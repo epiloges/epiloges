@@ -1,6 +1,6 @@
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { SiteSettingsForm } from "@/components/admin/SiteSettingsForm";
-import { getSiteSettings } from "@/services";
+import { getRawSiteSettings } from "@/services/settings";
 import { saveSiteSettingsAction } from "@/app/admin/(dashboard)/settings/actions";
 import { requireCapabilityOrRedirect } from "@/lib/admin-session";
 
@@ -10,7 +10,7 @@ export const instant = false;
 
 export default async function AdminSettingsPage() {
   await requireCapabilityOrRedirect("admin:settings");
-  const settings = await getSiteSettings();
+  const settings = await getRawSiteSettings();
 
   return (
     <div>

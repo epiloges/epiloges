@@ -101,6 +101,11 @@ export function SiteSettingsForm({ initialSettings, onSave }: SiteSettingsFormPr
           <label className="mb-2 block text-xs font-medium text-luxe-gray-dark uppercase">
             Announcement Bar Messages
           </label>
+          <p className="mb-2 text-xs text-luxe-gray-dark">
+            Write <code className="bg-luxe-gray-light px-1">{"{freeShippingThreshold}"}</code> and it is filled in from the Shipping
+            settings — e.g. “Δωρεάν αποστολή για παραγγελίες άνω των {"{freeShippingThreshold}"}”. A typed amount goes stale the day
+            the threshold changes; a message using the placeholder disappears by itself if free shipping is switched off.
+          </p>
           <div className="space-y-2">
             {settings.announcementMessages.map((message, index) => (
               <div key={index} className="flex items-center gap-2">
