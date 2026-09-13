@@ -315,3 +315,12 @@ export async function markVouchersListed(trackingNumbers: string[], pickupListNo
   });
   return count;
 }
+
+/** Every order placed under an email address, newest first — the customer detail page history. */
+export async function getOrdersForEmail(email: string): Promise<Order[]> {
+  const rows = await prisma.order.findMany({
+    where: { customerEmail: { equals: email, mode: "insensitive" } },
+    orderBy: { createdAt: "desc" },
+  });
+  return rows.map(toOrder);
+}

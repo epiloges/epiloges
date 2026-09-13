@@ -289,6 +289,14 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderDetailP
           ) : null}
           <div className="border border-border bg-luxe-white p-4">
             <h3 className="mb-3 text-xs font-medium tracking-[0.05em] uppercase text-luxe-gray-dark">Shipping Address</h3>
+            <p className="mb-2 text-xs">
+              <Link
+                href={`/admin/customers/${encodeURIComponent(`email:${order.customerEmail.toLowerCase()}`)}`}
+                className="underline underline-offset-4"
+              >
+                Customer history
+              </Link>
+            </p>
             <div className="text-sm">
               {addressLines(order.shippingAddress).map((line, i) => (
                 <p key={i}>{line}</p>

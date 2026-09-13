@@ -1,9 +1,7 @@
 import "server-only";
-import { countsAsSale } from "@/lib/order-revenue";
+import { DEFAULT_PAGE_SIZE, resolvePage, toPaged } from "@/lib/pagination";
 import { prisma } from "@/lib/prisma";
 import { customerInclude, toCustomer } from "@/lib/commerce/postgres/mappers";
-import { cartTotalsSchema } from "@/lib/validation/commerce";
-import { storedAddressSchema } from "@/lib/validation/checkout";
 import { round2 } from "@/lib/commerce/postgres/cart-totals";
 import type { Address, Customer } from "@/lib/commerce/types";
 
@@ -149,12 +147,30 @@ export interface AdminCustomerRow {
 }
 
 export async function getAllCustomersForAdmin(): Promise<AdminCustomerRow[]> {
-  const [accounts, orders] = await Promise.all([
+  /**
+   * Orders aggregated in SQL — one row per email with the count, the money that still
+   * stands (cancelled and refunded orders excluded, see lib/order-revenue.ts), and the
+   * name and phone from the most recent shipping address. This used to load every order
+   * row and parse every address JSON in JavaScript on each page view, and a single
+   * malformed address threw and took the whole page with it. Reads that are not
+   * addresses now degrade to "—" rather than to a 500.
+   */
+  const [accounts, orderRows] = await Promise.all([
     prisma.customer.findMany({ orderBy: { createdAt: "desc" } }),
-    prisma.order.findMany({
-      select: { customerEmail: true, totals: true, shippingAddress: true, createdAt: true, status: true },
-      orderBy: { createdAt: "asc" },
-    }),
+    prisma.$queryRaw<
+      { email: string; ordersCount: number; totalSpent: number; firstName: string | null; lastName: string | null; phone: string | null; firstOrderAt: Date }[]
+    >`
+      SELECT
+        lower(o."customerEmail") AS email,
+        count(*)::int AS "ordersCount",
+        coalesce(sum((o.totals->'total'->>'amount')::numeric) FILTER (WHERE o.status NOT IN ('cancelled', 'refunded')), 0)::float AS "totalSpent",
+        (array_agg(o."shippingAddress"->>'firstName' ORDER BY o."createdAt" DESC))[1] AS "firstName",
+        (array_agg(o."shippingAddress"->>'lastName' ORDER BY o."createdAt" DESC))[1] AS "lastName",
+        (array_agg(o."shippingAddress"->>'phone' ORDER BY o."createdAt" DESC))[1] AS phone,
+        min(o."createdAt") AS "firstOrderAt"
+      FROM orders o
+      GROUP BY lower(o."customerEmail")
+    `,
   ]);
 
   const rows = new Map<string, AdminCustomerRow>();
@@ -172,28 +188,53 @@ export async function getAllCustomersForAdmin(): Promise<AdminCustomerRow[]> {
     });
   }
 
-  for (const order of orders) {
-    const email = order.customerEmail.toLowerCase();
-    let row = rows.get(email);
-    if (!row) {
-      const address = storedAddressSchema.parse(order.shippingAddress);
-      row = {
-        id: `guest:${email}`,
-        email,
-        firstName: address.firstName,
-        lastName: address.lastName,
-        phone: address.phone || undefined,
-        createdAt: order.createdAt.toISOString(),
-        hasAccount: false,
-        ordersCount: 0,
-        totalSpent: 0,
-      };
-      rows.set(email, row);
+  for (const agg of orderRows) {
+    const existing = rows.get(agg.email);
+    if (existing) {
+      existing.ordersCount = agg.ordersCount;
+      existing.totalSpent = round2(agg.totalSpent);
+      if (!existing.phone && agg.phone) existing.phone = agg.phone;
+      continue;
     }
-    row.ordersCount += 1;
-    // A cancelled or refunded order is not money the customer spent (lib/order-revenue.ts).
-    if (countsAsSale(order)) row.totalSpent = round2(row.totalSpent + cartTotalsSchema.parse(order.totals).total.amount);
+    rows.set(agg.email, {
+      id: `guest:${agg.email}`,
+      email: agg.email,
+      firstName: agg.firstName ?? "—",
+      lastName: agg.lastName ?? "",
+      phone: agg.phone || undefined,
+      createdAt: agg.firstOrderAt.toISOString(),
+      hasAccount: false,
+      ordersCount: agg.ordersCount,
+      totalSpent: round2(agg.totalSpent),
+    });
   }
 
   return [...rows.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+/** Search (name, email, phone) and page the aggregated list — the set is one row per person, so paging in memory is cheap. */
+export async function listCustomersForAdmin(query: { search?: string; page?: number; pageSize?: number } = {}) {
+  const all = await getAllCustomersForAdmin();
+  const needle = query.search?.trim().toLowerCase();
+  const filtered = needle
+    ? all.filter((row) => `${row.firstName} ${row.lastName} ${row.email} ${row.phone ?? ""}`.toLowerCase().includes(needle))
+    : all;
+  const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE;
+  const { page, skip, take } = resolvePage(filtered.length, { page: query.page ?? 1, pageSize });
+  return {
+    ...toPaged(filtered.slice(skip, skip + take), filtered.length, page, pageSize),
+    accounts: all.filter((row) => row.hasAccount).length,
+    everyone: all.length,
+  };
+}
+
+/**
+ * One customer, by account id, by `guest:<email>`, or by `email:<email>` — the last for
+ * callers that only hold an email (an order row) and do not know whether it belongs to an
+ * account.
+ */
+export async function getCustomerForAdmin(key: string): Promise<AdminCustomerRow | null> {
+  const all = await getAllCustomersForAdmin();
+  const byEmail = key.startsWith("email:") ? key.slice("email:".length).toLowerCase() : null;
+  return all.find((row) => row.id === key || (byEmail !== null && row.email.toLowerCase() === byEmail)) ?? null;
 }

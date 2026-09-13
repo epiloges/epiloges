@@ -117,3 +117,12 @@ export async function updateReturnStatus(id: string, status: Return["status"]): 
 
   return returnRow;
 }
+
+/** Every return filed under an email address, newest first. */
+export async function getReturnsForEmail(email: string): Promise<Return[]> {
+  const rows = await prisma.return.findMany({
+    where: { customerEmail: { equals: email, mode: "insensitive" } },
+    orderBy: { createdAt: "desc" },
+  });
+  return rows.map(toReturn);
+}
