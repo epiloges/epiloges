@@ -135,6 +135,35 @@ description. Flip it when a second courier appears — two rows both titled "Π�
 οίκον" and distinguishable only by their subtitles is worse than putting the carrier first,
 because by then the carrier is what is being chosen.
 
+## Customer audit fixes (2026-09-13)
+
+A strict end-to-end walk of the live shop as a first-time customer, desktop and mobile, found
+twenty-six things; all the code-level ones are fixed and deployed the same day. The ones that
+mattered most: **the order confirmation page crashed for every successful order** (a render
+function passed for a plain `{email}` argument in `Confirmation.confirmationSentTo` — tags take
+functions, arguments take values); the FAQ said *"this is a demo store — no payment is
+charged"*; Shipping & Returns, Our Story, Sustainability and Careers were English template copy
+describing a shoemaker with ateliers and €150 free shipping. All content pages are Greek now
+and derived from the Terms of Service + live shipping settings — keep them in step: the Terms
+say **30-day free returns** (plus the 14-day legal right); the announcement bar says 14. One of
+the two is wrong and it is the owner's call which.
+
+Also new: `/search` results page (the overlay only previews six); inline error for a bad
+discount code; category context on `?category=` listings; New In = flagged OR added in the last
+45 days; delivery estimates count from the courier handover (next working day on a Sunday or
+after 14:00); amber ≤2-unit stock dots with a legend instead of red dots everywhere; single
+sizes pre-selected; `WC-…` SKUs hidden; the mock address autocomplete removed; country names
+via `Intl.DisplayNames`; every English leftover on the storefront translated, including the
+persisted COD/bank-transfer instruction labels.
+
+**Data was cleaned in place** (57 descriptions with literal `
+`, 22 with a stale "3–5
+εργάσιμες" promise, colour-name casing). **Product names were NOT touched** — an attempt to
+strip supplier codes went wrong because the slug's trailing number is a uniqueness suffix, not
+the store code, and was fully reverted from a Neon point-in-time branch. 26 products still carry
+supplier codes in their names (Guess/Valentino bags, U.S. Polo); renaming them is the owner's
+job, by hand, in the admin.
+
 ## ACS courier — test credentials arrived, activation pending (2026-09-13)
 
 **Superseded the entry below.** ACS sent TEST web-services credentials on 13 September with
