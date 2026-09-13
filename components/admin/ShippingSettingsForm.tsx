@@ -6,7 +6,7 @@ import type { ShippingSettings } from "@/types";
 
 interface ShippingSettingsFormProps {
   initialSettings: ShippingSettings;
-  onSave: (settings: ShippingSettings) => Promise<void>;
+  onSave: (settings: ShippingSettings) => Promise<{ error?: string } | void>;
 }
 
 const inputClass = "h-10 w-full border border-border px-3 text-sm outline-none focus:border-luxe-black";
@@ -15,6 +15,8 @@ const labelClass = "mb-1 block text-xs font-medium text-luxe-gray-dark uppercase
 export function ShippingSettingsForm({ initialSettings, onSave }: ShippingSettingsFormProps) {
   const [settings, setSettings] = useState(initialSettings);
   const [saved, setSaved] = useState<"idle" | "saved" | "error">("idle");
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [remoteDrafts, setRemoteDrafts] = useState<Record<string, string>>({});
   const [isPending, startTransition] = useTransition();
 
   const freeShippingOn = settings.freeShippingThreshold !== null;
@@ -30,9 +32,16 @@ export function ShippingSettingsForm({ initialSettings, onSave }: ShippingSettin
   const handleSave = () => {
     startTransition(async () => {
       try {
-        await onSave(settings);
+        const result = await onSave(settings);
+        if (result?.error) {
+          setSaveError(result.error);
+          setSaved("error");
+          return;
+        }
+        setSaveError(null);
         setSaved("saved");
       } catch {
+        setSaveError(null);
         setSaved("error");
       }
     });
@@ -160,6 +169,72 @@ export function ShippingSettingsForm({ initialSettings, onSave }: ShippingSettin
                   <span className="text-xs text-luxe-gray-dark">(free shipping is currently off)</span>
                 ) : null}
               </label>
+
+              {/*
+                The remote-area surcharge (δυσπρόσιτες περιοχές) was applied at checkout
+                (lib/shipping.ts) from data nobody could see or change here — a rate could
+                quietly charge a different price for hundreds of postal codes with no trace
+                of it on this page. Shown only for domestic rates, since it never applies to
+                international ones.
+              */}
+              {rate.scope !== "international" ? (
+                <details className="text-sm" open={Boolean(rate.remoteAreas)}>
+                  <summary className="cursor-pointer text-xs text-luxe-gray-dark">
+                    Remote-area surcharge
+                    {rate.remoteAreas
+                      ? ` — ${rate.remoteAreas.amount} € for ${rate.remoteAreas.postalCodes.length} postal codes`
+                      : " — none"}
+                  </summary>
+                  <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-[10rem_1fr]">
+                    <div>
+                      <label className={labelClass}>Price in these areas (EUR)</label>
+                      <input
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        value={rate.remoteAreas?.amount ?? ""}
+                        placeholder="Same as above"
+                        onChange={(event) => {
+                          const value = event.target.value;
+                          patchRate(rate.id, {
+                            remoteAreas:
+                              value === ""
+                                ? undefined
+                                : { amount: Number(value), postalCodes: rate.remoteAreas?.postalCodes ?? [] },
+                          });
+                        }}
+                        className={inputClass}
+                      />
+                    </div>
+                    <div>
+                      <label className={labelClass}>Postal codes (comma or line separated)</label>
+                      {/* Typed into a draft and parsed on blur — parsing on every keystroke
+                          would eat the comma the moment it was typed. */}
+                      <textarea
+                        rows={3}
+                        value={remoteDrafts[rate.id] ?? (rate.remoteAreas?.postalCodes ?? []).join(", ")}
+                        disabled={!rate.remoteAreas}
+                        onChange={(event) => setRemoteDrafts((prev) => ({ ...prev, [rate.id]: event.target.value }))}
+                        onBlur={(event) => {
+                          const postalCodes = event.target.value
+                            .split(/[\s,;]+/)
+                            .map((code) => code.trim())
+                            .filter(Boolean);
+                          setRemoteDrafts((prev) => {
+                            const next = { ...prev };
+                            delete next[rate.id];
+                            return next;
+                          });
+                          patchRate(rate.id, {
+                            remoteAreas: { amount: rate.remoteAreas?.amount ?? rate.amount, postalCodes },
+                          });
+                        }}
+                        className={inputClass.replace("h-10", "h-auto py-2")}
+                      />
+                    </div>
+                  </div>
+                </details>
+              ) : null}
             </div>
           ))}
         </div>
@@ -171,7 +246,7 @@ export function ShippingSettingsForm({ initialSettings, onSave }: ShippingSettin
               Saved
             </span>
           ) : saved === "error" ? (
-            <span className="text-xs text-destructive">Couldn&apos;t save. Try again.</span>
+            <span role="alert" className="text-xs text-destructive">{saveError ?? "Couldn't save. Try again."}</span>
           ) : null}
           <button
             type="button"

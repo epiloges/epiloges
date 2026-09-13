@@ -6,12 +6,13 @@ import type { SiteSettings } from "@/types";
 
 interface SiteSettingsFormProps {
   initialSettings: SiteSettings;
-  onSave: (settings: SiteSettings) => Promise<void>;
+  onSave: (settings: SiteSettings) => Promise<{ error?: string } | void>;
 }
 
 export function SiteSettingsForm({ initialSettings, onSave }: SiteSettingsFormProps) {
   const [settings, setSettings] = useState(initialSettings);
   const [saved, setSaved] = useState<"idle" | "saved" | "error">("idle");
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const field = <K extends keyof SiteSettings>(key: K, value: SiteSettings[K]) => {
@@ -39,9 +40,16 @@ export function SiteSettingsForm({ initialSettings, onSave }: SiteSettingsFormPr
   const handleSave = () => {
     startTransition(async () => {
       try {
-        await onSave(settings);
+        const result = await onSave(settings);
+        if (result?.error) {
+          setSaveError(result.error);
+          setSaved("error");
+          return;
+        }
+        setSaveError(null);
         setSaved("saved");
       } catch {
+        setSaveError(null);
         setSaved("error");
       }
     });
@@ -126,7 +134,7 @@ export function SiteSettingsForm({ initialSettings, onSave }: SiteSettingsFormPr
             Saved
           </span>
         ) : saved === "error" ? (
-          <span className="text-xs text-destructive">Couldn&apos;t save. Try again.</span>
+          <span role="alert" className="text-xs text-destructive">{saveError ?? "Couldn't save. Try again."}</span>
         ) : null}
         <button
           type="button"

@@ -6,12 +6,13 @@ import type { SiteSeoDefaults } from "@/types";
 
 interface SeoSettingsFormProps {
   initialSeo: SiteSeoDefaults;
-  onSave: (seo: SiteSeoDefaults) => Promise<void>;
+  onSave: (seo: SiteSeoDefaults) => Promise<{ error?: string } | void>;
 }
 
 export function SeoSettingsForm({ initialSeo, onSave }: SeoSettingsFormProps) {
   const [seo, setSeo] = useState(initialSeo);
   const [saved, setSaved] = useState<"idle" | "saved" | "error">("idle");
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const field = (key: keyof SiteSeoDefaults, value: string) => {
@@ -22,9 +23,16 @@ export function SeoSettingsForm({ initialSeo, onSave }: SeoSettingsFormProps) {
   const handleSave = () => {
     startTransition(async () => {
       try {
-        await onSave(seo);
+        const result = await onSave(seo);
+        if (result?.error) {
+          setSaveError(result.error);
+          setSaved("error");
+          return;
+        }
+        setSaveError(null);
         setSaved("saved");
       } catch {
+        setSaveError(null);
         setSaved("error");
       }
     });
@@ -85,7 +93,7 @@ export function SeoSettingsForm({ initialSeo, onSave }: SeoSettingsFormProps) {
             Saved
           </span>
         ) : saved === "error" ? (
-          <span className="text-xs text-destructive">Couldn&apos;t save. Try again.</span>
+          <span role="alert" className="text-xs text-destructive">{saveError ?? "Couldn't save. Try again."}</span>
         ) : null}
         <button
           type="button"

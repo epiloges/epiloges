@@ -13,7 +13,7 @@ interface HomepageEditorProps {
   initialSections: HomepageSection[];
   /** When set, only this section is shown, expanded, with no reordering — used by the Hero Management page. */
   focusSectionId?: string;
-  onPublish: (sections: HomepageSection[]) => Promise<void>;
+  onPublish: (sections: HomepageSection[]) => Promise<{ error?: string } | void>;
 }
 
 const SECTION_LABELS: Record<HomepageSection["type"], string> = {
@@ -55,6 +55,7 @@ export function HomepageEditor({ initialSections, focusSectionId, onPublish }: H
   );
   const [expandedId, setExpandedId] = useState<string | null>(focusSectionId ?? null);
   const [status, setStatus] = useState<"idle" | "published" | "error">("idle");
+  const [publishError, setPublishError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const dragIndex = useRef<number | null>(null);
 
@@ -89,9 +90,16 @@ export function HomepageEditor({ initialSections, focusSectionId, onPublish }: H
   const handlePublish = () => {
     startTransition(async () => {
       try {
-        await onPublish(sections);
+        const result = await onPublish(sections);
+        if (result?.error) {
+          setPublishError(result.error);
+          setStatus("error");
+          return;
+        }
+        setPublishError(null);
         setStatus("published");
       } catch {
+        setPublishError(null);
         setStatus("error");
       }
     });
@@ -127,7 +135,7 @@ export function HomepageEditor({ initialSections, focusSectionId, onPublish }: H
 
       {status !== "idle" ? (
         <p className={cn("mb-4 text-xs", status === "published" ? "text-green-700" : "text-destructive")}>
-          {status === "published" ? "Published — live on the storefront now." : "Couldn't publish. Try again."}
+          {status === "published" ? "Published — live on the storefront now." : (publishError ?? "Couldn't publish. Try again.")}
         </p>
       ) : null}
 

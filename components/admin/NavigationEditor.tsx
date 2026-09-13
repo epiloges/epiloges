@@ -11,7 +11,7 @@ type Featured = NonNullable<NavItem["featured"]>[number];
 interface NavigationEditorProps {
   /** The FULL navigation config, always — this editor only touches .primary (including each item's .children — the header's dropdown sub-menus), but a save must round-trip .utility/.footer unchanged rather than dropping them. */
   initialNavigation: NavigationConfig;
-  onSave: (navigation: NavigationConfig) => Promise<void>;
+  onSave: (navigation: NavigationConfig) => Promise<{ error?: string } | void>;
 }
 
 const inputClass = "h-10 w-full border border-border px-3 text-sm outline-none focus:border-luxe-black";
@@ -34,6 +34,7 @@ const ALLOWED_HOSTS = REMOTE_IMAGE_HOSTS.map((host) => host.hostname).join(", ")
 export function NavigationEditor({ initialNavigation, onSave }: NavigationEditorProps) {
   const [navigation, setNavigation] = useState(initialNavigation);
   const [saved, setSaved] = useState<"idle" | "saved" | "error">("idle");
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const updateItem = (id: string, patch: Partial<NavItem>) => {
@@ -116,9 +117,16 @@ export function NavigationEditor({ initialNavigation, onSave }: NavigationEditor
   const handleSave = () => {
     startTransition(async () => {
       try {
-        await onSave(navigation);
+        const result = await onSave(navigation);
+        if (result?.error) {
+          setSaveError(result.error);
+          setSaved("error");
+          return;
+        }
+        setSaveError(null);
         setSaved("saved");
       } catch {
+        setSaveError(null);
         setSaved("error");
       }
     });
@@ -278,7 +286,7 @@ export function NavigationEditor({ initialNavigation, onSave }: NavigationEditor
             Saved
           </span>
         ) : saved === "error" ? (
-          <span className="text-xs text-destructive">Couldn&apos;t save. Try again.</span>
+          <span role="alert" className="text-xs text-destructive">{saveError ?? "Couldn't save. Try again."}</span>
         ) : null}
         <button
           type="button"
