@@ -1,7 +1,7 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
-import { cartTotalsSchema } from "@/lib/validation/commerce";
-import { getNewsletterSubscriberCount } from "@/services/newsletter";
+import { toOrder } from "@/lib/commerce/postgres/mappers";
+import type { Order } from "@/lib/commerce/types";
 import type { AdminUser, DashboardStat } from "@/types";
 
 /**
@@ -40,18 +40,78 @@ export async function getAdminUsers(): Promise<AdminUser[]> {
   }));
 }
 
-export async function getDashboardStats(): Promise<DashboardStat[]> {
-  const [orders, customerCount, subscriberCount] = await Promise.all([
-    prisma.order.findMany({ select: { totals: true } }),
-    prisma.customer.count(),
-    getNewsletterSubscriberCount(),
-  ]);
-  const revenue = orders.reduce((sum, order) => sum + cartTotalsSchema.parse(order.totals).total.amount, 0);
+/**
+ * Midnight today in the shop's own timezone, as a UTC instant. Vercel runs on UTC, so a
+ * plain `new Date().setHours(0)` would start "today" two or three hours late for Athens
+ * and an order placed at 01:00 would count towards yesterday.
+ */
+function startOfTodayIn(timeZone: string): Date {
+  const now = new Date();
+  const parts = new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(now);
+  const get = (type: string) => Number(parts.find((part) => part.type === type)?.value);
+  // Midnight of that calendar date as if it were UTC, then shift by the zone's offset at that moment.
+  const midnightAsUtc = Date.UTC(get("year"), get("month") - 1, get("day"));
+  const offsetMs = zoneOffsetMs(new Date(midnightAsUtc), timeZone);
+  return new Date(midnightAsUtc - offsetMs);
+}
 
-  return [
-    { id: "revenue", label: "Revenue", value: `€${revenue.toLocaleString()}` },
-    { id: "orders", label: "Orders", value: String(orders.length) },
-    { id: "customers", label: "Customers", value: String(customerCount) },
-    { id: "subscribers", label: "Newsletter Subscribers", value: String(subscriberCount) },
-  ];
+function zoneOffsetMs(at: Date, timeZone: string): number {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    hourCycle: "h23",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).formatToParts(at);
+  const get = (type: string) => Number(parts.find((part) => part.type === type)?.value);
+  const local = Date.UTC(get("year"), get("month") - 1, get("day"), get("hour"), get("minute"), get("second"));
+  return local - at.getTime();
+}
+
+export interface DashboardSummary {
+  stats: DashboardStat[];
+  /** Orders placed since midnight Athens time, newest first. */
+  todayOrders: Order[];
+  /** Confirmed/processing orders from before today, oldest first — the backlog to clear. */
+  awaitingShipment: Order[];
+}
+
+/**
+ * What the shop needs to act on today — not lifetime totals. Lifetime revenue and
+ * customer counts belong on Analytics; the dashboard is the screen opened each morning
+ * to see what came in overnight and what still has to go out the door.
+ */
+export async function getDashboardSummary(): Promise<DashboardSummary> {
+  const since = startOfTodayIn("Europe/Athens");
+  const unshipped = ["confirmed", "processing"];
+
+  const [todayRows, backlogRows, openReturns, openConcierge] = await Promise.all([
+    prisma.order.findMany({ where: { createdAt: { gte: since } }, orderBy: { createdAt: "desc" } }),
+    prisma.order.findMany({
+      where: { createdAt: { lt: since }, status: { in: unshipped } },
+      orderBy: { createdAt: "asc" },
+    }),
+    prisma.return.count({ where: { status: { in: ["requested", "approved"] } } }),
+    prisma.conciergeRequest.count({ where: { status: "open" } }),
+  ]);
+
+  const todayOrders = todayRows.map(toOrder);
+  const awaitingShipment = backlogRows.map(toOrder);
+  const todayRevenue = todayOrders.reduce((sum, order) => sum + order.totals.total.amount, 0);
+  const toShip = todayOrders.filter((order) => unshipped.includes(order.status)).length + awaitingShipment.length;
+
+  return {
+    stats: [
+      { id: "today-orders", label: "Today's Orders", value: String(todayOrders.length) },
+      { id: "today-revenue", label: "Today's Revenue", value: `€${todayRevenue.toLocaleString()}` },
+      { id: "to-ship", label: "To Ship", value: String(toShip) },
+      { id: "open-returns", label: "Open Returns", value: String(openReturns) },
+      { id: "stylist-requests", label: "Stylist Requests", value: String(openConcierge) },
+    ],
+    todayOrders,
+    awaitingShipment,
+  };
 }

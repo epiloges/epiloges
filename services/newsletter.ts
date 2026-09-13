@@ -32,7 +32,3 @@ export async function getNewsletterSubscribers(): Promise<NewsletterSubscriber[]
     subscribedAt: row.subscribedAt.toISOString(),
   }));
 }
-
-export async function getNewsletterSubscriberCount(): Promise<number> {
-  return prisma.newsletterSubscriber.count();
-}
