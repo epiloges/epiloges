@@ -111,10 +111,25 @@ function addBusinessDays(date: Date, days: number): Date {
   return result;
 }
 
+/** Orders placed after this hour (Athens) are handed to the courier the next working day. */
+const DISPATCH_CUTOFF_HOUR = 14;
+
+/**
+ * The day the parcel actually leaves: today if it is a working day and the cut-off has not
+ * passed, otherwise the next working day. The courier's "1–3 days" run from the handover,
+ * not from the click — an order placed on a Sunday night is not delivered on Monday.
+ */
+function dispatchDay(from: Date): Date {
+  const hour = Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Athens", hour: "numeric", hourCycle: "h23" }).format(from));
+  const sameDay = !isNonWorkingDay(from) && hour < DISPATCH_CUTOFF_HOUR;
+  return sameDay ? from : addBusinessDays(from, 1);
+}
+
 /** Renders a friendly "Arrives X – Y" estimate from today, given a min/max business-day window. */
 export function getDeliveryEstimate(minDays: number, maxDays: number, from: Date = new Date()): string {
-  const start = addBusinessDays(from, minDays);
-  const end = addBusinessDays(from, maxDays);
+  const handover = dispatchDay(from);
+  const start = addBusinessDays(handover, minDays);
+  const end = addBusinessDays(handover, maxDays);
   return `${WEEKDAY_FORMAT.format(start)} – ${WEEKDAY_FORMAT.format(end)}`;
 }
 

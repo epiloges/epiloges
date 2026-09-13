@@ -104,8 +104,9 @@ export function getProductBadges(product: Product): ProductBadge[] {
   if (isOnSale(product)) badges.push({ key: "sale", tone: "sale" });
   else if (product.isNew) badges.push({ key: "new", tone: "new" });
 
+  // "Last size" on a bag or belt that only ever had one size is noise, not scarcity.
   const sizesLeft = availableSizeCount(product);
-  if (product.availableForSale && sizesLeft > 0 && sizesLeft <= FEW_SIZES_THRESHOLD) {
+  if (product.availableForSale && product.sizes.length > 1 && sizesLeft > 0 && sizesLeft <= FEW_SIZES_THRESHOLD) {
     badges.push({ key: sizesLeft === 1 ? "lastSize" : "fewSizesLeft", tone: "low-stock" });
   }
 

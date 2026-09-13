@@ -183,6 +183,7 @@
     "brand": "Μάρκα"
   },
   "Pdp": {
+    "free": "Δωρεάν",
     "quantity": "Ποσότητα",
     "decreaseQuantity": "Μείωση ποσότητας",
     "increaseQuantity": "Αύξηση ποσότητας",
@@ -366,6 +367,7 @@
     "alreadyHaveAccount": "Έχετε ήδη λογαριασμό;"
   },
   "Address": {
+    "streetAddressPlaceholder": "Οδός και αριθμός",
     "firstName": "Όνομα",
     "lastName": "Επώνυμο",
     "company": "Εταιρεία (προαιρετικό)",

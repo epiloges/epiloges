@@ -60,10 +60,22 @@ describe("addBusinessDays", () => {
 
 describe("getDeliveryEstimate", () => {
   it("renders a readable range and never lands on a non-working day", () => {
+    // A Monday morning: handed to the courier the same day, so 3–5 working days from Monday.
     const estimate = getDeliveryEstimate(3, 5, day("2026-08-17"));
     // Greek, because the storefront is. This asserted the en-US shape, which is how a Greek
     // shopper came to be told "Arrives Tuesday, September 8" on an otherwise Greek page.
     expect(estimate).toBe("Πέμπτη 20 Αυγούστου – Δευτέρα 24 Αυγούστου");
+  });
+
+  it("counts from the next working day when the order is placed on a Sunday", () => {
+    // 13 Sep 2026 is a Sunday. The parcel leaves Monday; 1–3 days after that is Tue–Thu.
+    // It used to say Monday–Wednesday, promising a delivery the day after a Sunday order.
+    expect(getDeliveryEstimate(1, 3, day("2026-09-13"))).toBe("Τρίτη 15 Σεπτεμβρίου – Πέμπτη 17 Σεπτεμβρίου");
+  });
+
+  it("counts from the next working day after the afternoon cut-off", () => {
+    const lateMonday = new Date("2026-08-17T16:30:00+03:00");
+    expect(getDeliveryEstimate(1, 3, lateMonday)).toBe("Τετάρτη 19 Αυγούστου – Παρασκευή 21 Αυγούστου");
   });
 });
 

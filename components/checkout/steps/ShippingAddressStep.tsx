@@ -34,7 +34,6 @@ export function ShippingAddressStep() {
   const {
     register,
     handleSubmit,
-    setValue,
     control,
     reset,
     getValues,
@@ -308,13 +307,6 @@ export function ShippingAddressStep() {
             value={field.value}
             onChange={field.onChange}
             error={errors.address1?.message}
-            onSelect={(suggestion) => {
-              setValue("address1", suggestion.address1, { shouldValidate: true });
-              setValue("city", suggestion.city, { shouldValidate: true });
-              setValue("region", suggestion.region, { shouldValidate: true });
-              setValue("postalCode", suggestion.postalCode, { shouldValidate: true });
-              setValue("countryCode", suggestion.countryCode, { shouldValidate: true });
-            }}
           />
         )}
       />

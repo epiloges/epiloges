@@ -16,6 +16,9 @@ interface VariantSelectorProps {
   onRequestNotify?: (size: string) => void;
 }
 
+/** At or below this many units a size is flagged as running out. */
+const LOW_STOCK_UNITS = 2;
+
 export function VariantSelector({
   product,
   selectedColor,
@@ -69,7 +72,7 @@ export function VariantSelector({
         <div className="flex flex-wrap gap-2">
           {product.sizes.map((size) => {
             const purchasable = isSizePurchasable(product, size.name);
-            const lowStock = size.quantity > 0 && size.quantity <= 3;
+            const lowStock = size.quantity > 0 && size.quantity <= LOW_STOCK_UNITS;
             return (
               <button
                 key={size.name}
@@ -88,12 +91,20 @@ export function VariantSelector({
               >
                 {size.name}
                 {purchasable && lowStock && selectedSize !== size.name ? (
-                  <span className="absolute -top-1.5 -right-1.5 size-2 rounded-full bg-destructive" title={t("lowStock")} />
+                  <span className="absolute -top-1.5 -right-1.5 size-2 rounded-full bg-amber-500" title={t("lowStock")} />
                 ) : null}
               </button>
             );
           })}
         </div>
+        {/* The dot alone read as "sold out" — red, on every size of a shop that stocks one or
+            two pairs per size. Amber, rarer, and spelled out once underneath. */}
+        {product.sizes.some((size) => isSizePurchasable(product, size.name) && size.quantity > 0 && size.quantity <= LOW_STOCK_UNITS) ? (
+          <p className="mt-2 flex items-center gap-1.5 text-xs text-luxe-gray-dark">
+            <span className="inline-block size-2 rounded-full bg-amber-500" aria-hidden />
+            {t("lowStock")}
+          </p>
+        ) : null}
       </div>
     </div>
   );

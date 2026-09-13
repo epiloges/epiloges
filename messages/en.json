@@ -183,6 +183,7 @@
     "brand": "Brand"
   },
   "Pdp": {
+    "free": "Free",
     "quantity": "Quantity",
     "decreaseQuantity": "Decrease quantity",
     "increaseQuantity": "Increase quantity",
@@ -366,6 +367,7 @@
     "alreadyHaveAccount": "Already have an account?"
   },
   "Address": {
+    "streetAddressPlaceholder": "Street and number",
     "firstName": "First name",
     "lastName": "Last name",
     "company": "Company (optional)",

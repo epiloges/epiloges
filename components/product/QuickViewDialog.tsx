@@ -53,7 +53,7 @@ export function QuickViewDialog({ product, open, onOpenChange }: QuickViewDialog
                 </span>
               ) : null}
             </p>
-            <p className="mt-4 text-sm text-luxe-gray-dark">{product.description}</p>
+            <p className="mt-4 text-sm whitespace-pre-line text-luxe-gray-dark">{product.description}</p>
 
             <div className="mt-6">
               <p className="text-eyebrow mb-2">{t("color")} — {selectedColor}</p>

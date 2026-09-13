@@ -97,9 +97,12 @@ export function ProductAccordion({ product, rates }: ProductAccordionProps) {
       <AccordionItem value="shipping">
         <AccordionTrigger className={TRIGGER_CLASS}>{t("shipping")}</AccordionTrigger>
         <AccordionContent>
+          {/* Each line carries its price: "when" without "how much" is the question a shopper
+              asks next, and it is the same number the checkout will show. */}
           {rates.map((rate) => (
             <p key={rate.id} className="text-sm text-luxe-gray-dark first:mt-0 mt-1">
-              {rate.label}: <span className="text-luxe-black">{describeArrival(rate.estimatedDelivery)}</span>
+              {rate.label} ({rate.price.amount === 0 ? t("free") : formatMoney(rate.price)}):{" "}
+              <span className="text-luxe-black">{describeArrival(rate.estimatedDelivery)}</span>
             </p>
           ))}
           {freeOver ? (
