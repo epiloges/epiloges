@@ -2,6 +2,8 @@ import "server-only";
 import { startOfTodayIn } from "@/lib/dates";
 import { prisma } from "@/lib/prisma";
 import { toOrder } from "@/lib/commerce/postgres/mappers";
+import { countsAsSale } from "@/lib/order-revenue";
+import { formatMoney } from "@/lib/format";
 import type { Order } from "@/lib/commerce/types";
 import type { AdminUser, DashboardStat } from "@/types";
 
@@ -76,13 +78,15 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
 
   const todayOrders = todayRows.map(toOrder);
   const awaitingShipment = backlogRows.map(toOrder);
-  const todayRevenue = todayOrders.reduce((sum, order) => sum + order.totals.total.amount, 0);
+  const todayRevenue = todayOrders.filter(countsAsSale).reduce((sum, order) => sum + order.totals.total.amount, 0);
   const toShip = todayOrders.filter((order) => unshipped.includes(order.status)).length + awaitingShipment.length;
 
   return {
     stats: [
       { id: "today-orders", label: "Today's Orders", value: String(todayOrders.length) },
-      { id: "today-revenue", label: "Today's Revenue", value: `€${todayRevenue.toLocaleString()}` },
+      // Same format as every order row ("39,85 €"), not `€${n.toLocaleString()}` in the
+      // server's locale; cancelled and refunded orders are left out (lib/order-revenue.ts).
+      { id: "today-revenue", label: "Today's Sales", value: formatMoney({ amount: todayRevenue, currencyCode: "EUR" }) },
       { id: "to-ship", label: "To Ship", value: String(toShip) },
       { id: "open-returns", label: "Open Returns", value: String(openReturns) },
       { id: "stylist-requests", label: "Stylist Requests", value: String(openConcierge) },

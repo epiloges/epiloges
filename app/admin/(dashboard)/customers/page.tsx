@@ -2,7 +2,7 @@ import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { DataTable } from "@/components/admin/DataTable";
 import { EraseCustomerDataForm, ExportCustomerDataForm } from "@/components/admin/DataSubjectPanel";
 import { currentRoleHasCapability } from "@/lib/admin-session";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatMoney } from "@/lib/format";
 import { getAllCustomersForAdmin, type AdminCustomerRow } from "@/services/customers";
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
@@ -50,7 +50,7 @@ export default async function AdminCustomersPage() {
             ),
           },
           { header: "Orders", cell: (row) => row.ordersCount },
-          { header: "Total Spent", cell: (row) => `€${row.totalSpent.toFixed(2)}` },
+          { header: "Total Spent", cell: (row) => formatMoney({ amount: row.totalSpent, currencyCode: "EUR" }) },
           { header: "Since", cell: (row) => formatDate(row.createdAt) },
         ]}
         rows={customers}

@@ -1,4 +1,5 @@
 import "server-only";
+import { countsAsSale } from "@/lib/order-revenue";
 import { prisma } from "@/lib/prisma";
 import { customerInclude, toCustomer } from "@/lib/commerce/postgres/mappers";
 import { cartTotalsSchema } from "@/lib/validation/commerce";
@@ -151,7 +152,7 @@ export async function getAllCustomersForAdmin(): Promise<AdminCustomerRow[]> {
   const [accounts, orders] = await Promise.all([
     prisma.customer.findMany({ orderBy: { createdAt: "desc" } }),
     prisma.order.findMany({
-      select: { customerEmail: true, totals: true, shippingAddress: true, createdAt: true },
+      select: { customerEmail: true, totals: true, shippingAddress: true, createdAt: true, status: true },
       orderBy: { createdAt: "asc" },
     }),
   ]);
@@ -190,7 +191,8 @@ export async function getAllCustomersForAdmin(): Promise<AdminCustomerRow[]> {
       rows.set(email, row);
     }
     row.ordersCount += 1;
-    row.totalSpent = round2(row.totalSpent + cartTotalsSchema.parse(order.totals).total.amount);
+    // A cancelled or refunded order is not money the customer spent (lib/order-revenue.ts).
+    if (countsAsSale(order)) row.totalSpent = round2(row.totalSpent + cartTotalsSchema.parse(order.totals).total.amount);
   }
 
   return [...rows.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
