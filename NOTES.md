@@ -145,8 +145,9 @@ functions, arguments take values); the FAQ said *"this is a demo store — no pa
 charged"*; Shipping & Returns, Our Story, Sustainability and Careers were English template copy
 describing a shoemaker with ateliers and €150 free shipping. All content pages are Greek now
 and derived from the Terms of Service + live shipping settings — keep them in step: the Terms
-say **30-day free returns** (plus the 14-day legal right); the announcement bar says 14. One of
-the two is wrong and it is the owner's call which.
+used to say 30-day free returns while the announcement bar said 14; the owner confirmed **14
+days, free** (the shop pays the return shipping), and every page, the Terms and the product
+accordion now say exactly that.
 
 Also new: `/search` results page (the overlay only previews six); inline error for a bad
 discount code; category context on `?category=` listings; New In = flagged OR added in the last

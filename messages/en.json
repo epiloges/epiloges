@@ -219,7 +219,7 @@
     "freeShippingOver": "Free shipping on orders over {amount}",
     "arrives": "Arrives <at>{range}</at>",
     "sku": "SKU",
-    "returnsBody": "Free returns within 30 days of delivery. Items must be unworn, unwashed, and with tags attached."
+    "returnsBody": "Free returns within 14 days of delivery. Items must be unworn, in their original packaging, with tags attached."
   },
   "Account": {
     "loading": "Loading…",
