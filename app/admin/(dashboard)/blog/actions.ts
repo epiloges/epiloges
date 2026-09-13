@@ -1,11 +1,11 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireCapability } from "@/lib/admin-session";
 import { recordAdminAction } from "@/services/audit-log";
-import { createPost, deletePost, updatePost } from "@/services/blog";
+import { createPost, deletePost, updatePost, BLOG_CACHE_TAG } from "@/services/blog";
 import { blogFormSchema, type BlogFormValues } from "@/lib/validation/blog";
 
 export interface BlogActionState {
@@ -14,6 +14,7 @@ export interface BlogActionState {
 
 function revalidateStorefront() {
   revalidatePath("/", "layout");
+  updateTag(BLOG_CACHE_TAG);
 }
 
 export async function createBlogPost(values: BlogFormValues): Promise<BlogActionState> {

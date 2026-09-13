@@ -1,4 +1,5 @@
 import "server-only";
+import { cacheLife, cacheTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { imageSchema } from "@/lib/validation/product";
 import { toJsonInput } from "@/lib/commerce/postgres/mappers";
@@ -19,6 +20,9 @@ function toBlogPost(row: Prisma.BlogPostGetPayload<object>): BlogPost {
   };
 }
 
+/** Invalidated by every admin blog write. */
+export const BLOG_CACHE_TAG = "blog-posts";
+
 export async function getAllPosts(): Promise<BlogPost[]> {
   const rows = await prisma.blogPost.findMany({ orderBy: { publishedAt: "desc" } });
   return rows.map(toBlogPost);
@@ -32,11 +36,21 @@ export async function getAllPosts(): Promise<BlogPost[]> {
  * stays for the admin, which must see everything.
  */
 export async function getPublishedPosts(): Promise<BlogPost[]> {
+  // Cached, because "now" is not a value a prerender can use: the journal pages are built
+  // ahead of time, and `new Date()` in their data path fails the build. An hour's cache is
+  // the resolution at which a scheduled post appears; an admin save invalidates the tag
+  // (app/admin/(dashboard)/blog/actions.ts) so edits still show immediately.
+  "use cache";
+  cacheLife("hours");
+  cacheTag(BLOG_CACHE_TAG);
   const rows = await prisma.blogPost.findMany({ where: { publishedAt: { lte: new Date() } }, orderBy: { publishedAt: "desc" } });
   return rows.map(toBlogPost);
 }
 
 export async function getPublishedPostBySlug(slug: string): Promise<BlogPost | undefined> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag(BLOG_CACHE_TAG);
   const row = await prisma.blogPost.findFirst({ where: { slug, publishedAt: { lte: new Date() } } });
   return row ? toBlogPost(row) : undefined;
 }

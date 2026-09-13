@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { requireCapability } from "@/lib/admin-session";
 import { commerceErrorResponse } from "@/lib/commerce/http-errors";
 import { recordAdminAction } from "@/services/audit-log";
@@ -5,6 +6,9 @@ import { getNewsletterSubscribers } from "@/services/newsletter";
 
 /** The list as CSV, for a mailing tool. The "Export CSV" button used to do nothing at all. */
 export async function GET() {
+  // A GET with no dynamic read is attempted as a prerender at build; the session cookie is
+  // only readable per request. Mark the route dynamic before touching it.
+  await connection();
   try {
     await requireCapability("orders:view");
     const subscribers = await getNewsletterSubscribers();
