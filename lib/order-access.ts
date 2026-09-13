@@ -84,3 +84,32 @@ export async function readOrderAccess(token: string | undefined): Promise<string
 export function withGrantedOrder(existing: string[], orderId: string): string[] {
   return [orderId, ...existing.filter((id) => id !== orderId)].slice(0, MAX_GRANTED_ORDERS);
 }
+
+/**
+ * A link a customer can follow from an email to see their order without signing in.
+ *
+ * The grant cookie above is set only in the browser that placed the order; an email is
+ * opened anywhere. This token carries one order id, is signed like the cookie, and is
+ * exchanged for the cookie when the confirmation page receives it (`?order=…&t=…`). Long-
+ * lived, because "where is my order?" is asked weeks later; scoped to a single order, so
+ * a leaked link reveals that order and nothing else — the same exposure as the email.
+ */
+const LINK_TTL = "180d";
+
+export async function signOrderLinkToken(orderId: string): Promise<string> {
+  return new SignJWT({ order: orderId, purpose: "order-link" })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime(LINK_TTL)
+    .sign(getSecretKey());
+}
+
+export async function readOrderLinkToken(token: string | undefined, orderId: string): Promise<boolean> {
+  if (!token) return false;
+  try {
+    const { payload } = await jwtVerify(token, getSecretKey());
+    return payload.purpose === "order-link" && payload.order === orderId;
+  } catch {
+    return false;
+  }
+}

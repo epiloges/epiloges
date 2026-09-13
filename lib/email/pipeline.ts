@@ -19,6 +19,7 @@ import { isUnsubscribed, unsubscribeUrl } from "@/lib/email/unsubscribe";
  */
 const MAX_ATTEMPTS = 3;
 const BACKOFF_MS = [500, 2000];
+const UNSUBSCRIBE_MARKER = "<!-- unsubscribe -->";
 
 /** Errors worth another attempt: rate limits, provider 5xx, network. A rejected sender or recipient is not. */
 function isTransient(error: unknown): boolean {
@@ -75,6 +76,8 @@ export function createEmailPipeline(transport: EmailTransport): EmailProvider {
             "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
           },
         };
+      } else {
+        message = { ...message, html: message.html.replace(UNSUBSCRIBE_MARKER, "") };
       }
 
       let lastError: unknown;
@@ -110,6 +113,5 @@ export function createEmailPipeline(transport: EmailTransport): EmailProvider {
 /** Inserts the opt-out line above the closing footer of a rendered template; appends it if the marker is absent. */
 function withUnsubscribeFooter(html: string, url: string): string {
   const line = `<p style="margin:12px 0 0;color:#9A9A9A;font-size:11px;line-height:1.6;">Δεν θέλετε τέτοια μηνύματα; <a href="${url}" style="color:#9A9A9A;text-decoration:underline;">Διαγραφή από τη λίστα</a>.</p>`;
-  const marker = "<!-- unsubscribe -->";
-  return html.includes(marker) ? html.replace(marker, line) : html.replace(/<\/body>/i, `${line}</body>`);
+  return html.includes(UNSUBSCRIBE_MARKER) ? html.replace(UNSUBSCRIBE_MARKER, line) : html.replace(/<\/body>/i, `${line}</body>`);
 }

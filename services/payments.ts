@@ -2,6 +2,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
+import { notifyCustomerOfPaymentChange } from "@/services/order-notifications";
 import { Prisma } from "@/lib/generated/prisma/client";
 import { toJsonInput } from "@/lib/commerce/postgres/mappers";
 import { round2 } from "@/lib/commerce/postgres/cart-totals";
@@ -433,6 +434,8 @@ async function applyStatus(
     },
   });
 
+  const next = toPaymentRecord(updated);
+
   if (changed) {
     await recordTransaction(record.id, {
       eventType: options.eventType ?? eventTypeForStatus(nextStatus),
@@ -443,9 +446,16 @@ async function applyStatus(
       message: options.message ?? result.failureReason ?? null,
       data: options.data,
     });
+    // Every status change reaches the customer from here — webhook, server-side
+    // verification, admin confirmation, refund — rather than from whichever caller
+    // remembered. Best-effort: the payment row is already written.
+    await notifyCustomerOfPaymentChange(next, record.status, {
+      actorType: options.actorType,
+      refundAmount: typeof options.data?.refundAmount === "number" ? options.data.refundAmount : undefined,
+    });
   }
 
-  return toPaymentRecord(updated);
+  return next;
 }
 
 interface RecordTransactionInput {

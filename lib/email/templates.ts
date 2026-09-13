@@ -101,9 +101,10 @@ function footer(siteName: string, url: string): string {
     `<a href="${href}" style="color:${MUTED};text-decoration:none;font-size:10px;letter-spacing:2px;text-transform:uppercase;padding:0 10px;">${label}</a>`;
   return `<tr>
     <td align="center" style="padding:36px 24px 56px;border-top:1px solid ${HAIRLINE};">
-      <p style="margin:0 0 18px;">${link("Επικοινωνία", `${url}/contact`)}${link("Επιστροφές", `${url}/returns`)}${link("Απόρρητο", `${url}/privacy`)}</p>
-      <p style="margin:0;font-family:${SERIF};font-size:11px;letter-spacing:4px;color:${INK};text-transform:uppercase;">${siteName}</p>
+      <p style="margin:0 0 18px;">${link("Επικοινωνία", `${url}/contact`)}${link("Αποστολές & Επιστροφές", `${url}/shipping-returns`)}${link("Απόρρητο", `${url}/legal/privacy`)}</p>
+      <p style="margin:0;font-family:${SERIF};font-size:11px;letter-spacing:4px;color:${INK};text-transform:uppercase;">${escapeHtml(siteName)}</p>
       <p style="margin:10px 0 0;color:${MUTED};font-size:11px;line-height:1.6;">Αυτό το μήνυμα στάλθηκε αυτόματα με βάση την παραγγελία ή τον λογαριασμό σας.</p>
+      <!-- unsubscribe -->
     </td>
   </tr>`;
 }
@@ -236,12 +237,16 @@ export function orderConfirmationEmail(input: {
    * template never has to know which method produced them.
    */
   paymentInstructions?: { label: string; value: string }[] | null;
+  /** How the customer is paying — named so a bank-transfer order's "we'll ship once it lands" is explicit. */
+  paymentMethodName?: string;
+  /** Absolute link to the order (with its access token) — see lib/order-access.ts. */
+  orderUrl?: string;
 }): RenderedEmail {
-  const { siteName, orderId, lineItems, totals, shippingAddress, shippingRate, giftWrap, giftMessage, paymentInstructions } = input;
+  const { siteName, orderId, lineItems, totals, shippingAddress, shippingRate, giftWrap, giftMessage, paymentInstructions, paymentMethodName, orderUrl } = input;
   const subject = `Η παραγγελία σας επιβεβαιώθηκε — #${orderId.slice(-8).toUpperCase()}`;
   const giftNoteHtml =
     giftWrap && giftMessage
-      ? `<p style="color:#555555;font-size:13px;font-style:italic;margin:0 0 24px;">"${giftMessage}"</p>`
+      ? `<p style="color:#555555;font-size:13px;font-style:italic;margin:0 0 24px;">"${escapeHtml(giftMessage)}"</p>`
       : "";
   const paymentHtml =
     paymentInstructions && paymentInstructions.length > 0
@@ -266,7 +271,11 @@ export function orderConfirmationEmail(input: {
     `
     ${eyebrow("Επιβεβαίωση παραγγελίας")}
     ${heading("Ευχαριστούμε για την παραγγελία σας")}
-    ${bodyText(`Παραγγελία #${orderId.slice(-8).toUpperCase()} — θα σας ενημερώσουμε ξανά μόλις αποσταλεί.`)}
+    ${bodyText(
+      paymentInstructions && paymentInstructions.length > 0
+        ? `Παραγγελία #${orderId.slice(-8).toUpperCase()}${paymentMethodName ? ` · ${escapeHtml(paymentMethodName)}` : ""}. Θα την ετοιμάσουμε μόλις ολοκληρωθεί η πληρωμή — τα στοιχεία είναι παρακάτω — και θα σας ενημερώσουμε ξανά μόλις αποσταλεί.`
+        : `Παραγγελία #${orderId.slice(-8).toUpperCase()}${paymentMethodName ? ` · ${escapeHtml(paymentMethodName)}` : ""} — θα σας ενημερώσουμε ξανά μόλις αποσταλεί.`
+    )}
     ${giftNoteHtml}
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${lineItemsHtml(lineItems)}</table>
     ${totalsHtml(totals)}
@@ -279,10 +288,11 @@ export function orderConfirmationEmail(input: {
         </td>
         <td style="width:50%;vertical-align:top;">
           ${sectionLabel("Τρόπος παράδοσης")}
-          <p style="font-size:13px;color:${INK};margin:0;">${shippingRate.label}<br/>${shippingRate.estimatedDelivery}</p>
+          <p style="font-size:13px;color:${INK};margin:0;">${escapeHtml(shippingRate.label)}<br/>${escapeHtml(shippingRate.estimatedDelivery)}</p>
         </td>
       </tr>
-    </table>`
+    </table>
+    ${orderUrl ? `<div style="margin-top:36px;">${textLink("Δείτε την παραγγελία σας", orderUrl)}</div>` : ""}`
   );
   const text = `Ευχαριστούμε για την παραγγελία σας\n\nΠαραγγελία #${orderId.slice(-8).toUpperCase()}\n\n${lineItems
     .map((i) => `${i.name} (${i.color}, ${i.size}) x${i.quantity} — ${formatMoney({ amount: i.unitPrice.amount * i.quantity, currencyCode: i.unitPrice.currencyCode })}`)
@@ -290,7 +300,7 @@ export function orderConfirmationEmail(input: {
     paymentInstructions && paymentInstructions.length > 0
       ? `\n\nΣτοιχεία πληρωμής:\n${paymentInstructions.map((line) => `${line.label}: ${line.value}`).join("\n")}`
       : ""
-  }\n\nΔιεύθυνση αποστολής:\n${addressLines(shippingAddress)}\n\nΠαράδοση: ${shippingRate.label} (${shippingRate.estimatedDelivery})`;
+  }\n\nΔιεύθυνση αποστολής:\n${addressLines(shippingAddress)}\n\nΠαράδοση: ${shippingRate.label} (${shippingRate.estimatedDelivery})${orderUrl ? `\n\nΗ παραγγελία σας: ${orderUrl}` : ""}`;
   return { subject, html, text };
 }
 
@@ -302,9 +312,17 @@ export function shippingUpdateEmail(input: {
   trackingNumber?: string;
   carrier?: string;
   trackingUrl?: string;
+  /** Absolute link to the order, with its access token, so a guest can open it from the mail. */
+  orderUrl?: string;
+  /** For "refunded": what went back, and where. */
+  refundedAmount?: { amount: number; currencyCode: string };
+  paymentMethodName?: string;
 }): RenderedEmail {
-  const { siteName, orderId, status, lineItems, trackingNumber, carrier, trackingUrl } = input;
+  const { siteName, orderId, status, lineItems, trackingNumber, carrier, trackingUrl, orderUrl, refundedAmount, paymentMethodName } = input;
   const orderNumber = `#${orderId.slice(-8).toUpperCase()}`;
+  const refundLine = refundedAmount
+    ? `Επιστρέψαμε ${formatMoney(refundedAmount)}${paymentMethodName ? ` στον τρόπο πληρωμής σας (${escapeHtml(paymentMethodName)})` : " στον αρχικό τρόπο πληρωμής σας"}. Ανάλογα με την τράπεζά σας, μπορεί να χρειαστούν 3–10 εργάσιμες ημέρες για να εμφανιστεί.`
+    : "Η επιστροφή χρημάτων για αυτή την παραγγελία έχει πραγματοποιηθεί. Ανάλογα με την τράπεζά σας, μπορεί να χρειαστούν 3–10 εργάσιμες ημέρες για να εμφανιστεί.";
   const copy: Record<typeof status, { subject: string; eyebrow: string; headline: string; body: string }> = {
     processing: {
       subject: `Η παραγγελία ${orderNumber} ετοιμάζεται`,
@@ -316,25 +334,27 @@ export function shippingUpdateEmail(input: {
       subject: `Η παραγγελία ${orderNumber} απεστάλη`,
       eyebrow: "Ενημέρωση παραγγελίας",
       headline: "Η παραγγελία σας είναι καθ' οδόν",
-      body: "Το δέμα σας αναχώρησε από την αποθήκη μας. Μπορείτε να παρακολουθείτε την πορεία του ανά πάσα στιγμή από τον λογαριασμό σας.",
+      body: trackingNumber
+        ? "Το δέμα σας παραδόθηκε στην εταιρεία ταχυμεταφορών. Με τον αριθμό αποστολής παρακάτω μπορείτε να παρακολουθείτε την πορεία του."
+        : "Το δέμα σας παραδόθηκε στην εταιρεία ταχυμεταφορών. Θα σας στείλουμε τον αριθμό αποστολής μόλις τον έχουμε.",
     },
     delivered: {
       subject: `Η παραγγελία ${orderNumber} παραδόθηκε`,
       eyebrow: "Ενημέρωση παραγγελίας",
       headline: "Η παραγγελία σας παραδόθηκε",
-      body: "Ελπίζουμε να σας ενθουσιάσει. Αν κάτι δεν είναι όπως το περιμένατε, μπορείτε να ξεκινήσετε επιστροφή από τον λογαριασμό σας.",
+      body: "Ελπίζουμε να σας ενθουσιάσει. Αν κάτι δεν είναι όπως το περιμένατε, έχετε 14 ημέρες για δωρεάν επιστροφή — απαντήστε σε αυτό το email ή επικοινωνήστε μαζί μας.",
     },
     cancelled: {
       subject: `Η παραγγελία ${orderNumber} ακυρώθηκε`,
       eyebrow: "Ενημέρωση παραγγελίας",
       headline: "Η παραγγελία σας ακυρώθηκε",
-      body: "Η παραγγελία ακυρώθηκε — δεν πρόκειται να χρεωθεί ούτε να αποσταλεί.",
+      body: "Η παραγγελία ακυρώθηκε και δεν πρόκειται να αποσταλεί. Αν είχε ήδη πληρωθεί, το ποσό επιστρέφεται στον τρόπο πληρωμής σας. Αν δεν ζητήσατε εσείς την ακύρωση, απαντήστε σε αυτό το email.",
     },
     refunded: {
       subject: `Επιστροφή χρημάτων για την παραγγελία ${orderNumber}`,
       eyebrow: "Ενημέρωση παραγγελίας",
       headline: "Η επιστροφή χρημάτων ολοκληρώθηκε",
-      body: "Η επιστροφή χρημάτων για αυτή την παραγγελία έχει πραγματοποιηθεί.",
+      body: refundLine,
     },
   };
   const { subject, eyebrow: eyebrowText, headline, body } = copy[status];
@@ -343,8 +363,8 @@ export function shippingUpdateEmail(input: {
       ? `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 28px;background-color:#FAFAFA;border:1px solid ${HAIRLINE};">
       <tr><td style="padding:20px 24px;">
-        ${sectionLabel(carrier ?? "Παρακολούθηση")}
-        <p style="font-size:14px;color:${INK};margin:0 0 10px;">${trackingNumber}</p>
+        ${sectionLabel(carrier ? `${escapeHtml(carrier)} · Αριθμός αποστολής` : "Αριθμός αποστολής")}
+        <p style="font-size:16px;letter-spacing:1px;color:${INK};margin:0 0 12px;">${escapeHtml(trackingNumber)}</p>
         ${trackingUrl ? textLink("Παρακολούθηση δέματος", trackingUrl) : ""}
       </td></tr>
     </table>`
@@ -358,10 +378,16 @@ export function shippingUpdateEmail(input: {
     <p style="color:${MUTED};font-size:12px;letter-spacing:0.5px;margin:-8px 0 20px;">Παραγγελία ${orderNumber}</p>
     ${bodyText(body)}
     ${trackingHtml}
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${lineItemsHtml(lineItems)}</table>`
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${lineItemsHtml(lineItems)}</table>
+    ${orderUrl ? `<div style="margin-top:36px;">${textLink("Δείτε την παραγγελία σας", orderUrl)}</div>` : ""}`
   );
-  const trackingText = status === "shipped" && trackingNumber ? `\n\n${carrier ?? "Παρακολούθηση"}: ${trackingNumber}${trackingUrl ? ` — ${trackingUrl}` : ""}` : "";
-  const text = `${headline}\n\nΠαραγγελία ${orderNumber}\n\n${body}${trackingText}\n\n${lineItems.map((i) => `${i.name} (${i.color}, ${i.size}) x${i.quantity}`).join("\n")}`;
+  const trackingText =
+    status === "shipped" && trackingNumber
+      ? `\n\n${carrier ? `${carrier} · ` : ""}Αριθμός αποστολής: ${trackingNumber}${trackingUrl ? `\nΠαρακολούθηση: ${trackingUrl}` : ""}`
+      : "";
+  const text = `${headline}\n\nΠαραγγελία ${orderNumber}\n\n${body.replace(/<[^>]+>/g, "")}${trackingText}\n\n${lineItems
+    .map((i) => `${i.name} (${i.color}, ${i.size}) x${i.quantity}`)
+    .join("\n")}${orderUrl ? `\n\nΗ παραγγελία σας: ${orderUrl}` : ""}`;
   return { subject, html, text };
 }
 
@@ -459,14 +485,16 @@ export function contactMessageNotificationEmail(input: {
 }): RenderedEmail {
   const { siteName, name, email, subject, message } = input;
   const emailSubject = `Νέο μήνυμα επικοινωνίας: ${subject}`;
+  // Every field here was typed by a stranger on the public contact page. Unescaped, a
+  // visitor could put markup — a fake "click to verify" link, say — into the shop's inbox.
   const html = layout(
     siteName,
-    `Νέο μήνυμα από ${name}`,
+    `Νέο μήνυμα από ${escapeHtml(name)}`,
     `
     <h1 style="font-size:22px;color:${INK};margin:0 0 8px;">Νέο μήνυμα επικοινωνίας</h1>
-    <p style="color:#555555;font-size:13px;margin:0 0 4px;"><strong>Από:</strong> ${name} (${email})</p>
-    <p style="color:#555555;font-size:13px;margin:0 0 20px;"><strong>Θέμα:</strong> ${subject}</p>
-    <p style="color:${INK};font-size:14px;white-space:pre-line;margin:0;">${message}</p>`
+    <p style="color:#555555;font-size:13px;margin:0 0 4px;"><strong>Από:</strong> ${escapeHtml(name)} (<a href="mailto:${escapeHtml(email)}" style="color:${INK};">${escapeHtml(email)}</a>)</p>
+    <p style="color:#555555;font-size:13px;margin:0 0 20px;"><strong>Θέμα:</strong> ${escapeHtml(subject)}</p>
+    <p style="color:${INK};font-size:14px;white-space:pre-line;margin:0;">${escapeHtml(message)}</p>`
   );
   const text = `Νέο μήνυμα επικοινωνίας\n\nΑπό: ${name} (${email})\nΘέμα: ${subject}\n\n${message}`;
   return { subject: emailSubject, html, text };
@@ -480,13 +508,14 @@ export function abandonedCartEmail(input: {
 }): RenderedEmail {
   const { siteName, firstName, lineItems, resumeUrl } = input;
   const greeting = firstName ? `Το σκέφτεστε ακόμη, ${firstName};` : "Το σκέφτεστε ακόμη;";
+  const greetingHtml = firstName ? `Το σκέφτεστε ακόμη, ${escapeHtml(firstName)};` : "Το σκέφτεστε ακόμη;";
   const subject = "Αφήσατε κάτι στο καλάθι σας";
   const html = layout(
     siteName,
     "Το καλάθι σας είναι αποθηκευμένο — συνεχίστε από εκεί που μείνατε.",
     `
     ${eyebrow("Το καλάθι σας")}
-    ${heading(greeting)}
+    ${heading(greetingHtml)}
     ${bodyText("Το καλάθι σας είναι ακόμη αποθηκευμένο. Οι τιμές και η διαθεσιμότητα ενδέχεται να αλλάξουν, οπότε αξίζει να επιστρέψετε σύντομα.")}
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${lineItemsHtml(lineItems)}</table>
     <div style="margin-top:32px;">${ctaButton("Επιστροφή στο καλάθι", resumeUrl)}</div>`,
@@ -605,5 +634,235 @@ export function returnStatusUpdateEmail(input: {
     ${bodyText(body)}`
   );
   const text = `${headline}\n\nΠαραγγελία ${orderNumber}\n\n${body}`;
+  return { subject, html, text };
+}
+
+// ---------------------------------------------------------------------------
+// Payment lifecycle
+// ---------------------------------------------------------------------------
+
+/**
+ * A manual payment landed — the bank transfer arrived, or the admin confirmed it. This is
+ * the "you can stop wondering" email a transfer needs: the confirmation said "we'll ship
+ * once it lands", and nothing said when it did.
+ */
+export function paymentReceivedEmail(input: {
+  siteName: string;
+  orderId: string;
+  amount: { amount: number; currencyCode: string };
+  paymentMethodName: string;
+  orderUrl?: string;
+}): RenderedEmail {
+  const { siteName, orderId, amount, paymentMethodName, orderUrl } = input;
+  const orderNumber = `#${orderId.slice(-8).toUpperCase()}`;
+  const subject = `Λάβαμε την πληρωμή σας — παραγγελία ${orderNumber}`;
+  const body = `Λάβαμε ${formatMoney(amount)} μέσω ${escapeHtml(paymentMethodName)} για την παραγγελία ${orderNumber}. Την ετοιμάζουμε τώρα και θα σας ενημερώσουμε ξανά μόλις αποσταλεί.`;
+  const html = layout(
+    siteName,
+    `Λάβαμε την πληρωμή σας για την παραγγελία ${orderNumber}.`,
+    `
+    ${eyebrow("Επιβεβαίωση πληρωμής")}
+    ${heading("Λάβαμε την πληρωμή σας")}
+    <p style="color:${MUTED};font-size:12px;letter-spacing:0.5px;margin:-8px 0 20px;">Παραγγελία ${orderNumber}</p>
+    ${bodyText(body)}
+    ${orderUrl ? textLink("Δείτε την παραγγελία σας", orderUrl) : ""}`
+  );
+  const text = `Λάβαμε την πληρωμή σας\n\nΠαραγγελία ${orderNumber}\n\nΛάβαμε ${formatMoney(amount)} μέσω ${paymentMethodName}. Την ετοιμάζουμε τώρα και θα σας ενημερώσουμε ξανά μόλις αποσταλεί.${orderUrl ? `\n\nΗ παραγγελία σας: ${orderUrl}` : ""}`;
+  return { subject, html, text };
+}
+
+/**
+ * A card (or other redirect) payment did not go through. The order exists and is waiting;
+ * the link lets the customer try again with a different card, or contact the shop.
+ */
+export function paymentFailedEmail(input: {
+  siteName: string;
+  orderId: string;
+  amount: { amount: number; currencyCode: string };
+  paymentMethodName: string;
+  outcome: "failed" | "cancelled" | "expired";
+  retryUrl: string;
+}): RenderedEmail {
+  const { siteName, orderId, amount, paymentMethodName, outcome, retryUrl } = input;
+  const orderNumber = `#${orderId.slice(-8).toUpperCase()}`;
+  const subject = `Η πληρωμή για την παραγγελία ${orderNumber} δεν ολοκληρώθηκε`;
+  const why =
+    outcome === "cancelled"
+      ? "Η πληρωμή ακυρώθηκε πριν ολοκληρωθεί."
+      : outcome === "expired"
+        ? "Η πληρωμή δεν ολοκληρώθηκε εγκαίρως."
+        : "Η τράπεζά σας δεν ενέκρινε τη συναλλαγή.";
+  const body = `${why} Η παραγγελία ${orderNumber} (${formatMoney(amount)}, ${escapeHtml(paymentMethodName)}) έχει αποθηκευτεί και δεν έχει χρεωθεί. Μπορείτε να δοκιμάσετε ξανά από τον παρακάτω σύνδεσμο — ή να απαντήσετε σε αυτό το email και θα σας βοηθήσουμε να την ολοκληρώσετε.`;
+  const html = layout(
+    siteName,
+    `Η πληρωμή για την παραγγελία ${orderNumber} δεν ολοκληρώθηκε — δεν έχετε χρεωθεί.`,
+    `
+    ${eyebrow("Πληρωμή")}
+    ${heading("Η πληρωμή δεν ολοκληρώθηκε")}
+    <p style="color:${MUTED};font-size:12px;letter-spacing:0.5px;margin:-8px 0 20px;">Παραγγελία ${orderNumber}</p>
+    ${bodyText(body)}
+    ${ctaButton("Δοκιμάστε ξανά", retryUrl)}`
+  );
+  const text = `Η πληρωμή δεν ολοκληρώθηκε\n\nΠαραγγελία ${orderNumber}\n\n${why} Η παραγγελία (${formatMoney(amount)}, ${paymentMethodName}) έχει αποθηκευτεί και δεν έχει χρεωθεί.\n\nΔοκιμάστε ξανά: ${retryUrl}`;
+  return { subject, html, text };
+}
+
+/** Money went back — a full or partial refund, with the amount. For a full refund the order-level "refunded" status mail is sent instead of this. */
+export function refundIssuedEmail(input: {
+  siteName: string;
+  orderId: string;
+  amount: { amount: number; currencyCode: string };
+  paymentMethodName: string;
+  partial: boolean;
+  orderUrl?: string;
+}): RenderedEmail {
+  const { siteName, orderId, amount, paymentMethodName, partial, orderUrl } = input;
+  const orderNumber = `#${orderId.slice(-8).toUpperCase()}`;
+  const subject = `${partial ? "Μερική επιστροφή χρημάτων" : "Επιστροφή χρημάτων"} — παραγγελία ${orderNumber}`;
+  const body = `Επιστρέψαμε ${formatMoney(amount)} στον τρόπο πληρωμής σας (${escapeHtml(paymentMethodName)}) για την παραγγελία ${orderNumber}. Ανάλογα με την τράπεζά σας, μπορεί να χρειαστούν 3–10 εργάσιμες ημέρες για να εμφανιστεί.`;
+  const html = layout(
+    siteName,
+    `Επιστρέψαμε ${formatMoney(amount)} για την παραγγελία ${orderNumber}.`,
+    `
+    ${eyebrow("Επιστροφή χρημάτων")}
+    ${heading(partial ? "Μερική επιστροφή χρημάτων" : "Η επιστροφή χρημάτων ολοκληρώθηκε")}
+    <p style="color:${MUTED};font-size:12px;letter-spacing:0.5px;margin:-8px 0 20px;">Παραγγελία ${orderNumber}</p>
+    ${bodyText(body)}
+    ${orderUrl ? textLink("Δείτε την παραγγελία σας", orderUrl) : ""}`
+  );
+  const text = `${partial ? "Μερική επιστροφή χρημάτων" : "Η επιστροφή χρημάτων ολοκληρώθηκε"}\n\nΠαραγγελία ${orderNumber}\n\nΕπιστρέψαμε ${formatMoney(amount)} στον τρόπο πληρωμής σας (${paymentMethodName}). Ανάλογα με την τράπεζά σας, μπορεί να χρειαστούν 3–10 εργάσιμες ημέρες για να εμφανιστεί.${orderUrl ? `\n\nΗ παραγγελία σας: ${orderUrl}` : ""}`;
+  return { subject, html, text };
+}
+
+// ---------------------------------------------------------------------------
+// Returns
+// ---------------------------------------------------------------------------
+
+/** The customer filed a return. Until now the first email they got was the approval — or nothing, if it took a while. */
+export function returnRequestedEmail(input: {
+  siteName: string;
+  orderId: string;
+  items: { name: string; size: string; quantity: number }[];
+  reason: string;
+}): RenderedEmail {
+  const { siteName, orderId, items, reason } = input;
+  const orderNumber = `#${orderId.slice(-8).toUpperCase()}`;
+  const subject = `Λάβαμε το αίτημα επιστροφής σας — παραγγελία ${orderNumber}`;
+  const itemsHtml = items
+    .map((item) => `<li style="margin:0 0 6px;">${escapeHtml(item.name)} · ${escapeHtml(item.size)} · ×${item.quantity}</li>`)
+    .join("");
+  const html = layout(
+    siteName,
+    `Λάβαμε το αίτημα επιστροφής σας για την παραγγελία ${orderNumber}.`,
+    `
+    ${eyebrow("Επιστροφή")}
+    ${heading("Λάβαμε το αίτημά σας")}
+    <p style="color:${MUTED};font-size:12px;letter-spacing:0.5px;margin:-8px 0 20px;">Παραγγελία ${orderNumber}</p>
+    ${bodyText("Θα το εξετάσουμε εντός 1–2 εργάσιμων ημερών και θα σας στείλουμε οδηγίες για την αποστολή. Μην στείλετε τίποτα πριν λάβετε την έγκριση.")}
+    ${sectionLabel("Προϊόντα προς επιστροφή")}
+    <ul style="margin:0 0 24px;padding:0 0 0 18px;color:${INK};font-size:14px;line-height:1.6;">${itemsHtml}</ul>
+    ${sectionLabel("Αιτία")}
+    <p style="color:${INK};font-size:14px;margin:0;white-space:pre-line;">${escapeHtml(reason)}</p>`
+  );
+  const text = `Λάβαμε το αίτημά σας\n\nΠαραγγελία ${orderNumber}\n\nΘα το εξετάσουμε εντός 1–2 εργάσιμων ημερών και θα σας στείλουμε οδηγίες για την αποστολή. Μην στείλετε τίποτα πριν λάβετε την έγκριση.\n\nΠροϊόντα:\n${items
+    .map((item) => `${item.name} (${item.size}) x${item.quantity}`)
+    .join("\n")}\n\nΑιτία: ${reason}`;
+  return { subject, html, text };
+}
+
+// ---------------------------------------------------------------------------
+// Forms
+// ---------------------------------------------------------------------------
+
+/** To the visitor, after the contact form — "we got it" with what they wrote, so the thread starts in their inbox too. */
+export function contactAcknowledgementEmail(input: { siteName: string; name: string; subject: string; message: string }): RenderedEmail {
+  const { siteName, name, subject, message } = input;
+  const emailSubject = `Λάβαμε το μήνυμά σας — ${siteName}`;
+  const html = layout(
+    siteName,
+    "Λάβαμε το μήνυμά σας και θα απαντήσουμε σύντομα.",
+    `
+    ${eyebrow("Επικοινωνία")}
+    ${heading(`Ευχαριστούμε, ${escapeHtml(name)}`)}
+    ${bodyText("Λάβαμε το μήνυμά σας και συνήθως απαντάμε εντός 1 εργάσιμης ημέρας. Αν θέλετε να προσθέσετε κάτι, απαντήστε σε αυτό το email.")}
+    ${sectionLabel(`Θέμα: ${escapeHtml(subject)}`)}
+    <p style="color:${BODY};font-size:14px;line-height:1.8;margin:0;white-space:pre-line;border-left:2px solid ${HAIRLINE};padding-left:16px;">${escapeHtml(message)}</p>`
+  );
+  const text = `Ευχαριστούμε, ${name}\n\nΛάβαμε το μήνυμά σας και συνήθως απαντάμε εντός 1 εργάσιμης ημέρας.\n\nΘέμα: ${subject}\n\n${message}`;
+  return { subject: emailSubject, html, text };
+}
+
+/** To the visitor, after "Ask a stylist". Same shape as the contact acknowledgement; the promise is a personal reply. */
+export function conciergeAcknowledgementEmail(input: { siteName: string; name: string; topic: string; message: string }): RenderedEmail {
+  const { siteName, name, topic, message } = input;
+  const subject = `Λάβαμε το αίτημά σας — ${siteName}`;
+  const html = layout(
+    siteName,
+    "Ένας άνθρωπος από την ομάδα μας θα σας απαντήσει προσωπικά.",
+    `
+    ${eyebrow("Ρωτήστε έναν στυλίστα")}
+    ${heading(`Ευχαριστούμε, ${escapeHtml(name)}`)}
+    ${bodyText("Λάβαμε το αίτημά σας. Ένας άνθρωπος από την ομάδα μας θα σας απαντήσει προσωπικά εντός 1 εργάσιμης ημέρας — αν θέλετε να προσθέσετε λεπτομέρειες στο μεταξύ, απαντήστε σε αυτό το email.")}
+    ${sectionLabel(`Θέμα: ${escapeHtml(topic)}`)}
+    <p style="color:${BODY};font-size:14px;line-height:1.8;margin:0;white-space:pre-line;border-left:2px solid ${HAIRLINE};padding-left:16px;">${escapeHtml(message)}</p>`
+  );
+  const text = `Ευχαριστούμε, ${name}\n\nΛάβαμε το αίτημά σας. Ένας άνθρωπος από την ομάδα μας θα σας απαντήσει προσωπικά εντός 1 εργάσιμης ημέρας.\n\nΘέμα: ${topic}\n\n${message}`;
+  return { subject, html, text };
+}
+
+/** To the visitor who signed up for the newsletter. The unsubscribe link is added by the pipeline. */
+export function newsletterWelcomeEmail(input: { siteName: string; shopUrl: string }): RenderedEmail {
+  const { siteName, shopUrl } = input;
+  const subject = `Εγγραφήκατε στα νέα του ${siteName}`;
+  const html = layout(
+    siteName,
+    "Είστε στη λίστα — νέες αφίξεις και προσφορές, πρώτοι.",
+    `
+    ${eyebrow("Newsletter")}
+    ${heading("Είστε στη λίστα")}
+    ${bodyText("Θα μαθαίνετε πρώτοι για νέες αφίξεις, προσφορές και ό,τι ετοιμάζουμε. Όχι συχνά, και μόνο όταν αξίζει.")}
+    ${ctaButton("Δείτε τις νέες αφίξεις", `${shopUrl}/new-in`)}`
+  );
+  const text = `Είστε στη λίστα\n\nΘα μαθαίνετε πρώτοι για νέες αφίξεις, προσφορές και ό,τι ετοιμάζουμε.\n\n${shopUrl}/new-in`;
+  return { subject, html, text };
+}
+
+// ---------------------------------------------------------------------------
+// Internal
+// ---------------------------------------------------------------------------
+
+/**
+ * To the shop, not a customer: a new order, a return request, a stylist request. Plain
+ * and dense on purpose — this is read on a phone between customers — with a link straight
+ * into the admin. `rows` are label/value pairs; anything a customer typed is escaped.
+ */
+export function adminNotificationEmail(input: {
+  siteName: string;
+  title: string;
+  summary: string;
+  rows: { label: string; value: string }[];
+  adminUrl: string;
+  adminLabel?: string;
+}): RenderedEmail {
+  const { siteName, title, summary, rows, adminUrl, adminLabel = "Άνοιγμα στο admin" } = input;
+  const subject = `[${siteName}] ${title}`;
+  const rowsHtml = rows
+    .map(
+      (row) => `<tr>
+        <td style="padding:6px 12px 6px 0;color:${MUTED};font-size:12px;vertical-align:top;white-space:nowrap;">${escapeHtml(row.label)}</td>
+        <td style="padding:6px 0;color:${INK};font-size:13px;vertical-align:top;white-space:pre-line;">${escapeHtml(row.value)}</td>
+      </tr>`
+    )
+    .join("");
+  const html = layout(
+    siteName,
+    summary,
+    `
+    <h1 style="font-size:22px;color:${INK};margin:0 0 8px;">${escapeHtml(title)}</h1>
+    <p style="color:${BODY};font-size:14px;margin:0 0 20px;">${escapeHtml(summary)}</p>
+    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">${rowsHtml}</table>
+    ${ctaButton(adminLabel, adminUrl)}`
+  );
+  const text = `${title}\n\n${summary}\n\n${rows.map((row) => `${row.label}: ${row.value}`).join("\n")}\n\n${adminUrl}`;
   return { subject, html, text };
 }

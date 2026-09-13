@@ -11,10 +11,9 @@ import { getShippingSettings } from "@/services/shipping";
 import { GIFT_MESSAGE_MAX_LENGTH } from "@/lib/gift-wrap";
 import { CUSTOMER_NOTE_MAX_LENGTH } from "@/lib/customer-note";
 import { CommerceError, type Address, type Checkout, type CompleteCheckoutResult, type Order } from "@/lib/commerce/types";
-import { getEmailProvider, orderConfirmationEmail } from "@/lib/email";
-import { getSiteSettings } from "@/services/settings";
+import { notifyAdminOfNewOrder, sendOrderConfirmationEmail } from "@/services/order-notifications";
 import { rewardReferralIfPending } from "@/services/referrals";
-import { initiatePayment, resolveSelectedMethod } from "@/services/payments";
+import { getPrimaryPaymentForOrder, initiatePayment, resolveSelectedMethod } from "@/services/payments";
 import { getSiteUrl } from "@/lib/site-url";
 import { getDefaultShippingRate } from "@/services/shipping";
 
@@ -533,7 +532,9 @@ export async function completeCheckout(checkoutId: string): Promise<CompleteChec
   const shouldEmailNow =
     !paymentOutcome.customerAction || paymentOutcome.customerAction.type !== "redirect";
   if (shouldEmailNow) {
-    await sendOrderConfirmationEmail(order, paymentOutcome.customerAction?.instructions ?? null);
+    const payment = paymentOutcome.payment ? await getPrimaryPaymentForOrder(order.id) : null;
+    await sendOrderConfirmationEmail(order, paymentOutcome.customerAction?.instructions ?? null, payment);
+    await notifyAdminOfNewOrder(order, payment);
   }
 
   // Best-effort, same reasoning as the confirmation email — a signed-in
@@ -600,48 +601,5 @@ async function resumePaymentForOrder(order: Order, paymentMethodId: string | nul
   return { order, ...outcome };
 }
 
-/**
- * Sends the order-confirmation email at most once per order, whichever code path
- * gets there first (checkout, the return-path verification, or a webhook). The
- * timestamp is set BEFORE sending and only from a null state, so two concurrent
- * senders can't both pass the check.
- */
-export async function sendOrderConfirmationEmail(
-  order: Order,
-  paymentInstructions: { label: string; value: string }[] | null
-): Promise<void> {
-  const claimed = await prisma.order.updateMany({
-    where: { id: order.id, confirmationEmailSentAt: null },
-    data: { confirmationEmailSentAt: new Date() },
-  });
-  if (claimed.count === 0) return;
 
-  // Best-effort and awaited, not fire-and-forget: an un-awaited promise here could
-  // be killed mid-flight the moment this function returns and the route handler's
-  // response is sent (real risk on serverless runtimes). Wrapped in try/catch so a
-  // failed send never fails an order that has already been committed.
-  try {
-    const settings = await getSiteSettings();
-    const message = orderConfirmationEmail({
-      siteName: settings.siteName,
-      orderId: order.id,
-      lineItems: order.lineItems,
-      totals: order.totals,
-      shippingAddress: order.shippingAddress,
-      shippingRate: order.shippingRate,
-      giftWrap: order.giftWrap,
-      giftMessage: order.giftMessage,
-      paymentInstructions,
-    });
-    await getEmailProvider().send({ to: order.customerEmail, template: "order-confirmation", ...message });
-  } catch (emailError) {
-    // Release the claim so a later attempt (a webhook, an admin resend) can retry
-    // rather than the order being permanently marked as notified.
-    await prisma.order.update({ where: { id: order.id }, data: { confirmationEmailSentAt: null } }).catch(() => {});
-    // Deliberately NOT the customer's email address. The order id identifies the order
-    // completely, and this record now leaves the process for a third-party error tracker —
-    // shipping customer PII there would undo PRIV-001 on a different axis. instrumentation.ts
-    // scrubs email-shaped strings as a backstop; not sending them is the actual fix.
-    logger.error("Order confirmation email failed — claim released for retry", emailError, { orderId: order.id });
-  }
-}
+export { sendOrderConfirmationEmail } from "@/services/order-notifications";

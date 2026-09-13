@@ -5,6 +5,7 @@ import { AlertCircle, CheckCircle2, Clock, Landmark } from "lucide-react";
 import { formatMoney, orderReference } from "@/lib/format";
 import { getOrderById } from "@/services/orders";
 import { canAccessOrder } from "@/lib/order-access-cookie";
+import { readOrderLinkToken } from "@/lib/order-access";
 import { getPrimaryPaymentForOrder, verifyPaymentWithProvider } from "@/services/payments";
 import { sendOrderConfirmationEmail } from "@/services/checkout";
 import { paymentProviderRegistry } from "@/lib/payments/registry";
@@ -51,11 +52,11 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 interface ConfirmationPageProps {
-  searchParams: Promise<{ order?: string; verify?: string; cancelled?: string }>;
+  searchParams: Promise<{ order?: string; verify?: string; cancelled?: string; t?: string }>;
 }
 
 export default async function CheckoutConfirmationPage({ searchParams }: ConfirmationPageProps) {
-  const { order: orderId, verify, cancelled } = await searchParams;
+  const { order: orderId, verify, cancelled, t: linkToken } = await searchParams;
   const t = await getTranslations("Confirmation");
   const tCart = await getTranslations("Cart");
   const tStatus = await getTranslations("PaymentStatus");
@@ -77,7 +78,12 @@ export default async function CheckoutConfirmationPage({ searchParams }: Confirm
 
   // Authorization BEFORE the read, so an unauthorized request cannot be distinguished from a
   // nonexistent order by timing or by any difference in what comes back.
-  if (!(await canAccessOrder(orderId))) return <OrderNotViewable />;
+  // A signed link from one of the order's emails is as good as the grant cookie the placing
+  // browser got — so "view your order" works from a phone that never saw checkout. Read-only
+  // for this render (a page cannot set cookies); the email links always carry the token.
+  if (!(await canAccessOrder(orderId)) && !(await readOrderLinkToken(linkToken, orderId))) {
+    return <OrderNotViewable />;
+  }
 
   const order = await getOrderById(orderId);
   if (!order) notFound();

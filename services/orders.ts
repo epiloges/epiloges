@@ -8,6 +8,9 @@ import { getEmailProvider, shippingUpdateEmail } from "@/lib/email";
 import { getSiteSettings } from "@/services/settings";
 import { creditStockForLines, quantitiesCreditedByReturns, subtractCreditedQuantities } from "@/services/restock";
 import { CommerceError, type Order } from "@/lib/commerce/types";
+import { orderLink } from "@/services/order-notifications";
+import { getPrimaryPaymentForOrder } from "@/services/payments";
+import { paymentProviderRegistry } from "@/lib/payments/registry";
 import { canTransitionOrder } from "@/lib/order-transitions";
 
 export async function getOrderById(id: string): Promise<Order | null> {
@@ -249,6 +252,8 @@ export async function updateOrderStatus(id: string, status: Order["status"]): Pr
   if (status !== "confirmed") {
     try {
       const settings = await getSiteSettings();
+      // For "refunded", say how much and where it went — the payment record knows.
+      const payment = status === "refunded" ? await getPrimaryPaymentForOrder(order.id) : null;
       const message = shippingUpdateEmail({
         siteName: settings.siteName,
         orderId: order.id,
@@ -257,8 +262,16 @@ export async function updateOrderStatus(id: string, status: Order["status"]): Pr
         trackingNumber: order.trackingNumber,
         carrier: order.carrier,
         trackingUrl: order.trackingUrl,
+        orderUrl: await orderLink(order.id),
+        refundedAmount: payment && payment.refundedAmount.amount > 0 ? payment.refundedAmount : undefined,
+        paymentMethodName: payment ? paymentProviderRegistry.getMethod(payment.methodId)?.defaultDisplayName : undefined,
       });
-      await getEmailProvider().send({ to: order.customerEmail, template: "shipping-update", ...message });
+      await getEmailProvider().send({
+        to: order.customerEmail,
+        template: "shipping-update",
+        idempotencyKey: `order-status:${order.id}:${status}:${Date.now()}`,
+        ...message,
+      });
     } catch (emailError) {
       logger.error("Order status email failed", emailError, { orderId: order.id, status });
     }

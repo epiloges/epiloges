@@ -1,10 +1,11 @@
 import "server-only";
 
 /**
- * Absolute site URL for building links inside emails sent from contexts that have no
- * `request` object to derive one from (writeProductRow's back-in-stock notifications,
- * the daily cron job's follow-up emails) — every other email template in this app
- * builds its URL from `request.url` at the Route Handler that already has one.
+ * Absolute site URL for every link inside an email. Deliberately NOT derived from
+ * `request.url`: a sign-up through a preview deployment or the bare *.vercel.app alias
+ * would otherwise mail out links to that host, and a webhook or cron job has no request
+ * at all. NEXT_PUBLIC_SITE_URL is the production domain; the Vercel fallbacks cover an
+ * environment where it was never set.
  */
 export function getSiteUrl(): string {
   if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL;
