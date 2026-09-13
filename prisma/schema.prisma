@@ -330,6 +330,10 @@ model Customer {
   /// the victim changed the password to lock them out. Compared against the token own
   /// `iat` claim in the session DAL. Null means "never invalidated".
   sessionsValidFrom DateTime?
+  /// When the customer proved they own the address (clicked the link in the welcome email,
+  /// or signed in through an OAuth provider that verified it). Null = not yet. Existing
+  /// accounts were backfilled at migration time. See lib/email-verification.ts.
+  emailVerifiedAt   DateTime?
 
   firstName        String
   lastName         String

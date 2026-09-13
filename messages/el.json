@@ -254,7 +254,20 @@
     "linkCopied": "Ο σύνδεσμος αντιγράφηκε",
     "yourReferrals": "Οι συστάσεις σας",
     "yourRequests": "Τα αιτήματά σας",
-    "eligibleOrders": "Επιλέξιμες παραγγελίες"
+    "eligibleOrders": "Επιλέξιμες παραγγελίες",
+    "verifyEmailTitle": "Επιβεβαίωση email",
+    "verifyEmailDone": "Το email σας επιβεβαιώθηκε",
+    "verifyEmailDoneBody": "Ευχαριστούμε. Οι ενημερώσεις για τις παραγγελίες σας θα φτάνουν σε αυτή τη διεύθυνση.",
+    "verifyEmailInvalid": "Ο σύνδεσμος δεν ισχύει",
+    "verifyEmailInvalidBody": "Ο σύνδεσμος έχει λήξει ή έχει ήδη χρησιμοποιηθεί. Συνδεθείτε στον λογαριασμό σας και ζητήστε νέο.",
+    "verifyEmailToAccount": "Στον λογαριασμό μου",
+    "verifyEmailToLogin": "Σύνδεση",
+    "verifyEmailNoticeTitle": "Επιβεβαιώστε το email σας",
+    "verifyEmailNoticeBody": "Στείλαμε έναν σύνδεσμο στο {email}. Αν η διεύθυνση είναι λάθος, δεν θα λαμβάνετε ενημερώσεις για τις παραγγελίες σας.",
+    "verifyEmailResend": "Αποστολή ξανά",
+    "verifyEmailResent": "Στάλθηκε",
+    "verifyEmailSent": "Στείλαμε νέο σύνδεσμο στο {email}",
+    "verifyEmailSendFailed": "Δεν ήταν δυνατή η αποστολή. Δοκιμάστε ξανά σε λίγο."
   },
   "ProductBadge": {
     "preorder": "Προπαραγγελία",

@@ -419,19 +419,46 @@ export function referralRewardEmail(input: {
   return { subject, html, text };
 }
 
-export function welcomeEmail(input: { siteName: string; firstName: string; shopUrl: string }): RenderedEmail {
-  const { siteName, firstName, shopUrl } = input;
-  const subject = `Καλώς ήρθατε στο ${siteName}`;
+/**
+ * With `verifyUrl` (a password sign-up) the button confirms the address and the shop is a
+ * secondary link; without it (an OAuth sign-up, already verified) the button is the shop.
+ */
+export function welcomeEmail(input: { siteName: string; firstName: string; shopUrl: string; verifyUrl?: string; verifyExpiresInHours?: number }): RenderedEmail {
+  const { siteName, firstName, shopUrl, verifyUrl, verifyExpiresInHours = 48 } = input;
+  const subject = verifyUrl ? `Καλώς ήρθατε στο ${siteName} — επιβεβαιώστε το email σας` : `Καλώς ήρθατε στο ${siteName}`;
+  const intro = "Ο λογαριασμός σας είναι έτοιμος. Παρακολουθήστε τις παραγγελίες σας, αποθηκεύστε διευθύνσεις και δημιουργήστε τη λίστα επιθυμιών σας όποτε θέλετε.";
+  const verifyLine = `Επιβεβαιώστε τη διεύθυνση email σας, ώστε να είμαστε σίγουροι ότι οι ενημερώσεις για τις παραγγελίες σας φτάνουν σε εσάς. Ο σύνδεσμος ισχύει για ${verifyExpiresInHours} ώρες.`;
   const html = layout(
     siteName,
     `Καλώς ήρθατε στο ${siteName}, ${escapeHtml(firstName)}.`,
     `
     ${eyebrow("Καλώς ήρθατε")}
     ${heading(`Καλώς ήρθατε, ${escapeHtml(firstName)}`)}
-    ${bodyText("Ο λογαριασμός σας είναι έτοιμος. Παρακολουθήστε τις παραγγελίες σας, αποθηκεύστε διευθύνσεις και δημιουργήστε τη λίστα επιθυμιών σας όποτε θέλετε.")}
-    ${ctaButton("Ανακαλύψτε τη συλλογή", shopUrl)}`
+    ${bodyText(intro)}
+    ${verifyUrl ? bodyText(verifyLine) + ctaButton("Επιβεβαίωση email", verifyUrl) + textLink("Ανακαλύψτε τη συλλογή", shopUrl) : ctaButton("Ανακαλύψτε τη συλλογή", shopUrl)}`
   );
-  const text = `Καλώς ήρθατε, ${firstName}\n\nΟ λογαριασμός σας είναι έτοιμος. Παρακολουθήστε τις παραγγελίες σας, αποθηκεύστε διευθύνσεις και δημιουργήστε τη λίστα επιθυμιών σας όποτε θέλετε.\n\n${shopUrl}`;
+  const text = verifyUrl
+    ? `Καλώς ήρθατε, ${firstName}\n\n${intro}\n\n${verifyLine}\n${verifyUrl}\n\nΑνακαλύψτε τη συλλογή: ${shopUrl}`
+    : `Καλώς ήρθατε, ${firstName}\n\n${intro}\n\n${shopUrl}`;
+  return { subject, html, text };
+}
+
+/** The "send it again" from the account page — the welcome email without the welcome. */
+export function emailVerificationEmail(input: { siteName: string; firstName: string; verifyUrl: string; expiresInHours: number }): RenderedEmail {
+  const { siteName, firstName, verifyUrl, expiresInHours } = input;
+  const subject = "Επιβεβαιώστε το email σας";
+  const line = `Πατήστε το κουμπί για να επιβεβαιώσετε ότι αυτή είναι η διεύθυνση email του λογαριασμού σας στο ${siteName}. Ο σύνδεσμος ισχύει για ${expiresInHours} ώρες.`;
+  const html = layout(
+    siteName,
+    "Επιβεβαιώστε τη διεύθυνση email σας.",
+    `
+    ${eyebrow("Λογαριασμός")}
+    ${heading(`Επιβεβαίωση email, ${escapeHtml(firstName)}`)}
+    ${bodyText(line)}
+    ${ctaButton("Επιβεβαίωση email", verifyUrl)}
+    <p style="color:${MUTED};font-size:12px;margin:24px 0 0;">Αν δεν δημιουργήσατε εσείς λογαριασμό στο ${escapeHtml(siteName)}, αγνοήστε αυτό το μήνυμα.</p>`
+  );
+  const text = `Επιβεβαίωση email, ${firstName}\n\n${line}\n\n${verifyUrl}\n\nΑν δεν δημιουργήσατε εσείς λογαριασμό στο ${siteName}, αγνοήστε αυτό το μήνυμα.`;
   return { subject, html, text };
 }
 

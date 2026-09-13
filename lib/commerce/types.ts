@@ -61,6 +61,8 @@ export interface Customer {
   addresses: CustomerAddress[];
   defaultAddressId?: string;
   acceptsMarketing: boolean;
+  /** False for a password sign-up that has not clicked the link in its welcome email yet. */
+  emailVerified: boolean;
   createdAt: string;
 }
 

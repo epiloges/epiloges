@@ -62,6 +62,10 @@ export async function findOrCreateCustomerForOAuth(input: {
     await prisma.customerOAuthAccount.create({
       data: { customerId: existingCustomer.id, provider: input.provider, providerUserId: input.providerUserId, email: input.email },
     });
+    // The provider just vouched for this address — as good as clicking the link.
+    if (!existingCustomer.emailVerifiedAt) {
+      await prisma.customer.update({ where: { id: existingCustomer.id }, data: { emailVerifiedAt: new Date() } });
+    }
     return { customer: (await getCustomerById(existingCustomer.id))!, created: false };
   }
 
@@ -69,6 +73,7 @@ export async function findOrCreateCustomerForOAuth(input: {
     data: {
       email: email ?? `${input.provider}-${input.providerUserId}@oauth.alexandris.invalid`,
       passwordHash: null,
+      emailVerifiedAt: email ? new Date() : null,
       firstName: input.firstName ?? "Customer",
       lastName: input.lastName ?? "",
       oauthAccounts: { create: { provider: input.provider, providerUserId: input.providerUserId, email: input.email } },
@@ -76,6 +81,20 @@ export async function findOrCreateCustomerForOAuth(input: {
     include: customerInclude,
   });
   return { customer: toCustomer(created), created: true };
+}
+
+/**
+ * Stamps the address as verified — only if the token's address is still the account's
+ * address, so a link mailed to an old address cannot verify a newer one. Idempotent:
+ * clicking twice is fine. Returns false only when the token does not match an account.
+ */
+export async function verifyCustomerEmail(customerId: string, email: string): Promise<boolean> {
+  const row = await prisma.customer.findUnique({ where: { id: customerId }, select: { email: true, emailVerifiedAt: true } });
+  if (!row || row.email !== email.toLowerCase()) return false;
+  if (!row.emailVerifiedAt) {
+    await prisma.customer.update({ where: { id: customerId }, data: { emailVerifiedAt: new Date() } });
+  }
+  return true;
 }
 
 export async function updateCustomerProfile(

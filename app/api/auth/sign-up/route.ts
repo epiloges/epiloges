@@ -13,6 +13,7 @@ import { commerceErrorResponse, invalidInputResponse, rateLimitedResponse } from
 import { getClientIp, isRateLimited, recordAttempt } from "@/lib/rate-limit";
 import { getEmailProvider, welcomeEmail, accountAlreadyExistsEmail } from "@/lib/email";
 import { getSiteUrl } from "@/lib/site-url";
+import { emailVerificationUrl, VERIFICATION_LINK_HOURS } from "@/lib/email-verification";
 import { getSiteSettings } from "@/services/settings";
 import { recordReferralSignup } from "@/services/referrals";
 
@@ -80,6 +81,8 @@ export async function POST(request: Request) {
         siteName: settings.siteName,
         firstName: customer.firstName,
         shopUrl: getSiteUrl(),
+        verifyUrl: await emailVerificationUrl(customer.id, customer.email),
+        verifyExpiresInHours: VERIFICATION_LINK_HOURS,
       });
       await getEmailProvider().send({ to: customer.email, template: "welcome", ...message });
     } catch (emailError) {

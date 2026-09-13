@@ -254,7 +254,20 @@
     "linkCopied": "Link copied",
     "yourReferrals": "Your referrals",
     "yourRequests": "Your requests",
-    "eligibleOrders": "Eligible orders"
+    "eligibleOrders": "Eligible orders",
+    "verifyEmailTitle": "Verify email",
+    "verifyEmailDone": "Your email is verified",
+    "verifyEmailDoneBody": "Thank you. Updates about your orders will reach this address.",
+    "verifyEmailInvalid": "This link is not valid",
+    "verifyEmailInvalidBody": "The link has expired or was already used. Sign in to your account and request a new one.",
+    "verifyEmailToAccount": "My account",
+    "verifyEmailToLogin": "Sign in",
+    "verifyEmailNoticeTitle": "Verify your email",
+    "verifyEmailNoticeBody": "We sent a link to {email}. If that address is wrong, you will not receive updates about your orders.",
+    "verifyEmailResend": "Send again",
+    "verifyEmailResent": "Sent",
+    "verifyEmailSent": "We sent a new link to {email}",
+    "verifyEmailSendFailed": "Could not send. Please try again in a moment."
   },
   "ProductBadge": {
     "preorder": "Preorder",

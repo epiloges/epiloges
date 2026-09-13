@@ -91,7 +91,7 @@ export async function exportDataSubject(subject: DataSubject): Promise<DataSubje
             // should have to be added here deliberately.
             select: {
               id: true, email: true, firstName: true, lastName: true, phone: true,
-              acceptsMarketing: true, referralCode: true, createdAt: true, updatedAt: true,
+              acceptsMarketing: true, emailVerifiedAt: true, referralCode: true, createdAt: true, updatedAt: true,
             },
           })
         : null,

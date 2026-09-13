@@ -5,6 +5,7 @@ import { useEffect, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { AccountNav } from "@/components/account/AccountNav";
+import { EmailVerificationNotice } from "@/components/account/EmailVerificationNotice";
 
 export function RequireAuthShell({ children }: { children: ReactNode }) {
   const t = useTranslations("Auth");
@@ -24,7 +25,10 @@ export function RequireAuthShell({ children }: { children: ReactNode }) {
       <aside>
         <AccountNav />
       </aside>
-      <div>{children}</div>
+      <div>
+        <EmailVerificationNotice />
+        {children}
+      </div>
     </div>
   );
 }

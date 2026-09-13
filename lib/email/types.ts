@@ -8,6 +8,7 @@
 export type EmailTemplate =
   // Account
   | "welcome"
+  | "email-verification"
   | "password-reset"
   | "account-already-exists"
   // Orders and payments

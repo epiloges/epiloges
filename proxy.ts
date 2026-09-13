@@ -202,7 +202,7 @@ export async function proxy(request: NextRequest) {
     // forgot-password flow unreachable — the link bounced straight to /account/login);
     // signed in, someone who requested a reset before logging in elsewhere must still be
     // able to finish it rather than be bounced to /account with their token discarded.
-    if (pathname === "/account/reset-password") return NextResponse.next();
+    if (pathname === "/account/reset-password" || pathname === "/account/verify-email") return NextResponse.next();
 
     const isPublicRoute = pathname === "/account/login" || pathname === "/account/register";
     const token = request.cookies.get(CUSTOMER_SESSION_COOKIE)?.value;

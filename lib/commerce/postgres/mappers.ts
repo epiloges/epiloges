@@ -294,6 +294,7 @@ export function toCustomer(row: CustomerRow): Customer {
     addresses: row.addresses.map(toCustomerAddress),
     defaultAddressId: row.defaultAddressId ?? undefined,
     acceptsMarketing: row.acceptsMarketing,
+    emailVerified: row.emailVerifiedAt !== null,
     createdAt: row.createdAt.toISOString(),
   };
 }

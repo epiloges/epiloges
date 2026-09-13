@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { backInStockEmail, orderConfirmationEmail, referralRewardEmail, welcomeEmail } from "@/lib/email/templates";
+import { backInStockEmail, emailVerificationEmail, orderConfirmationEmail, referralRewardEmail, welcomeEmail } from "@/lib/email/templates";
 
 /**
  * SEC-002. `escapeHtml` existed and was applied to SOME interpolations — line item names,
@@ -25,6 +25,12 @@ const address = {
 describe("email templates escape user-controlled values", () => {
   it("escapes a customer's own name in the welcome email", () => {
     const { html } = welcomeEmail({ siteName: "Alexandris", firstName: PAYLOAD, shopUrl: "https://example.com" });
+    expect(html).not.toContain(PAYLOAD);
+    expect(html).toContain(ESCAPED);
+  });
+
+  it("escapes the name in the verification email too", () => {
+    const { html } = emailVerificationEmail({ siteName: "Alexandris", firstName: PAYLOAD, verifyUrl: "https://example.com/v", expiresInHours: 48 });
     expect(html).not.toContain(PAYLOAD);
     expect(html).toContain(ESCAPED);
   });
@@ -83,5 +89,21 @@ describe("email templates escape user-controlled values", () => {
      * rather than inside `addressLines`, which feeds both.
      */
     expect(text).toContain(PAYLOAD);
+  });
+});
+
+describe("welcome email and verification", () => {
+  it("makes the verification link the button when there is one, and keeps the shop link", () => {
+    const { html, text, subject } = welcomeEmail({ siteName: "Alexandris", firstName: "Μαρία", shopUrl: "https://shop.example", verifyUrl: "https://shop.example/api/auth/verify-email?token=abc" });
+    expect(subject).toContain("επιβεβαιώστε");
+    expect(html).toContain("https://shop.example/api/auth/verify-email?token=abc");
+    expect(html).toContain("https://shop.example");
+    expect(text).toContain("https://shop.example/api/auth/verify-email?token=abc");
+  });
+
+  it("says nothing about verifying when the address is already verified (OAuth)", () => {
+    const { html, subject } = welcomeEmail({ siteName: "Alexandris", firstName: "Μαρία", shopUrl: "https://shop.example" });
+    expect(subject).not.toContain("επιβεβαιώστε");
+    expect(html).not.toContain("verify-email");
   });
 });

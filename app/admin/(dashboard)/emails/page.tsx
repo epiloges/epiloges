@@ -25,6 +25,7 @@ const TEMPLATE_LABELS: Record<string, string> = {
   "password-reset": "Password Reset",
   "account-already-exists": "Account Already Exists",
   welcome: "Welcome",
+  "email-verification": "Email Verification",
   "contact-message": "Contact Message (to shop)",
   "contact-acknowledgement": "Contact Acknowledgement",
   "concierge-request": "Stylist Request (to shop)",
