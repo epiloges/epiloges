@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { requireCapability } from "@/lib/admin-session";
 import { recordAdminAction } from "@/services/audit-log";
 import { giftCardFormSchema, type GiftCardFormValues } from "@/lib/validation/gift-card";
+import { generateGiftCardCode } from "@/lib/gift-card-code";
 
 export interface GiftCardActionState {
   error?: string;
@@ -19,7 +20,7 @@ export async function createGiftCard(values: GiftCardFormValues): Promise<GiftCa
   await requireCapability("catalog:discounts");
   const parsed = giftCardFormSchema.safeParse(values);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
-  const data = parsed.data;
+  const data = { ...parsed.data, code: parsed.data.code || generateGiftCardCode() };
 
   const existing = await prisma.giftCard.findUnique({ where: { code: data.code } });
   if (existing) return { error: "A gift card with this code already exists." };

@@ -94,7 +94,14 @@ export default async function AdminDiscountsPage() {
         >
           <DataTable<Discount>
             columns={[
-              { header: "Code", cell: (row) => <span className="font-mono">{row.code}</span> },
+              {
+                header: "Code",
+                cell: (row) => (
+                  <Link href={`/admin/discounts/${row.id}`} className="font-mono underline-offset-4 hover:underline">
+                    {row.code}
+                  </Link>
+                ),
+              },
               {
                 header: "Value",
                 cell: (row) => (row.type === "percentage" ? `${row.value}%` : `€${row.value.toFixed(2)}`),

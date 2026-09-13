@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { giftCardFormSchema, type GiftCardFormValues } from "@/lib/validation/gift-card";
+import { generateGiftCardCode, looksGenerated } from "@/lib/gift-card-code";
 import type { GiftCardActionState } from "@/app/admin/(dashboard)/gift-cards/actions";
 
 const inputClass =
@@ -24,11 +25,16 @@ export function GiftCardForm({ defaultValues, onSubmit, submitLabel = "Save Gift
     register,
     control,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<GiftCardFormValues>({
     resolver: zodResolver(giftCardFormSchema),
-    defaultValues,
+    // A fresh card starts with a generated code. Typing one over it still works (a card
+    // printed in advance), but the default is the unguessable one.
+    defaultValues: { ...defaultValues, code: defaultValues.code || generateGiftCardCode() },
   });
+  const code = watch("code");
 
   const submit = handleSubmit(async (values) => {
     setServerError(null);
@@ -48,8 +54,26 @@ export function GiftCardForm({ defaultValues, onSubmit, submitLabel = "Save Gift
             <label className={labelClass} htmlFor="gcf-code">
               Code
             </label>
-            <input id="gcf-code" className={inputClass} aria-invalid={Boolean(errors.code)} {...register("code")} />
-            {errors.code ? <p className={errorClass}>{errors.code.message}</p> : null}
+            <div className="flex gap-2">
+              <input id="gcf-code" className={`${inputClass} font-mono`} aria-invalid={Boolean(errors.code)} {...register("code")} />
+              <button
+                type="button"
+                onClick={() => setValue("code", generateGiftCardCode(), { shouldDirty: true })}
+                className="h-10 shrink-0 border border-border px-3 text-xs tracking-[0.05em] uppercase hover:border-luxe-black"
+              >
+                Generate
+              </button>
+            </div>
+            {errors.code ? (
+              <p className={errorClass}>{errors.code.message}</p>
+            ) : code && !looksGenerated(code) ? (
+              <p className="mt-1.5 text-xs text-amber-700">
+                A code someone can guess (&ldquo;GIFT50&rdquo;) is a balance anyone can spend. Prefer a generated one unless the
+                card is already printed.
+              </p>
+            ) : (
+              <p className="mt-1.5 text-xs text-luxe-gray-dark">Give this exact code to the buyer; it can&apos;t be recovered later.</p>
+            )}
           </div>
           <div>
             <label className={labelClass} htmlFor="gcf-balance">

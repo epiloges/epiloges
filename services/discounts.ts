@@ -12,3 +12,8 @@ export async function getDiscountByCode(code: string): Promise<Discount | null> 
   const row = await prisma.discount.findUnique({ where: { code: code.trim().toUpperCase() } });
   return row ? toDiscount(row) : null;
 }
+
+export async function getDiscountById(id: string): Promise<Discount | null> {
+  const row = await prisma.discount.findUnique({ where: { id } });
+  return row ? toDiscount(row) : null;
+}

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireCapability } from "@/lib/admin-session";
 import { recordAdminAction } from "@/services/audit-log";
+import { SHOP_TIME_ZONE, endOfDayIn } from "@/lib/dates";
 import { discountFormSchema, type DiscountFormValues } from "@/lib/validation/discount";
 
 export interface DiscountActionState {
@@ -30,7 +31,9 @@ export async function createDiscount(values: DiscountFormValues): Promise<Discou
       type: data.type,
       value: data.value,
       active: data.active,
-      expiresAt: data.expiresAt ? new Date(data.expiresAt) : null,
+      // The whole of the chosen day, in the shop's zone — not midnight UTC, which is 02:00 in
+      // Athens and used to cut the last day off every expiry.
+      expiresAt: data.expiresAt ? endOfDayIn(data.expiresAt, SHOP_TIME_ZONE) : null,
     },
   });
 
@@ -48,7 +51,50 @@ export async function createDiscount(values: DiscountFormValues): Promise<Discou
   redirect("/admin/discounts");
 }
 
-/** No redirect — called from the list page itself, not a detail page (discounts have no detail page). */
+/**
+ * Edits a code in place. Until now a discount could only be created, toggled or deleted —
+ * changing its expiry or value meant deleting it and recreating it, and losing the usage
+ * count with it. The code itself is editable too, but colliding with another discount's
+ * code is refused rather than reported by the database.
+ */
+export async function updateDiscount(id: string, values: DiscountFormValues): Promise<DiscountActionState> {
+  await requireCapability("catalog:discounts");
+  const parsed = discountFormSchema.safeParse(values);
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
+  const data = parsed.data;
+
+  const before = await prisma.discount.findUnique({ where: { id } });
+  if (!before) return { error: "That discount no longer exists." };
+  const clash = await prisma.discount.findUnique({ where: { code: data.code }, select: { id: true } });
+  if (clash && clash.id !== id) return { error: "A discount with this code already exists." };
+
+  await prisma.discount.update({
+    where: { id },
+    data: {
+      code: data.code,
+      type: data.type,
+      value: data.value,
+      active: data.active,
+      expiresAt: data.expiresAt ? endOfDayIn(data.expiresAt, SHOP_TIME_ZONE) : null,
+    },
+  });
+
+  await recordAdminAction({
+    action: "discount.updated",
+    targetType: "discount",
+    targetId: id,
+    summary: `Edited discount ${before.code}${before.code !== data.code ? ` (now ${data.code})` : ""}: ${data.type} ${data.value}`,
+    metadata: {
+      before: { code: before.code, type: before.type, value: Number(before.value), active: before.active, expiresAt: before.expiresAt },
+      after: { code: data.code, type: data.type, value: data.value, active: data.active, expiresAt: data.expiresAt ?? null },
+    },
+  });
+
+  revalidateStorefront();
+  redirect("/admin/discounts");
+}
+
+/** No redirect — called from the list page itself, not a detail page. */
 export async function toggleDiscountActive(id: string, active: boolean): Promise<void> {
   await requireCapability("catalog:discounts");
   const discount = await prisma.discount.update({ where: { id }, data: { active } });

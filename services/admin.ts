@@ -1,4 +1,5 @@
 import "server-only";
+import { startOfTodayIn } from "@/lib/dates";
 import { prisma } from "@/lib/prisma";
 import { toOrder } from "@/lib/commerce/postgres/mappers";
 import type { Order } from "@/lib/commerce/types";
@@ -45,31 +46,6 @@ export async function getAdminUsers(): Promise<AdminUser[]> {
  * plain `new Date().setHours(0)` would start "today" two or three hours late for Athens
  * and an order placed at 01:00 would count towards yesterday.
  */
-function startOfTodayIn(timeZone: string): Date {
-  const now = new Date();
-  const parts = new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(now);
-  const get = (type: string) => Number(parts.find((part) => part.type === type)?.value);
-  // Midnight of that calendar date as if it were UTC, then shift by the zone's offset at that moment.
-  const midnightAsUtc = Date.UTC(get("year"), get("month") - 1, get("day"));
-  const offsetMs = zoneOffsetMs(new Date(midnightAsUtc), timeZone);
-  return new Date(midnightAsUtc - offsetMs);
-}
-
-function zoneOffsetMs(at: Date, timeZone: string): number {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone,
-    hourCycle: "h23",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  }).formatToParts(at);
-  const get = (type: string) => Number(parts.find((part) => part.type === type)?.value);
-  const local = Date.UTC(get("year"), get("month") - 1, get("day"), get("hour"), get("minute"), get("second"));
-  return local - at.getTime();
-}
 
 export interface DashboardSummary {
   stats: DashboardStat[];
