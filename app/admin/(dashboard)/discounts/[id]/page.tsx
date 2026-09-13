@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { requireCapabilityOrRedirect } from "@/lib/admin-session";
 import { DiscountForm } from "@/components/admin/DiscountForm";
 import { updateDiscount } from "@/app/admin/(dashboard)/discounts/actions";
 import { getDiscountById } from "@/services/discounts";
@@ -16,6 +17,9 @@ interface EditDiscountPageProps {
 }
 
 export default async function EditDiscountPage({ params }: EditDiscountPageProps) {
+  // The list page redirects an editor away; this form used to render for them in full and
+  // fail silently on submit.
+  await requireCapabilityOrRedirect("catalog:discounts");
   const { id } = await params;
   await connection();
   const discount = await getDiscountById(id);

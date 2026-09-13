@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { requireCapability } from "@/lib/admin-session";
+import { capabilityDenied, requireCapability } from "@/lib/admin-session";
 import { recordAdminAction } from "@/services/audit-log";
 import { giftCardFormSchema, type GiftCardFormValues } from "@/lib/validation/gift-card";
 import { generateGiftCardCode } from "@/lib/gift-card-code";
@@ -17,7 +17,8 @@ function revalidateStorefront() {
 }
 
 export async function createGiftCard(values: GiftCardFormValues): Promise<GiftCardActionState> {
-  await requireCapability("catalog:discounts");
+  const denied = await capabilityDenied("catalog:discounts");
+  if (denied) return { error: denied };
   const parsed = giftCardFormSchema.safeParse(values);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
   const data = { ...parsed.data, code: parsed.data.code || generateGiftCardCode() };

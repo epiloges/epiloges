@@ -10,6 +10,8 @@ import { getProductById } from "@/services/products";
 import { getAllCollections } from "@/services/collections";
 import { getCategoryOptions } from "@/services/categories";
 import { getSeoDefaults } from "@/services/seo";
+import { requireAdminSessionOrRedirect } from "@/lib/admin-session";
+import { roleHasCapability } from "@/constants/permissions";
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
@@ -25,6 +27,7 @@ export default async function AdminProductDetailPage({ params }: AdminProductDet
   // which Cache Components flags during prerender ("1 Issue" in dev). The page is
   // per-request by nature — it edits one record — so render it that way.
   await connection();
+  const session = await requireAdminSessionOrRedirect();
   const [product, collections, categories, seo] = await Promise.all([
     getProductById(id),
     getAllCollections(),
@@ -43,7 +46,7 @@ export default async function AdminProductDetailPage({ params }: AdminProductDet
           `SKU ${product.sku} · ${product.category} · ${product.status}` +
           (product.archivedAt ? ` since ${formatDate(product.archivedAt)}` : "")
         }
-        actions={<ProductLifecycleActions id={id} name={product.name} status={product.status} />}
+        actions={<ProductLifecycleActions id={id} name={product.name} status={product.status} canDelete={roleHasCapability(session.role, "catalog:delete")} />}
       />
       {/*
         Keyed by id for the reason the new-product page gives: without it, navigating from one

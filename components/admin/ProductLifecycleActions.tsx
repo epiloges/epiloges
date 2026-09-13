@@ -10,7 +10,18 @@ import type { ProductStatus } from "@/types";
  * customers' carts and wishlists and destroys the record of what past orders contained.
  * Archiving takes it off the storefront while leaving all of that intact.
  */
-export function ProductLifecycleActions({ id, name, status }: { id: string; name: string; status: ProductStatus }) {
+export function ProductLifecycleActions({
+  id,
+  name,
+  status,
+  canDelete,
+}: {
+  id: string;
+  name: string;
+  status: ProductStatus;
+  /** catalog:delete — editors can archive but not hard-delete; rendering the button for them crashed the page. */
+  canDelete: boolean;
+}) {
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -49,6 +60,7 @@ export function ProductLifecycleActions({ id, name, status }: { id: string; name
             {isPending ? "Archiving…" : "Archive"}
           </button>
         )}
+        {canDelete ? (
         <button
           type="button"
           disabled={isPending}
@@ -62,6 +74,7 @@ export function ProductLifecycleActions({ id, name, status }: { id: string; name
         >
           Delete
         </button>
+        ) : null}
       </div>
       {error ? <p className="max-w-xs text-right text-xs text-destructive">{error}</p> : null}
     </div>

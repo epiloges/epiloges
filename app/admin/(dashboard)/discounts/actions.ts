@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { requireCapability } from "@/lib/admin-session";
+import { capabilityDenied, requireCapability } from "@/lib/admin-session";
 import { recordAdminAction } from "@/services/audit-log";
 import { SHOP_TIME_ZONE, endOfDayIn } from "@/lib/dates";
 import { discountFormSchema, type DiscountFormValues } from "@/lib/validation/discount";
@@ -17,7 +17,8 @@ function revalidateStorefront() {
 }
 
 export async function createDiscount(values: DiscountFormValues): Promise<DiscountActionState> {
-  await requireCapability("catalog:discounts");
+  const denied = await capabilityDenied("catalog:discounts");
+  if (denied) return { error: denied };
   const parsed = discountFormSchema.safeParse(values);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
   const data = parsed.data;
@@ -58,7 +59,8 @@ export async function createDiscount(values: DiscountFormValues): Promise<Discou
  * code is refused rather than reported by the database.
  */
 export async function updateDiscount(id: string, values: DiscountFormValues): Promise<DiscountActionState> {
-  await requireCapability("catalog:discounts");
+  const denied = await capabilityDenied("catalog:discounts");
+  if (denied) return { error: denied };
   const parsed = discountFormSchema.safeParse(values);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
   const data = parsed.data;
