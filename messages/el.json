@@ -79,7 +79,7 @@
     "emptyBagBlurb": "Δεν έχετε προσθέσει ακόμη κάτι.",
     "onlySavedItems": "Δεν υπάρχουν προϊόντα στο καλάθι — δείτε τα αποθηκευμένα παρακάτω.",
     "codeOrGiftCard": "Κωδικός έκπτωσης ή δωροκάρτα",
-    "codePlaceholder": "π.χ. WELCOME10 ή GIFT25",
+    "codePlaceholder": "Κωδικός",
     "invalidCode": "Ο κωδικός δεν είναι έγκυρος.",
     "percentOff": "{value}% έκπτωση",
     "removeCode": "Αφαίρεση κωδικού {code}"
@@ -94,6 +94,7 @@
     "INVALID_VARIANT": "Αυτή η επιλογή δεν είναι διαθέσιμη."
   },
   "Checkout": {
+    "pageTitle": "Ολοκλήρωση παραγγελίας",
     "loading": "Φόρτωση ταμείου…",
     "contactTitle": "Επικοινωνία",
     "contactSubtitle": "Θα σας στείλουμε εδώ την επιβεβαίωση της παραγγελίας σας.",

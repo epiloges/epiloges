@@ -24,6 +24,7 @@ interface LoginFormProps {
 
 export function LoginForm({ configuredOAuthProviders, from, oauthError }: LoginFormProps) {
   const t = useTranslations("Auth");
+  const hasSocialSignIn = Object.values(configuredOAuthProviders).some(Boolean);
   const { signIn, requestPasswordReset } = useAuth();
   const router = useRouter();
   const [mode, setMode] = useState<"password" | "magic-link">("password");
@@ -61,15 +62,22 @@ export function LoginForm({ configuredOAuthProviders, from, oauthError }: LoginF
         </p>
       ) : null}
 
-      <div className="mt-8">
-        <SocialSignInButtons configured={configuredOAuthProviders} from={from} />
-      </div>
-
-      <div className="my-8 flex items-center gap-3">
-        <div className="h-px flex-1 bg-border" />
-        <span className="text-eyebrow">{t("or")}</span>
-        <div className="h-px flex-1 bg-border" />
-      </div>
+      {/* The "ή" divider only makes sense between two ways to sign in. With no social
+          provider configured it sat above an empty space, looking like something failed. */}
+      {hasSocialSignIn ? (
+        <>
+          <div className="mt-8">
+            <SocialSignInButtons configured={configuredOAuthProviders} from={from} />
+          </div>
+          <div className="my-8 flex items-center gap-3">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-eyebrow">{t("or")}</span>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+        </>
+      ) : (
+        <div className="mt-8" />
+      )}
 
       {mode === "password" ? (
         <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} noValidate className="space-y-4">

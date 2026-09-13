@@ -79,7 +79,7 @@
     "emptyBagBlurb": "Looks like you haven’t added anything yet.",
     "onlySavedItems": "No items in your bag — check your saved items below.",
     "codeOrGiftCard": "Discount code or gift card",
-    "codePlaceholder": "e.g. WELCOME10 or GIFT25",
+    "codePlaceholder": "Code",
     "invalidCode": "That code isn't valid.",
     "percentOff": "{value}% off",
     "removeCode": "Remove code {code}"
@@ -94,6 +94,7 @@
     "INVALID_VARIANT": "That option isn't available."
   },
   "Checkout": {
+    "pageTitle": "Checkout",
     "loading": "Loading checkout…",
     "contactTitle": "Contact",
     "contactSubtitle": "We'll send your order confirmation here.",

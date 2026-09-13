@@ -88,8 +88,8 @@ export function CartTotalsSummary({
           <span>-{formatMoney(totals.giftCardTotal)}</span>
         </div>
       ) : null}
-      <div className="flex justify-between">
-        <span className="text-luxe-gray-dark">{t("shipping")}</span>
+      <div className="flex justify-between gap-4">
+        <span className="shrink-0 text-luxe-gray-dark">{t("shipping")}</span>
         {/*
           No figure at all before a destination is known — the amount is replaced by the words,
           rather than shown with a caveat under it.
@@ -99,7 +99,7 @@ export function CartTotalsSummary({
           488 remote ones. Showing 2,95 € and hoping is how someone reaches the payment step and
           finds a different number.
         */}
-        <span className={shippingEstimated ? "text-luxe-gray-dark" : undefined}>
+        <span className={shippingEstimated ? "text-right text-luxe-gray-dark" : undefined}>
           {shippingEstimated
             ? t("shippingCalculatedAtCheckout")
             : totals.shippingTotal.amount === 0

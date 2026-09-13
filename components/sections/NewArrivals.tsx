@@ -78,8 +78,8 @@ export function NewArrivals({ title, subtitle, rows }: NewArrivalsProps) {
   const isSoleRow = rows.length === 1 && !rows[0].title;
 
   return (
-    <section className="py-20 md:py-28">
-      <div className="container-luxe mb-10 md:mb-14">
+    <section className="pt-16 pb-10 md:pt-20 md:pb-12">
+      <div className="container-luxe mb-8 md:mb-10">
         <h2 className="font-heading text-3xl md:text-4xl">{title}</h2>
         {subtitle ? <p className="mt-2 text-luxe-gray-dark">{subtitle}</p> : null}
       </div>

@@ -49,7 +49,7 @@ export function PlpToolbar({
       {/* Nothing rather than "0 items" while the first fetch is in flight. The count
           rendered as 0 during loading and then jumped to the real figure, so on a slow
           connection a shopper saw an apparently empty category before it filled in. */}
-      <p className="min-w-0 truncate text-sm text-luxe-gray-dark">
+      <p className="min-w-0 text-sm text-luxe-gray-dark">
         {isLoading ? " " : t(total === 1 ? "itemsOne" : "itemsOther", { count: total })}
       </p>
       <div className="flex min-w-0 items-center gap-2 sm:gap-3">

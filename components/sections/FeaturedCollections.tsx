@@ -30,7 +30,7 @@ interface FeaturedCollectionsProps {
 
 export function FeaturedCollections({ title, subtitle, tiles }: FeaturedCollectionsProps) {
   return (
-    <section className="container-luxe py-20 md:py-28">
+    <section className="container-luxe py-16 md:py-20">
       <div className="mb-10 md:mb-14">
         <h2 className="font-heading text-3xl md:text-4xl">{title}</h2>
         {subtitle ? <p className="mt-2 text-luxe-gray-dark">{subtitle}</p> : null}

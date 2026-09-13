@@ -20,9 +20,10 @@ import { getTranslations } from "next-intl/server";
  * Set here rather than restored in the proxy, so both routes to this page carry it: the rewrite
  * from `proxy.ts`, and any `notFound()` that still fires from a route the proxy does not match.
  */
-export const metadata: Metadata = {
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("Errors");
+  return { title: t("notFoundTitle"), robots: { index: false, follow: false } };
+}
 
 export default async function NotFound() {
   const [navigation, settings, t] = await Promise.all([getNavigation(), getSiteSettings(), getTranslations("Errors")]);

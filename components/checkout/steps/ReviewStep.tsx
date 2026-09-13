@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { ROUTES } from "@/constants/routes";
 import { formatMoney } from "@/lib/format";
 import { computeShippingChargeForRate } from "@/lib/shipping";
@@ -10,7 +10,16 @@ import { useCart } from "@/components/providers/CartProvider";
 import { useCheckout } from "@/components/providers/CheckoutProvider";
 import { CUSTOMER_NOTE_MAX_LENGTH } from "@/lib/customer-note";
 
-function formatAddress(address: { firstName: string; lastName: string; company?: string; address1: string; address2?: string; city: string; region?: string; postalCode: string; countryCode: string; phone?: string } | null) {
+/** "Ελλάδα" rather than "GR" — the code is for the courier, not the customer. */
+function countryName(code: string, locale: string): string {
+  try {
+    return new Intl.DisplayNames([locale], { type: "region" }).of(code) ?? code;
+  } catch {
+    return code;
+  }
+}
+
+function formatAddress(locale: string, address: { firstName: string; lastName: string; company?: string; address1: string; address2?: string; city: string; region?: string; postalCode: string; countryCode: string; phone?: string } | null) {
   if (!address) return null;
   return (
     <address className="text-sm not-italic text-luxe-gray-dark">
@@ -23,14 +32,20 @@ function formatAddress(address: { firstName: string; lastName: string; company?:
       {address.city}
       {address.region ? `, ${address.region}` : ""} {address.postalCode}
       <br />
-      {address.countryCode}
-      {address.phone ? <>, {address.phone}</> : null}
+      {countryName(address.countryCode, locale)}
+      {address.phone ? (
+        <>
+          <br />
+          {address.phone}
+        </>
+      ) : null}
     </address>
   );
 }
 
 export function ReviewStep() {
   const t = useTranslations("Checkout");
+  const locale = useLocale();
   const {
     email,
     shippingAddress,
@@ -87,14 +102,14 @@ export function ReviewStep() {
         </div>
         <div className="py-4">
           <p className="text-eyebrow mb-1.5">{t("shippingAddress")}</p>
-          {formatAddress(shippingAddress)}
+          {formatAddress(locale, shippingAddress)}
         </div>
         <div className="py-4">
           <p className="text-eyebrow mb-1.5">{t("billingAddress")}</p>
           {sameBillingAsShipping ? (
             <p className="text-sm text-luxe-gray-dark">{t("sameAsShipping")}</p>
           ) : (
-            formatAddress(billingAddress)
+            formatAddress(locale, billingAddress)
           )}
         </div>
         <div className="py-4">
