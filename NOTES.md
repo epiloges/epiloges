@@ -135,7 +135,50 @@ description. Flip it when a second courier appears — two rows both titled "Π�
 οίκον" and distinguishable only by their subtitles is worse than putting the carrier first,
 because by then the carrier is what is being chosen.
 
-## ACS courier — waiting on ACS for the API key (2026-09-07)
+## ACS courier — test credentials arrived, activation pending (2026-09-13)
+
+**Superseded the entry below.** ACS sent TEST web-services credentials on 13 September with
+their June-2024 REST guide. They are in `.env` (git-ignored) — same endpoint as production,
+non-billable numbers — and `COURIER_PROVIDER` is deliberately still `manual` there, so the
+admin cannot put a test voucher on a real order. ACS said the credentials sync overnight:
+**nothing works before the morning of 14 September**, and a pickup date must be a working
+day (never a Sunday or public holiday).
+
+**What ACS wants back before activating:** a test voucher PDF (laser or thermal, whichever
+printer the shop has) and the matching test pickup-list PDF. `npm run acs:test` produces
+exactly those into `./acs-test/` — voucher to the shop's own address with a fake reference,
+printed both ways, closed into a pickup list, list printed. It calls
+`createAcsCourierProvider` directly and touches no order. `--delete <voucher>` cancels one
+that is not yet on a list. Email the PDFs to the ACS contact who sent the credentials.
+
+**What is now built, and pinned to the guide rather than guessed** (`lib/courier/providers/acs.ts`,
+tests in `acs.test.ts`): the response envelope — `ACSExecution_HasError`,
+`ACSOutputResponce` (sic) → `ACSValueOutput[0]` / `ACSTableOutput.Table_Data` — and the
+per-row `Error_Message` that carries a rejected voucher; `ACS_Print_Voucher` (Print_Type
+2 = A4 laser, 1 = thermal) with the PDF found by shape rather than key name, because the
+guide does not say the key; `ACS_Issue_Pickup_List` including the "unprinted vouchers"
+refusal, `ACS_Print_Pickup_List`, `ACS_Get_Pickup_Lists`, `ACS_Delete_Voucher`.
+**Αντικαταβολή is on the voucher now** (`Cod_Ammount` / `Cod_Payment_Way` 0 / `COD`): the
+previous adapter would have shipped a cash-on-delivery order with nothing to collect. The
+customer's delivery note goes into `Delivery_Notes`; `Item_Quantity` is 1 (parcels, not
+pairs — ACS issues a voucher per parcel).
+
+**The cycle the admin has to follow, because ACS's model demands it:** create the voucher on
+the order → print it (order page, "Print A4" / "Print thermal") → at the end of the day
+issue the pickup list at `/admin/courier` → print the list for the driver. A voucher that
+is never printed blocks the day's list; a voucher on a list can no longer be cancelled from
+the shop. The PDF routes are `/api/admin/courier/voucher` and `/api/admin/courier/pickup-list`.
+
+**Still unverified until the first live call:** the exact key ACS uses for the PDF bytes
+(handled by shape), and `Recipient_Region` — sent as the city, which matches the guide's
+"περιοχή ή τοπωνύμιο", but ACS may want the area (e.g. "ΤΑΥΡΟΣ") for Attica addresses.
+Watch the first real Athens voucher.
+
+**Go-live checklist:** ACS confirms the PDFs and activates → ACS may issue PRODUCTION
+credentials (ask; the email calls these the test server) → put them in Vercel, set
+`COURIER_PROVIDER=acs` there and locally → create one real voucher on a real order and print it.
+
+## ACS courier — waiting on ACS for the API key (2026-09-07) — superseded above
 
 **Blocked on a third party, not on code.** The owner emailed ACS on 7 September asking for web
 services access. Everything else is in place.

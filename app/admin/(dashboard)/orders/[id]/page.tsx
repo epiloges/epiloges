@@ -9,8 +9,14 @@ import { getOrderById } from "@/services/orders";
 import { getPaymentsForOrder } from "@/services/payments";
 import { paymentProviderRegistry } from "@/lib/payments/registry";
 import { PaymentStatusPill } from "@/components/admin/PaymentStatusPill";
-import { updateOrderStatusAction, updateOrderTrackingAction, createAcsShipmentAction } from "@/app/admin/(dashboard)/orders/actions";
-import { isAcsCourierConfigured } from "@/lib/courier";
+import {
+  updateOrderStatusAction,
+  updateOrderTrackingAction,
+  createAcsShipmentAction,
+  cancelAcsShipmentAction,
+} from "@/app/admin/(dashboard)/orders/actions";
+import { isAcsCourierConfigured, ACS_CARRIER_NAME } from "@/lib/courier";
+import { AcsVoucherActions } from "@/components/admin/AcsVoucherActions";
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
@@ -45,6 +51,9 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderDetailP
 
   const boundUpdateTracking = updateOrderTrackingAction.bind(null, order.id);
   const boundCreateAcsShipment = createAcsShipmentAction.bind(null, order.id);
+  const boundCancelAcsShipment = cancelAcsShipmentAction.bind(null, order.id);
+  const acsConfigured = isAcsCourierConfigured();
+  const hasAcsVoucher = acsConfigured && order.carrier === ACS_CARRIER_NAME && Boolean(order.trackingNumber);
 
   return (
     <div>
@@ -156,14 +165,20 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderDetailP
             </div>
           </div>
 
-          <OrderTrackingForm
-            defaultCarrier={order.carrier}
-            defaultTrackingNumber={order.trackingNumber}
-            defaultTrackingUrl={order.trackingUrl}
-            courierProviderIsAcs={isAcsCourierConfigured()}
-            onSave={boundUpdateTracking}
-            onCreateAcsShipment={boundCreateAcsShipment}
-          />
+          <div>
+            <OrderTrackingForm
+              defaultCarrier={order.carrier}
+              defaultTrackingNumber={order.trackingNumber}
+              defaultTrackingUrl={order.trackingUrl}
+              // Once a voucher exists the create button gives way to print/cancel below.
+              courierProviderIsAcs={acsConfigured && !hasAcsVoucher}
+              onSave={boundUpdateTracking}
+              onCreateAcsShipment={boundCreateAcsShipment}
+            />
+            {hasAcsVoucher && order.trackingNumber ? (
+              <AcsVoucherActions orderId={order.id} trackingNumber={order.trackingNumber} onCancel={boundCancelAcsShipment} />
+            ) : null}
+          </div>
         </div>
 
         <div className="space-y-6">

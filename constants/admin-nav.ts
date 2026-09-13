@@ -83,6 +83,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { label: "Payments", href: "/admin/payments", icon: CreditCard, capability: "payments:view" },
       { label: "Customers", href: "/admin/customers", icon: Users },
       { label: "Returns", href: "/admin/returns", icon: PackageOpen, capability: "orders:returns" },
+      { label: "ACS Courier", href: "/admin/courier", icon: Truck, capability: "orders:manage" },
       { label: "Newsletter", href: "/admin/newsletter", icon: Mail },
       { label: "Contact Messages", href: "/admin/messages", icon: MessageSquare },
       { label: "Ask a Stylist", href: "/admin/concierge", icon: Sparkles },

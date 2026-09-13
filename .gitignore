@@ -67,3 +67,6 @@ playwright-report/
 
 # Verde B2B import working files (order data, image previews)
 .verde/
+
+# PDFs produced by `npm run acs:test` for ACS's activation check
+acs-test/

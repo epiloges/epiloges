@@ -33,6 +33,8 @@ export type AuditAction =
   | "order.status_changed"
   | "order.tracking_updated"
   | "order.shipment_created"
+  | "order.shipment_cancelled"
+  | "courier.pickup_list_issued"
   | "adminUser.created"
   | "adminUser.role_changed"
   | "adminUser.deleted"
@@ -63,7 +65,8 @@ export interface AuditEntryInput {
     | "return"
     | "settings"
     | "product"
-    | "customer";
+    | "customer"
+    | "pickupList";
   targetId: string;
   summary: string;
   metadata?: Record<string, unknown>;

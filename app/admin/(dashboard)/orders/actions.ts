@@ -4,7 +4,9 @@ import { revalidatePath } from "next/cache";
 import { requireCapability } from "@/lib/admin-session";
 import { recordAdminAction } from "@/services/audit-log";
 import { getOrderById, updateOrderStatus, updateOrderTracking, type OrderTrackingInput } from "@/services/orders";
-import { getCourierProvider } from "@/lib/courier";
+import { getCourierProvider, ACS_CARRIER_NAME } from "@/lib/courier";
+import { getPrimaryPaymentForOrder } from "@/services/payments";
+import { getSiteSettings } from "@/services/settings";
 import type { Order } from "@/lib/commerce/types";
 
 export async function updateOrderStatusAction(orderId: string, status: Order["status"]): Promise<void> {
@@ -56,7 +58,19 @@ export async function createAcsShipmentAction(orderId: string): Promise<CreateSh
     const order = await getOrderById(orderId);
     if (!order) return { error: "Order not found." };
 
+    if (order.trackingNumber) {
+      return { error: `This order already has tracking number ${order.trackingNumber}. Cancel that voucher first if it is wrong.` };
+    }
+
     const totalQuantity = order.lineItems.reduce((sum, item) => sum + item.quantity, 0);
+    const [payment, settings] = await Promise.all([getPrimaryPaymentForOrder(order.id), getSiteSettings()]);
+    /**
+     * Αντικαταβολή rides on the voucher: the courier collects the order total at the door.
+     * Only while the money is still outstanding — a COD order the customer has already
+     * paid some other way must not be collected twice.
+     */
+    const collectOnDelivery = payment?.methodId === "cash-on-delivery" && payment.status !== "paid";
+
     const provider = getCourierProvider();
     const result = await provider.createShipment({
       orderId: order.id,
@@ -66,7 +80,12 @@ export async function createAcsShipmentAction(orderId: string): Promise<CreateSh
       // estimate per unit until real per-product shipping weight is threaded
       // through the cart/order snapshot.
       weightGrams: Math.max(500, totalQuantity * 500),
-      itemQuantity: totalQuantity,
+      // One parcel per order. ACS reads Item_Quantity as the number of PARCELS and issues
+      // a voucher per parcel; a three-pair order still ships in one box.
+      itemQuantity: 1,
+      codAmount: collectOnDelivery ? order.totals.total.amount : undefined,
+      deliveryNotes: order.customerNote,
+      senderName: settings.siteName,
     });
 
     await updateOrderTracking(orderId, result);
@@ -76,12 +95,44 @@ export async function createAcsShipmentAction(orderId: string): Promise<CreateSh
       action: "order.shipment_created",
       targetType: "order",
       targetId: orderId,
-      summary: `Created an ACS shipment${result.trackingNumber ? ` (${result.trackingNumber})` : ""}`,
-      metadata: { ...result },
+      summary: `Created an ACS shipment${result.trackingNumber ? ` (${result.trackingNumber})` : ""}${collectOnDelivery ? ` collecting ${order.totals.total.amount.toFixed(2)} on delivery` : ""}`,
+      metadata: { ...result, codAmount: collectOnDelivery ? order.totals.total.amount : null },
     });
     revalidatePath("/", "layout");
     return {};
   } catch (error) {
     return { error: error instanceof Error ? error.message : "Couldn't create the shipment." };
+  }
+}
+
+/**
+ * Cancels the ACS voucher and clears the order's tracking. Only possible until the voucher
+ * has been closed into a pickup list — after that ACS treats it as a real shipment and the
+ * shop has to ask its ACS branch.
+ */
+export async function cancelAcsShipmentAction(orderId: string): Promise<CreateShipmentActionState> {
+  await requireCapability("orders:manage");
+  try {
+    const order = await getOrderById(orderId);
+    if (!order) return { error: "Order not found." };
+    if (!order.trackingNumber || order.carrier !== ACS_CARRIER_NAME) {
+      return { error: "This order has no ACS voucher to cancel." };
+    }
+    const provider = getCourierProvider();
+    if (!provider.deleteShipment) return { error: "The active courier provider cannot cancel vouchers." };
+
+    await provider.deleteShipment(order.trackingNumber);
+    await updateOrderTracking(orderId, {});
+    await recordAdminAction({
+      action: "order.shipment_cancelled",
+      targetType: "order",
+      targetId: orderId,
+      summary: `Cancelled ACS voucher ${order.trackingNumber}`,
+      metadata: { cancelledVoucher: order.trackingNumber },
+    });
+    revalidatePath("/", "layout");
+    return {};
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Couldn't cancel the voucher." };
   }
 }
