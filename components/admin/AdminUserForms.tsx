@@ -7,6 +7,7 @@ import {
   changeOwnPassword,
   createAdminUser,
   deleteAdminUser,
+  resetAdminPassword,
   type UserActionState,
 } from "@/app/admin/(dashboard)/users/actions";
 import { ADMIN_ROLES } from "@/types/admin";
@@ -148,5 +149,68 @@ export function DeleteAdminUserButton({ userId, name, isSelf }: { userId: string
       </button>
       {error ? <p className="max-w-[16rem] text-right text-xs text-destructive">{error}</p> : null}
     </div>
+  );
+}
+
+/**
+ * "Reset password" for another admin: reveals a one-field form, sets the password, and
+ * shows the confirmation once. Not offered for the signed-in admin — their own change goes
+ * through ChangeOwnPasswordForm, which asks for the current password first.
+ */
+export function ResetAdminPasswordControl({ userId, name, isSelf }: { userId: string; name: string; isSelf: boolean }) {
+  const [open, setOpen] = useState(false);
+  const [message, setMessage] = useState<{ tone: "error" | "success"; text: string } | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  if (isSelf) return null;
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          setOpen(true);
+          setMessage(null);
+        }}
+        className="text-xs text-luxe-gray-dark underline-offset-4 hover:underline"
+      >
+        Reset password
+      </button>
+    );
+  }
+
+  return (
+    <form
+      className="flex flex-col items-end gap-1"
+      action={(formData) => {
+        if (!window.confirm(`Set a new password for ${name}? Every session they have will be signed out.`)) return;
+        startTransition(async () => {
+          const result = await resetAdminPassword(userId, formData);
+          if (result?.error) {
+            setMessage({ tone: "error", text: result.error });
+            return;
+          }
+          setMessage({ tone: "success", text: result?.success ?? "Password set." });
+          setOpen(false);
+        });
+      }}
+    >
+      <div className="flex items-center gap-2">
+        <input
+          name="newPassword"
+          type="password"
+          autoComplete="new-password"
+          placeholder="New password (10+ characters)"
+          className="h-8 w-56 border border-border bg-transparent px-2 text-xs outline-none focus:border-luxe-black"
+        />
+        <button type="submit" disabled={pending} className="h-8 border border-luxe-black px-3 text-xs uppercase tracking-[0.05em] disabled:opacity-50">
+          {pending ? "Saving…" : "Set"}
+        </button>
+        <button type="button" onClick={() => setOpen(false)} className="text-xs text-luxe-gray-dark">
+          Cancel
+        </button>
+      </div>
+      {message ? <p className={`max-w-[20rem] text-right text-xs ${message.tone === "error" ? "text-destructive" : "text-green-700"}`}>{message.text}</p> : null}
+    </form>
   );
 }

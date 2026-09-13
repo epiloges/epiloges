@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { getAllPosts } from "@/services/blog";
+import { getPublishedPosts } from "@/services/blog";
 
 export async function GET() {
-  const posts = await getAllPosts();
+  const posts = await getPublishedPosts();
   return NextResponse.json({ posts });
 }

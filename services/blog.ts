@@ -24,6 +24,23 @@ export async function getAllPosts(): Promise<BlogPost[]> {
   return rows.map(toBlogPost);
 }
 
+/**
+ * What the storefront shows: posts whose publish date has arrived. Every post used to be
+ * live the moment it was saved, and a future date showed immediately — so there was no
+ * way to write a post ahead or to schedule one. A future `publishedAt` is now a schedule:
+ * the admin list marks it "Scheduled", the journal shows it from that day. `getAllPosts`
+ * stays for the admin, which must see everything.
+ */
+export async function getPublishedPosts(): Promise<BlogPost[]> {
+  const rows = await prisma.blogPost.findMany({ where: { publishedAt: { lte: new Date() } }, orderBy: { publishedAt: "desc" } });
+  return rows.map(toBlogPost);
+}
+
+export async function getPublishedPostBySlug(slug: string): Promise<BlogPost | undefined> {
+  const row = await prisma.blogPost.findFirst({ where: { slug, publishedAt: { lte: new Date() } } });
+  return row ? toBlogPost(row) : undefined;
+}
+
 export async function getPostBySlug(slug: string): Promise<BlogPost | undefined> {
   const row = await prisma.blogPost.findUnique({ where: { slug } });
   return row ? toBlogPost(row) : undefined;

@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { getPostBySlug } from "@/services/blog";
+import { getPublishedPostBySlug } from "@/services/blog";
 
 export async function GET(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const post = await getPostBySlug(slug);
+  const post = await getPublishedPostBySlug(slug);
   return NextResponse.json({ post: post ?? null });
 }

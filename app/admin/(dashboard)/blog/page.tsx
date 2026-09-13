@@ -39,7 +39,15 @@ export default async function AdminBlogPage() {
             ),
           },
           { header: "Author", cell: (row) => row.author },
-          { header: "Published", cell: (row) => formatDate(row.publishedAt) },
+          {
+            header: "Published",
+            cell: (row) =>
+              new Date(row.publishedAt).getTime() > Date.now() ? (
+                <span className="text-amber-700">Scheduled · {formatDate(row.publishedAt)}</span>
+              ) : (
+                formatDate(row.publishedAt)
+              ),
+          },
           { header: "Tags", cell: (row) => row.tags.join(", "), className: "text-luxe-gray-dark" },
         ]}
         rows={posts}

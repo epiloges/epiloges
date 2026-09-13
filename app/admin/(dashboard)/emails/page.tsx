@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { DataTable } from "@/components/admin/DataTable";
-import { formatDate } from "@/lib/format";
-import { getAllEmailLogsForAdmin, type EmailLogEntry } from "@/services/emails";
+import { ListFilterBar } from "@/components/admin/ListFilterBar";
+import { Pagination } from "@/components/admin/Pagination";
+import { formatDateTime } from "@/lib/format";
+import { DEFAULT_PAGE_SIZE, parsePage, parseSearch } from "@/lib/pagination";
+import { emailProviderLabel, listEmailLogsForAdmin, type EmailLogEntry } from "@/services/emails";
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
@@ -21,14 +24,40 @@ const TEMPLATE_LABELS: Record<string, string> = {
   "back-in-stock": "Back in Stock",
 };
 
-export default async function AdminEmailsPage() {
-  const emails = await getAllEmailLogsForAdmin();
+interface AdminEmailsPageProps {
+  searchParams: Promise<{ q?: string; template?: string; page?: string }>;
+}
+
+export default async function AdminEmailsPage({ searchParams }: AdminEmailsPageProps) {
+  const params = await searchParams;
+  const search = parseSearch(params.q);
+  const template = params.template && TEMPLATE_LABELS[params.template] ? params.template : undefined;
+  const { rows, total, page, pageCount, pageSize } = await listEmailLogsForAdmin({
+    search,
+    template,
+    page: parsePage(params.page),
+    pageSize: DEFAULT_PAGE_SIZE,
+  });
 
   return (
     <div>
       <AdminPageHeader
         title="Emails"
-        description={`${emails.length} emails sent through the dev provider. Every order confirmation, shipping update, and password reset gets logged here instead of a real inbox — see lib/email/ to wire up a real provider.`}
+        description={`${total} emails sent through ${emailProviderLabel()}. Every order confirmation, shipping update and password reset is logged here; bodies are kept for 180 days.`}
+      />
+
+      <ListFilterBar
+        action="/admin/emails"
+        searchValue={search}
+        searchPlaceholder="Search recipient or subject"
+        selects={[
+          {
+            name: "template",
+            label: "All templates",
+            value: template ?? "",
+            options: Object.entries(TEMPLATE_LABELS).map(([value, label]) => ({ value, label })),
+          },
+        ]}
       />
 
       <DataTable<EmailLogEntry>
@@ -43,12 +72,14 @@ export default async function AdminEmailsPage() {
           },
           { header: "Template", cell: (row) => TEMPLATE_LABELS[row.template] ?? row.template },
           { header: "Subject", cell: (row) => row.subject },
-          { header: "Sent", cell: (row) => formatDate(row.sentAt), className: "text-right" },
+          { header: "Sent", cell: (row) => formatDateTime(row.sentAt), className: "text-right whitespace-nowrap" },
         ]}
-        rows={emails}
+        rows={rows}
         getRowKey={(row) => row.id}
-        emptyMessage="No emails sent yet."
+        emptyMessage={search || template ? "No emails match those filters." : "No emails sent yet."}
       />
+
+      <Pagination basePath="/admin/emails" params={{ q: search, template }} page={page} pageCount={pageCount} total={total} pageSize={pageSize} label="emails" />
     </div>
   );
 }

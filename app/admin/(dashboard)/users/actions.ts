@@ -9,7 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { recordAdminAction } from "@/services/audit-log";
 import { requireCapability, requireAdminSession } from "@/lib/admin-session";
 import { ADMIN_SESSION_COOKIE } from "@/lib/auth";
-import { changeOwnPasswordSchema, createAdminUserSchema } from "@/lib/validation/admin-user";
+import { adminPasswordSchema, changeOwnPasswordSchema, createAdminUserSchema } from "@/lib/validation/admin-user";
 import { ADMIN_ROLES, type AdminRole } from "@/types/admin";
 
 export interface UserActionState {
@@ -185,4 +185,36 @@ export async function changeOwnPassword(formData: FormData): Promise<UserActionS
   cookieStore.delete(ADMIN_SESSION_COOKIE);
   revalidatePath("/admin", "layout");
   return { success: "Password changed. Sign in again with your new password." };
+}
+
+/**
+ * Sets a NEW password for another admin. The only recovery path for a forgotten admin
+ * password used to be a database edit — there is no "forgot password" on the admin login,
+ * and deleting-and-recreating the account loses its audit history. The new password is
+ * shown once to the admin who set it, to pass on directly; every session the account had
+ * is retired (AUTH-001), and one cannot reset one's own this way — that is the form above,
+ * which asks for the current password.
+ */
+export async function resetAdminPassword(userId: string, formData: FormData): Promise<UserActionState> {
+  const session = await requireCapability("admin:users");
+  if (userId === session.sub) return { error: "Use \"Change your password\" for your own account." };
+
+  const parsed = adminPasswordSchema.safeParse(formData.get("newPassword"));
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Choose a longer password." };
+
+  const target = await prisma.adminUser.findUnique({ where: { id: userId }, select: { email: true, name: true } });
+  if (!target) return { error: "That account no longer exists." };
+
+  await prisma.adminUser.update({
+    where: { id: userId },
+    data: { passwordHash: await hashPassword(parsed.data), sessionsValidFrom: new Date() },
+  });
+  await recordAdminAction({
+    action: "adminUser.password_reset",
+    targetType: "adminUser",
+    targetId: userId,
+    summary: `Reset the password for ${target.name} (${target.email}) — their sessions were signed out`,
+  });
+  revalidatePath("/admin/users");
+  return { success: `Password set for ${target.name}. Give it to them directly — it can't be shown again.` };
 }

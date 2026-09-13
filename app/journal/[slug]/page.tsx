@@ -6,7 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { formatDate } from "@/lib/format";
-import { getAllPosts, getNavigation, getPostBySlug, getSiteSettings } from "@/services";
+import { getPublishedPosts, getNavigation, getPublishedPostBySlug, getSiteSettings } from "@/services";
 import { getTranslations } from "next-intl/server";
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
@@ -18,13 +18,13 @@ interface JournalPostPageProps {
 }
 
 export async function generateStaticParams() {
-  const posts = await getAllPosts();
+  const posts = await getPublishedPosts();
   return posts.map((post) => ({ slug: post.slug }));
 }
 
 export async function generateMetadata({ params }: JournalPostPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const post = await getPostBySlug(slug);
+  const post = await getPublishedPostBySlug(slug);
   if (!post) return {};
   return { title: post.title, description: post.excerpt };
 }
@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: JournalPostPageProps): Promis
 export default async function JournalPostPage({ params }: JournalPostPageProps) {
   const t = await getTranslations("Pages");
   const { slug } = await params;
-  const post = await getPostBySlug(slug);
+  const post = await getPublishedPostBySlug(slug);
   if (!post) notFound();
 
   const [navigation, settings] = await Promise.all([getNavigation(), getSiteSettings()]);

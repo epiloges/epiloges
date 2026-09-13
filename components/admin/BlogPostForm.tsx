@@ -63,7 +63,7 @@ export function BlogPostForm({ defaultValues, onSubmit, submitLabel = "Save Post
             {errors.author ? <p className={errorClass}>{errors.author.message}</p> : null}
           </div>
           <div>
-            <label className={labelClass} htmlFor="bf-publishedAt">Published Date</label>
+            <label className={labelClass} htmlFor="bf-publishedAt">Publish Date</label>
             <input
               id="bf-publishedAt"
               type="date"
@@ -71,7 +71,11 @@ export function BlogPostForm({ defaultValues, onSubmit, submitLabel = "Save Post
               aria-invalid={Boolean(errors.publishedAt)}
               {...register("publishedAt")}
             />
-            {errors.publishedAt ? <p className={errorClass}>{errors.publishedAt.message}</p> : null}
+            {errors.publishedAt ? (
+              <p className={errorClass}>{errors.publishedAt.message}</p>
+            ) : (
+              <p className="mt-1.5 text-xs text-luxe-gray-dark">A future date schedules the post — it stays off the journal until then.</p>
+            )}
           </div>
         </div>
         <div>

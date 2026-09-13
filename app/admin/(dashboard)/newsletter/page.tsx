@@ -1,5 +1,7 @@
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { DataTable } from "@/components/admin/DataTable";
+import { DeleteRowButton } from "@/components/admin/DeleteRowButton";
+import { removeNewsletterSubscriber } from "@/app/admin/(dashboard)/newsletter/actions";
 import { formatDate } from "@/lib/format";
 import { getNewsletterSubscribers } from "@/services";
 import type { NewsletterSubscriber } from "@/types";
@@ -17,12 +19,12 @@ export default async function AdminNewsletterPage() {
         title="Newsletter Subscribers"
         description={`${subscribers.length} subscribers, captured from the site's signup forms.`}
         actions={
-          <button
-            type="button"
-            className="h-9 border border-border px-4 text-xs font-medium tracking-[0.05em] uppercase"
+          <a
+            href="/api/admin/newsletter/export"
+            className="inline-flex h-9 items-center border border-border px-4 text-xs font-medium tracking-[0.05em] uppercase"
           >
             Export CSV
-          </button>
+          </a>
         }
       />
 
@@ -31,6 +33,11 @@ export default async function AdminNewsletterPage() {
           { header: "Email", cell: (row) => row.email },
           { header: "Source", cell: (row) => row.source ?? "—" },
           { header: "Subscribed", cell: (row) => formatDate(row.subscribedAt) },
+          {
+            header: "",
+            className: "text-right",
+            cell: (row) => <DeleteRowButton id={row.id} onDelete={removeNewsletterSubscriber} confirmMessage={`Remove ${row.email}?`} />,
+          },
         ]}
         rows={subscribers}
         getRowKey={(row) => row.id}

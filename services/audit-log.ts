@@ -38,6 +38,7 @@ export type AuditAction =
   | "adminUser.created"
   | "adminUser.role_changed"
   | "adminUser.deleted"
+  | "adminUser.password_reset"
   | "review.deleted"
   | "giftCard.created"
   | "giftCard.updated"

@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { ROUTES } from "@/constants/routes";
-import { getAllCategories, getAllCollections, getAllPosts, getAllProducts, getLegalPages, getSeoDefaults } from "@/services";
+import { getAllCategories, getAllCollections, getPublishedPosts, getAllProducts, getLegalPages, getSeoDefaults } from "@/services";
 
 const STATIC_ROUTES: { path: string; priority: number }[] = [
   { path: ROUTES.home, priority: 1 },
@@ -25,7 +25,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     getAllProducts(),
     getAllCollections(),
     getAllCategories(),
-    getAllPosts(),
+    getPublishedPosts(),
     getLegalPages(),
   ]);
 

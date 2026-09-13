@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { formatDate } from "@/lib/format";
-import { getAllPosts, getNavigation, getSiteSettings } from "@/services";
+import { getPublishedPosts, getNavigation, getSiteSettings } from "@/services";
 import { getTranslations } from "next-intl/server";
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
@@ -20,7 +20,7 @@ export default async function JournalPage() {
   const [navigation, settings, posts, t] = await Promise.all([
     getNavigation(),
     getSiteSettings(),
-    getAllPosts(),
+    getPublishedPosts(),
     getTranslations("Pages"),
   ]);
 

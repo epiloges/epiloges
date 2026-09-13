@@ -6,6 +6,7 @@ import {
   ChangeOwnPasswordForm,
   CreateAdminUserForm,
   DeleteAdminUserButton,
+  ResetAdminPasswordControl,
 } from "@/components/admin/AdminUserForms";
 import { requireCapabilityOrRedirect } from "@/lib/admin-session";
 import { getAdminUsers } from "@/services";
@@ -66,7 +67,10 @@ export default async function AdminUsersPage() {
             header: "",
             className: "text-right",
             cell: (row) => (
-              <DeleteAdminUserButton userId={row.id} name={row.name} isSelf={row.id === session?.sub} />
+              <div className="flex flex-col items-end gap-2">
+                <DeleteAdminUserButton userId={row.id} name={row.name} isSelf={row.id === session?.sub} />
+                <ResetAdminPasswordControl userId={row.id} name={row.name} isSelf={row.id === session?.sub} />
+              </div>
             ),
           },
         ]}
