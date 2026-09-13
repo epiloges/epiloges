@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { CollectionForm } from "@/components/admin/CollectionForm";
 import { updateCollection, deleteCollection } from "@/app/admin/(dashboard)/collections/actions";
@@ -17,6 +18,10 @@ interface AdminCollectionDetailPageProps {
 
 export default async function AdminCollectionDetailPage({ params }: AdminCollectionDetailPageProps) {
   const { id } = await params;
+  // Binding a Server Action to this record encrypts the bound id with a fresh random IV,
+  // which Cache Components flags during prerender ("1 Issue" in dev). The page is
+  // per-request by nature — it edits one record — so render it that way.
+  await connection();
   const [collections, products, seo] = await Promise.all([
     getAllCollections(),
     getAllProducts({ includeUnpublished: true }),

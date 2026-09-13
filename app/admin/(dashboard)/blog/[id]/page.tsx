@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { BlogPostForm } from "@/components/admin/BlogPostForm";
 import { updateBlogPost, deleteBlogPost } from "@/app/admin/(dashboard)/blog/actions";
@@ -15,6 +16,10 @@ interface AdminBlogDetailPageProps {
 
 export default async function AdminBlogDetailPage({ params }: AdminBlogDetailPageProps) {
   const { id } = await params;
+  // Binding a Server Action to this record encrypts the bound id with a fresh random IV,
+  // which Cache Components flags during prerender ("1 Issue" in dev). The page is
+  // per-request by nature — it edits one record — so render it that way.
+  await connection();
   const post = await getPostById(id);
   if (!post) notFound();
 

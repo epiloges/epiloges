@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 import Link from "next/link";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { CategoryForm } from "@/components/admin/CategoryForm";
@@ -18,6 +19,10 @@ interface AdminCategoryDetailPageProps {
 
 export default async function AdminCategoryDetailPage({ params }: AdminCategoryDetailPageProps) {
   const { id } = await params;
+  // Binding a Server Action to this record encrypts the bound id with a fresh random IV,
+  // which Cache Components flags during prerender ("1 Issue" in dev). The page is
+  // per-request by nature — it edits one record — so render it that way.
+  await connection();
   const [category, parentOptions, children, seo] = await Promise.all([
     getCategoryById(id),
     getCategoryOptions(id),

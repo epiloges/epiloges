@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { OrderStatusSelect } from "@/components/admin/OrderStatusSelect";
 import { OrderTrackingForm } from "@/components/admin/OrderTrackingForm";
@@ -40,6 +41,10 @@ function addressLines(address: { firstName: string; lastName: string; company?: 
 
 export default async function AdminOrderDetailPage({ params }: AdminOrderDetailPageProps) {
   const { id } = await params;
+  // Binding a Server Action to this record encrypts the bound id with a fresh random IV,
+  // which Cache Components flags during prerender ("1 Issue" in dev). The page is
+  // per-request by nature — it edits one record — so render it that way.
+  await connection();
   const order = await getOrderById(id);
   if (!order) notFound();
 

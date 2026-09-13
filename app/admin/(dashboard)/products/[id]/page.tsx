@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { ProductForm } from "@/components/admin/ProductForm";
 import { ProductLifecycleActions } from "@/components/admin/ProductLifecycleActions";
@@ -20,6 +21,10 @@ interface AdminProductDetailPageProps {
 
 export default async function AdminProductDetailPage({ params }: AdminProductDetailPageProps) {
   const { id } = await params;
+  // Binding a Server Action to this record encrypts the bound id with a fresh random IV,
+  // which Cache Components flags during prerender ("1 Issue" in dev). The page is
+  // per-request by nature — it edits one record — so render it that way.
+  await connection();
   const [product, collections, categories, seo] = await Promise.all([
     getProductById(id),
     getAllCollections(),
