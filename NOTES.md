@@ -270,8 +270,12 @@ the sender (contact, concierge, returns, newsletter welcome once) with Reply-To 
 copy; OAuth first sign-in gets the welcome; all links come from `getSiteUrl()`, never the
 request host.
 
-**Not built, on purpose:** email verification at sign-up (Google/Apple/Facebook verify for
-us; the password form does not — a design gap, not a bug), invoices, SMS. **Untested live:**
+**Email verification (added 2026-09-14):** a password sign-up gets a signed 48-hour link in
+its welcome email; clicking it stamps `Customer.emailVerifiedAt`, and every account page
+shows a notice with "send again" until then. Nothing is locked behind it — it exists to
+catch a typo before the first order confirmation goes to a stranger. OAuth sign-ins are
+verified on arrival; every pre-existing account was backfilled as verified by the migration
+`20260914090000_customer_email_verified`. **Not built, on purpose:** invoices, SMS. **Untested live:**
 payment-received/failed/refund flows need Piraeus credentials that do not exist yet; they are
 exercised only through `applyStatus` in the sandbox.
 
