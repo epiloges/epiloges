@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireCapability } from "@/lib/admin-session";
+import { prisma } from "@/lib/prisma";
 import { recordAdminAction } from "@/services/audit-log";
 import { getOrderById, updateOrderStatus, updateOrderTracking, type OrderTrackingInput } from "@/services/orders";
 import { getCourierProvider, ACS_CARRIER_NAME } from "@/lib/courier";
@@ -185,4 +186,39 @@ export async function cancelAcsShipmentAction(orderId: string): Promise<CreateSh
   } catch (error) {
     return { error: error instanceof Error ? error.message : "Couldn't cancel the voucher." };
   }
+}
+
+export interface OrderNoteActionState {
+  error?: string;
+  success?: string;
+}
+
+/** Saves the shop's internal note on an order. Never emailed, never shown to the customer. */
+export async function updateOrderInternalNoteAction(
+  orderId: string,
+  _previous: OrderNoteActionState,
+  formData: FormData
+): Promise<OrderNoteActionState> {
+  await requireCapability("orders:manage");
+  const note = String(formData.get("internalNote") ?? "").trim().slice(0, 2000);
+  let before: { internalNote: string | null } | null;
+  try {
+    before = await prisma.order.findUnique({ where: { id: orderId }, select: { internalNote: true } });
+    if (!before) return { error: "Order not found." };
+    await prisma.order.update({ where: { id: orderId }, data: { internalNote: note || null } });
+  } catch (error) {
+    // A thrown error here would replace the whole page with the storefront's error screen.
+    console.error("[orders] internal note save failed", error);
+    return { error: "Couldn't save the note — try again." };
+  }
+  if ((before.internalNote ?? "") !== note) {
+    await recordAdminAction({
+      action: "order.note_updated",
+      targetType: "order",
+      targetId: orderId,
+      summary: note ? `Updated the internal note: "${note.slice(0, 80)}${note.length > 80 ? "…" : ""}"` : "Cleared the internal note",
+    });
+  }
+  revalidatePath(`/admin/orders/${orderId}`);
+  return { success: note ? "Note saved." : "Note cleared." };
 }

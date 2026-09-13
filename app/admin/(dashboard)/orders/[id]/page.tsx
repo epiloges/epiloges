@@ -14,11 +14,14 @@ import { PaymentStatusPill } from "@/components/admin/PaymentStatusPill";
 import {
   updateOrderStatusAction,
   updateOrderTrackingAction,
+  updateOrderInternalNoteAction,
   createAcsShipmentAction,
   cancelAcsShipmentAction,
 } from "@/app/admin/(dashboard)/orders/actions";
 import { isAcsCourierConfigured, ACS_CARRIER_NAME } from "@/lib/courier";
 import { AcsVoucherActions } from "@/components/admin/AcsVoucherActions";
+import { OrderInternalNoteForm } from "@/components/admin/OrderInternalNoteForm";
+import { listAuditLogForTarget } from "@/services/audit-log";
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
@@ -53,7 +56,8 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderDetailP
   // Cash-on-Delivery order is legitimately "processing" while its payment is still
   // pending, and this page is where that distinction actually matters to someone
   // deciding whether to dispatch.
-  const payments = await getPaymentsForOrder(order.id);
+  const [payments, history] = await Promise.all([getPaymentsForOrder(order.id), listAuditLogForTarget("order", order.id)]);
+  const boundUpdateNote = updateOrderInternalNoteAction.bind(null, order.id);
 
   const boundUpdateTracking = updateOrderTrackingAction.bind(null, order.id);
   const boundCreateAcsShipment = createAcsShipmentAction.bind(null, order.id);
@@ -66,7 +70,19 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderDetailP
       <AdminPageHeader
         title={`Order #${order.id.slice(-8).toUpperCase()}`}
         description={`Placed ${formatDate(order.createdAt)} by ${order.customerEmail}`}
-        actions={<OrderStatusSelect orderId={order.id} defaultStatus={order.status} hasTracking={Boolean(order.trackingNumber)} onChange={updateOrderStatusAction} />}
+        actions={
+          <div className="flex flex-wrap items-center gap-3">
+            <a
+              href={`/api/admin/orders/${order.id}/packing-slip`}
+              target="_blank"
+              rel="noopener"
+              className="h-8 border border-border px-3 text-xs leading-8 tracking-[0.05em] uppercase hover:border-luxe-black"
+            >
+              Packing slip
+            </a>
+            <OrderStatusSelect orderId={order.id} defaultStatus={order.status} hasTracking={Boolean(order.trackingNumber)} onChange={updateOrderStatusAction} />
+          </div>
+        }
       />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -243,6 +259,33 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderDetailP
               <p className="text-sm">{order.giftMessage ? `"${order.giftMessage}"` : "No message added"}</p>
             </div>
           ) : null}
+          <div className="border border-border bg-luxe-white p-4">
+            <h3 className="mb-3 text-xs font-medium tracking-[0.05em] uppercase text-luxe-gray-dark">Internal note</h3>
+            <OrderInternalNoteForm initialNote={order.internalNote ?? ""} action={boundUpdateNote} />
+          </div>
+          {/*
+            What happened to this order and who did it, from the activity trail. There is no
+            status-history table, so this is the record: status changes, tracking, vouchers,
+            refunds — each with a time and a name.
+          */}
+          <div className="border border-border bg-luxe-white p-4">
+            <h3 className="mb-3 text-xs font-medium tracking-[0.05em] uppercase text-luxe-gray-dark">History</h3>
+            <ol className="space-y-2 text-xs">
+              <li className="flex gap-3">
+                <span className="w-24 shrink-0 text-luxe-gray-dark">{formatDateTime(order.createdAt)}</span>
+                <span>Order placed by the customer</span>
+              </li>
+              {history.map((entry) => (
+                <li key={entry.id} className="flex gap-3">
+                  <span className="w-24 shrink-0 text-luxe-gray-dark">{formatDateTime(entry.createdAt)}</span>
+                  <span>
+                    {entry.summary}
+                    <span className="text-luxe-gray-dark"> — {entry.actorEmail}</span>
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </div>
           {/*
             The shopper's delivery note, above the addresses for the same reason as the
             invoice: it changes what the person packing the box has to do. "Παράδοση μετά τις

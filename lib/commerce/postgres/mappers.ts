@@ -367,6 +367,7 @@ export function toOrder(row: OrderRow): Order {
     giftWrap: row.giftWrap,
     giftMessage: row.giftMessage ?? undefined,
     customerNote: row.customerNote ?? undefined,
+    internalNote: row.internalNote ?? undefined,
     status: row.status as Order["status"],
     trackingNumber: row.trackingNumber ?? undefined,
     carrier: row.carrier ?? undefined,

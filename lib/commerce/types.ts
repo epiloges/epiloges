@@ -219,6 +219,8 @@ export interface Order {
   giftMessage?: string;
   /** A free-text delivery instruction from the shopper. Never a gift message — see the schema. */
   customerNote?: string;
+  /** The shop's own note on the order — never sent to the customer. */
+  internalNote?: string;
   status: "confirmed" | "processing" | "shipped" | "delivered" | "cancelled" | "refunded";
   /** Set once a shipment exists — see lib/courier/. */
   trackingNumber?: string;

@@ -567,6 +567,8 @@ model Order {
   /// Deliberately NOT giftMessage: that column stays reserved for gift wrapping, which is
   /// retired from the UI but kept intact so December is a UI change rather than a rebuild.
   customerNote String?
+  /// What the shop wrote to itself about this order. Never shown to the customer.
+  internalNote String?
 
   /// "confirmed" | "processing" | "shipped" | "delivered" | "cancelled" | "refunded"
   /// Starts at "confirmed" — EXACT parity with the mock's completeCheckout, which sets

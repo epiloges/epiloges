@@ -34,6 +34,7 @@ export type AuditAction =
   | "order.tracking_updated"
   | "order.shipment_created"
   | "order.shipment_cancelled"
+  | "order.note_updated"
   | "courier.pickup_list_issued"
   | "adminUser.created"
   | "adminUser.role_changed"
@@ -164,4 +165,19 @@ export async function listAuditLog(query: { page?: number; pageSize?: number; ac
     page,
     pageSize
   );
+}
+
+/** Every entry about one target, oldest first — the order page's timeline. */
+export async function listAuditLogForTarget(targetType: AuditEntryInput["targetType"], targetId: string): Promise<AuditLogEntry[]> {
+  const rows = await prisma.adminAuditLog.findMany({ where: { targetType, targetId }, orderBy: { createdAt: "asc" } });
+  return rows.map((row) => ({
+    id: row.id,
+    actorId: row.actorId,
+    actorEmail: row.actorEmail,
+    action: row.action,
+    targetType: row.targetType,
+    targetId: row.targetId,
+    summary: row.summary,
+    createdAt: row.createdAt.toISOString(),
+  }));
 }
