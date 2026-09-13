@@ -457,7 +457,7 @@
     "paymentFailedTitle": "Your payment didn't go through",
     "thankYou": "Thank you for your order",
     "failedBody": "Order {reference} is saved, but we haven't received payment. Please get in touch and we'll help you complete it.",
-    "confirmationSentTo": "A confirmation has been sent to {email}.",
+    "confirmationSentTo": "A confirmation has been sent to <email>{address}</email>.",
     "orderNumber": "Order number: #{reference}",
     "payment": "Payment",
     "cameBackUnfinished": "It looks like you came back without finishing. Your order is held — contact us and we can send you a fresh payment link.",

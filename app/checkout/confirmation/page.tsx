@@ -131,8 +131,11 @@ export default async function CheckoutConfirmationPage({ searchParams }: Confirm
         <p className="mt-2 text-sm text-luxe-gray-dark">
           {isFailed
             ? t("failedBody", { reference: `#${reference}` })
-            : t.rich("confirmationSentTo", {
-                email: () => <span className="text-luxe-black">{order.customerEmail}</span>,
+            : // A tag (<email>…</email>) takes a render function; a plain {argument} does not, and
+              // passing one crashed the page for every successful order.
+              t.rich("confirmationSentTo", {
+                address: order.customerEmail,
+                email: (chunks) => <span className="text-luxe-black">{chunks}</span>,
               })}
         </p>
         <p className="mt-1 text-sm text-luxe-gray-dark">{t("orderNumber", { reference })}</p>
