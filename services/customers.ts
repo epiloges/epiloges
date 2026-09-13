@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { customerInclude, toCustomer } from "@/lib/commerce/postgres/mappers";
 import { cartTotalsSchema } from "@/lib/validation/commerce";
+import { storedAddressSchema } from "@/lib/validation/checkout";
 import { round2 } from "@/lib/commerce/postgres/cart-totals";
 import type { Address, Customer } from "@/lib/commerce/types";
 
@@ -125,14 +126,72 @@ export async function updateCustomerPasswordHash(customerId: string, passwordHas
   });
 }
 
-export async function getAllCustomersForAdmin(): Promise<(Customer & { ordersCount: number; totalSpent: number })[]> {
-  const rows = await prisma.customer.findMany({
-    include: { ...customerInclude, orders: { select: { totals: true } } },
-    orderBy: { createdAt: "desc" },
-  });
-  return rows.map((row) => {
-    const customer = toCustomer(row);
-    const totalSpent = row.orders.reduce((sum, order) => sum + cartTotalsSchema.parse(order.totals).total.amount, 0);
-    return { ...customer, ordersCount: row.orders.length, totalSpent: round2(totalSpent) };
-  });
+/**
+ * One row per email address the shop has dealt with. Guests never get a Customer row, and
+ * an order placed from a cart that started before sign-in has no customerId either, so
+ * matching orders by customerId under-counts everyone. Email is the one thing every order
+ * carries, so it is the key here — a guest shows up with the name from their shipping
+ * address, and an account holder's guest orders count towards them.
+ */
+export interface AdminCustomerRow {
+  /** Customer id for an account, `guest:<email>` otherwise — stable enough for a table key. */
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  /** Sign-up date for an account, first order date for a guest. */
+  createdAt: string;
+  hasAccount: boolean;
+  ordersCount: number;
+  totalSpent: number;
+}
+
+export async function getAllCustomersForAdmin(): Promise<AdminCustomerRow[]> {
+  const [accounts, orders] = await Promise.all([
+    prisma.customer.findMany({ orderBy: { createdAt: "desc" } }),
+    prisma.order.findMany({
+      select: { customerEmail: true, totals: true, shippingAddress: true, createdAt: true },
+      orderBy: { createdAt: "asc" },
+    }),
+  ]);
+
+  const rows = new Map<string, AdminCustomerRow>();
+  for (const account of accounts) {
+    rows.set(account.email.toLowerCase(), {
+      id: account.id,
+      email: account.email,
+      firstName: account.firstName,
+      lastName: account.lastName,
+      phone: account.phone ?? undefined,
+      createdAt: account.createdAt.toISOString(),
+      hasAccount: true,
+      ordersCount: 0,
+      totalSpent: 0,
+    });
+  }
+
+  for (const order of orders) {
+    const email = order.customerEmail.toLowerCase();
+    let row = rows.get(email);
+    if (!row) {
+      const address = storedAddressSchema.parse(order.shippingAddress);
+      row = {
+        id: `guest:${email}`,
+        email,
+        firstName: address.firstName,
+        lastName: address.lastName,
+        phone: address.phone || undefined,
+        createdAt: order.createdAt.toISOString(),
+        hasAccount: false,
+        ordersCount: 0,
+        totalSpent: 0,
+      };
+      rows.set(email, row);
+    }
+    row.ordersCount += 1;
+    row.totalSpent = round2(row.totalSpent + cartTotalsSchema.parse(order.totals).total.amount);
+  }
+
+  return [...rows.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }

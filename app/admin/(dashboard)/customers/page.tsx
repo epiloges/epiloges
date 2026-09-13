@@ -3,14 +3,11 @@ import { DataTable } from "@/components/admin/DataTable";
 import { EraseCustomerDataForm, ExportCustomerDataForm } from "@/components/admin/DataSubjectPanel";
 import { currentRoleHasCapability } from "@/lib/admin-session";
 import { formatDate } from "@/lib/format";
-import { getAllCustomersForAdmin } from "@/services/customers";
-import type { Customer } from "@/lib/commerce/types";
+import { getAllCustomersForAdmin, type AdminCustomerRow } from "@/services/customers";
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
 export const instant = false;
-
-type AdminCustomerRow = Customer & { ordersCount: number; totalSpent: number };
 
 export default async function AdminCustomersPage() {
   // Data-subject work sits with whoever owns the shop's legal obligations, not with whoever
@@ -20,10 +17,14 @@ export default async function AdminCustomersPage() {
     getAllCustomersForAdmin(),
     currentRoleHasCapability("admin:settings"),
   ]);
+  const accounts = customers.filter((c) => c.hasAccount).length;
 
   return (
     <div>
-      <AdminPageHeader title="Customers" description={`${customers.length} customers.`} />
+      <AdminPageHeader
+        title="Customers"
+        description={`${customers.length} customers — ${accounts} with an account, ${customers.length - accounts} who checked out as guests.`}
+      />
 
       <DataTable<AdminCustomerRow>
         columns={[
@@ -31,16 +32,26 @@ export default async function AdminCustomersPage() {
             header: "Customer",
             cell: (row) => (
               <div>
-                <p>
+                <p className="flex items-center gap-2">
                   {row.firstName} {row.lastName}
+                  {row.hasAccount ? null : (
+                    <span className="border border-border px-1.5 py-px text-[10px] tracking-[0.05em] text-luxe-gray-dark uppercase">
+                      Guest
+                    </span>
+                  )}
                 </p>
-                <p className="text-xs text-luxe-gray-dark">{row.email}</p>
+                <p className="text-xs text-luxe-gray-dark">
+                  <a href={`mailto:${row.email}`} className="hover:underline">
+                    {row.email}
+                  </a>
+                  {row.phone ? <span> · {row.phone}</span> : null}
+                </p>
               </div>
             ),
           },
           { header: "Orders", cell: (row) => row.ordersCount },
           { header: "Total Spent", cell: (row) => `€${row.totalSpent.toFixed(2)}` },
-          { header: "Joined", cell: (row) => formatDate(row.createdAt) },
+          { header: "Since", cell: (row) => formatDate(row.createdAt) },
         ]}
         rows={customers}
         getRowKey={(row) => row.id}

@@ -4,14 +4,11 @@ import { MiniBarChart } from "@/components/admin/MiniBarChart";
 import { DataTable } from "@/components/admin/DataTable";
 import { formatDate } from "@/lib/format";
 import { getAllOrdersForAdmin } from "@/services/orders";
-import { getAllCustomersForAdmin } from "@/services/customers";
-import type { Customer } from "@/lib/commerce/types";
+import { getAllCustomersForAdmin, type AdminCustomerRow } from "@/services/customers";
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
 export const instant = false;
-
-type AdminCustomerRow = Customer & { ordersCount: number; totalSpent: number };
 
 export default async function AdminAnalyticsPage() {
   const [orders, customers] = await Promise.all([getAllOrdersForAdmin(), getAllCustomersForAdmin()]);
@@ -27,7 +24,7 @@ export default async function AdminAnalyticsPage() {
   for (const order of orders) statusCounts.set(order.status, (statusCounts.get(order.status) ?? 0) + 1);
   const ordersByStatus = Array.from(statusCounts.entries()).map(([label, value]) => ({ label, value }));
 
-  const topCustomers = [...customers].sort((a, b) => b.totalSpent - a.totalSpent).slice(0, 5);
+  const topCustomers = customers.filter((c) => c.ordersCount > 0).sort((a, b) => b.totalSpent - a.totalSpent).slice(0, 5);
 
   return (
     <div>
