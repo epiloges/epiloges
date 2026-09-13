@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { AdminTopbar } from "@/components/admin/AdminTopbar";
 import { requireAdminSessionOrRedirect } from "@/lib/admin-session";
@@ -7,6 +8,13 @@ import { requireAdminSessionOrRedirect } from "@/lib/admin-session";
 export const instant = false;
 
 export default async function AdminDashboardLayout({ children }: { children: React.ReactNode }) {
+  /**
+   * Verifying the session token compares its expiry against the clock, and Cache
+   * Components refuses to prerender a clock read — even under `instant = false` — which
+   * showed up as a permanent "1 Issue" badge on every admin page in development. An admin
+   * page can never be prerendered anyway: who is signed in is only known per request.
+   */
+  await connection();
   const session = await requireAdminSessionOrRedirect();
 
   return (
