@@ -41,6 +41,8 @@ interface ProductsTableProps {
 }
 
 const PAGE_SIZE = 25;
+/** Hard deletes of this many or more products need the count typed back. */
+const TYPED_CONFIRM_THRESHOLD = 10;
 
 /**
  * QA-046: this table used to receive the entire catalog and filter, sort and page it in the
@@ -163,6 +165,21 @@ export function ProductsTable({ products, total, page, pageCount, filter, catego
         ? `Permanently delete ${selectionCount} product(s)? This cannot be undone — archive instead if you just want them off the storefront.`
         : `${label[0].toUpperCase()}${label.slice(1)} ${selectionCount} product(s)?`;
     if (!window.confirm(confirmation)) return;
+
+    /**
+     * Past a handful, a hard delete asks for the number to be typed. One OK on a dialog was
+     * all that stood between "select all matching" with no filter and the whole catalogue
+     * gone, together with every cart and wishlist line that referenced it.
+     */
+    if (action === "delete" && selectionCount >= TYPED_CONFIRM_THRESHOLD) {
+      const typed = window.prompt(
+        `You are about to permanently delete ${selectionCount} products. Type the number ${selectionCount} to confirm.`
+      );
+      if (typed?.trim() !== String(selectionCount)) {
+        setError("Deletion cancelled — the number typed did not match.");
+        return;
+      }
+    }
 
     startTransition(async () => {
       const result = await bulkUpdateProducts(action, currentScope());
