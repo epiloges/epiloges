@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -30,6 +30,9 @@ export function NewsletterForm({
 }: NewsletterFormProps) {
   const [submitted, setSubmitted] = useState(false);
   const t = useTranslations("Newsletter");
+  // The homepage renders this form twice (section + footer); a fixed id made two elements
+  // share it, so the label and any browser autofill pointed at whichever came first.
+  const inputId = useId();
   // The footer renders this with no ctaLabel; the homepage passes one from editable
   // section data. The fallback has to be translated, not a hardcoded "Subscribe".
   const label = ctaLabel ?? t("subscribe");
@@ -85,11 +88,11 @@ export function NewsletterForm({
           onDark ? "border-luxe-white/30" : compact ? "border-luxe-gray-dark/40" : "border-luxe-black/30"
         )}
       >
-        <label htmlFor="newsletter-email" className="sr-only">
+        <label htmlFor={inputId} className="sr-only">
           {t("emailLabel")}
         </label>
         <input
-          id="newsletter-email"
+          id={inputId}
           type="email"
           placeholder={t("emailPlaceholder")}
           className={cn(
