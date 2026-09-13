@@ -1,26 +1,34 @@
 {
-  "title": "Shipping & Returns",
-  "intro": "The essentials — full detail is confirmed at checkout and in your order emails.",
+  "title": "Αποστολές & Επιστροφές",
+  "intro": "Τα βασικά, με μια ματιά. Το ακριβές κόστος και η εκτίμηση παράδοσης εμφανίζονται στο ταμείο πριν επιβεβαιώσετε την παραγγελία.",
   "sections": [
     {
-      "heading": "Shipping",
-      "body": "Standard shipping is free on all orders over €150, and €6.95 on orders below that. Standard delivery arrives in 3–5 business days. Express shipping (1–2 business days) is available at checkout for €14.95. We currently ship within the EU and UK."
+      "heading": "Αποστολή εντός Ελλάδας",
+      "body": "Στέλνουμε με ACS Courier και η παραγγελία φτάνει σε 1–3 εργάσιμες ημέρες. Τα μεταφορικά είναι 2,95 € — 4,95 € για δυσπρόσιτες περιοχές — και δωρεάν για παραγγελίες άνω των 100 €. Παραγγελίες που ολοκληρώνονται μέχρι το μεσημέρι φεύγουν συνήθως την ίδια εργάσιμη ημέρα."
     },
     {
-      "heading": "Order Tracking",
-      "body": "You'll receive a shipping confirmation once your order leaves the warehouse. Track its status any time from your account's Orders page."
+      "heading": "Παραλαβή από το κατάστημα",
+      "body": "Δωρεάν. Επιλέξτε το στο ταμείο και θα σας ειδοποιήσουμε με email μόλις η παραγγελία σας είναι έτοιμη — συνήθως την επόμενη εργάσιμη ημέρα. Έβανς 9, Ηράκλειο Κρήτης, 71201."
     },
     {
-      "heading": "Returns",
-      "body": "Unworn items with tags attached can be returned within 30 days of delivery for a full refund to your original payment method. Start a return from your account's Returns page — we'll email a prepaid return label. Sale items marked 'Final Sale' are not eligible for return."
+      "heading": "Αποστολή στην Ευρωπαϊκή Ένωση",
+      "body": "14,95 €, με παράδοση σε 5–8 εργάσιμες ημέρες. Δεν στέλνουμε προς το παρόν εκτός ΕΕ."
     },
     {
-      "heading": "Exchanges",
-      "body": "We don't process direct exchanges — return the item for a refund and place a new order for the size or colour you'd prefer, so you're not waiting on stock availability."
+      "heading": "Παρακολούθηση παραγγελίας",
+      "body": "Μόλις η παραγγελία σας φύγει από το κατάστημα, λαμβάνετε email με τον αριθμό αποστολής της ACS. Αν έχετε λογαριασμό, βλέπετε την κατάσταση κάθε παραγγελίας στη σελίδα «Παραγγελίες»."
     },
     {
-      "heading": "Refund Timing",
-      "body": "Once your return is received and inspected, refunds are issued within 5–7 business days. It can take a further few days for your bank to post the credit."
+      "heading": "Επιστροφές",
+      "body": "Έχετε 30 ημέρες από την παράδοση για να μας επιστρέψετε δωρεάν αφόρετα είδη στην αρχική τους συσκευασία, για πλήρη επιστροφή χρημάτων. Δοκιμάστε τα παπούτσια σε εσωτερικό χώρο· είδη που έχουν φορεθεί έξω ή έχουν σημάδια χρήσης δεν γίνονται δεκτά. Για να ξεκινήσετε, στείλτε μας email στο alexandrisstores@gmail.com με τον αριθμό παραγγελίας σας — ή, αν έχετε λογαριασμό, από τη σελίδα «Επιστροφές». Πέρα από την πολιτική μας, διατηρείτε πάντα το νόμιμο δικαίωμα υπαναχώρησης εντός 14 ημερών, όπως περιγράφεται στους Όρους Χρήσης."
+    },
+    {
+      "heading": "Αλλαγές μεγέθους",
+      "body": "Πείτε μας ποιο νούμερο χρειάζεστε. Εφόσον είναι διαθέσιμο, το κρατάμε για εσάς και το στέλνουμε μόλις παραλάβουμε το αρχικό ζευγάρι. Αν έχει εξαντληθεί, σας επιστρέφουμε τα χρήματα."
+    },
+    {
+      "heading": "Επιστροφή χρημάτων",
+      "body": "Γίνεται το αργότερο 14 ημέρες αφότου παραλάβουμε και ελέγξουμε το είδος, με τον τρόπο που πληρώσατε. Για παραγγελίες με αντικαταβολή θα σας ζητήσουμε έναν IBAN. Η τράπεζά σας μπορεί να χρειαστεί λίγες ακόμη ημέρες για να εμφανίσει το ποσό."
     }
   ]
 }

@@ -9,7 +9,7 @@ import { getShippingReturnsPage, getNavigation, getSiteSettings } from "@/servic
 export const instant = false;
 
 export const metadata: Metadata = {
-  title: "Shipping & Returns",
+  title: "Αποστολές & Επιστροφές",
 };
 
 export default async function ShippingReturnsPage() {

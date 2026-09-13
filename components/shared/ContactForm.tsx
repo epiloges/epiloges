@@ -11,7 +11,7 @@ import { contactSchema, type ContactFormValues } from "@/lib/validation/contact"
 const inputClass =
   "h-11 w-full border border-border bg-transparent px-3 text-sm outline-none focus:border-luxe-black aria-invalid:border-destructive";
 
-const TOPICS = ["Order support", "Returns & exchanges", "Product question", "Press & partnerships", "Something else"];
+const TOPIC_KEYS = ["topicOrder", "topicReturns", "topicProduct", "topicPress", "topicOther"] as const;
 
 export function ContactForm() {
   const t = useTranslations("Contact");
@@ -106,7 +106,7 @@ export function ContactForm() {
           <option value="" disabled>
             {t("selectTopic")}
           </option>
-          {TOPICS.map((topic) => (
+          {TOPIC_KEYS.map((key) => t(key)).map((topic) => (
             <option key={topic} value={topic}>
               {topic}
             </option>
@@ -143,7 +143,7 @@ export function ContactForm() {
         disabled={isSubmitting}
         className="flex h-12 w-full items-center justify-center bg-luxe-black text-xs font-medium tracking-[0.1em] text-luxe-white uppercase transition-opacity hover:opacity-85 disabled:opacity-50 sm:w-auto sm:px-10"
       >
-        {isSubmitting ? "Sending..." : "Send Message"}
+        {isSubmitting ? t("sending") : t("submit")}
       </button>
     </form>
   );

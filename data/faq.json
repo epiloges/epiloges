@@ -1,71 +1,83 @@
 {
-  "intro": "Can't find what you're looking for? Reach us at alexandrisstores@gmail.com.",
+  "intro": "Δεν βρίσκετε αυτό που ψάχνετε; Γράψτε μας στο alexandrisstores@gmail.com ή καλέστε στο 2814 001 031.",
   "categories": [
     {
-      "title": "Orders & Shipping",
+      "title": "Παραγγελίες & αποστολή",
       "questions": [
         {
-          "question": "How long does delivery take?",
-          "answer": "Standard shipping arrives in 3–5 business days and is free on orders over €150 (€6.95 below that). Express shipping arrives in 1–2 business days for €14.95."
+          "question": "Πόσο κοστίζουν τα μεταφορικά και πότε παραδίδετε;",
+          "answer": "Εντός Ελλάδας στέλνουμε με ACS Courier σε 1–3 εργάσιμες ημέρες. Τα μεταφορικά είναι 2,95 € (4,95 € για δυσπρόσιτες περιοχές) και δωρεάν για παραγγελίες άνω των 100 €. Στις χώρες της Ευρωπαϊκής Ένωσης η αποστολή κοστίζει 14,95 € και φτάνει σε 5–8 εργάσιμες ημέρες."
         },
         {
-          "question": "Which countries do you ship to?",
-          "answer": "We currently ship within the EU and UK. Broader international shipping is on our roadmap."
+          "question": "Μπορώ να παραλάβω από το κατάστημα;",
+          "answer": "Ναι, δωρεάν. Επιλέξτε «Παραλαβή από το κατάστημα» στο ταμείο και θα σας ενημερώσουμε με email μόλις η παραγγελία σας είναι έτοιμη. Θα μας βρείτε στην Έβανς 9, στο Ηράκλειο Κρήτης."
         },
         {
-          "question": "Can I change or cancel my order after placing it?",
-          "answer": "Orders begin processing shortly after they're placed, so we can't guarantee changes once confirmed. Contact us as soon as possible and we'll do what we can."
+          "question": "Σε ποιες χώρες στέλνετε;",
+          "answer": "Σε όλη την Ελλάδα και στις χώρες της Ευρωπαϊκής Ένωσης. Δεν στέλνουμε προς το παρόν εκτός ΕΕ."
         },
         {
-          "question": "How do I track my order?",
-          "answer": "Sign in and open Account → Orders to see the current status of any order. You'll also get a shipping confirmation email once it leaves the warehouse."
+          "question": "Μπορώ να αλλάξω ή να ακυρώσω την παραγγελία μου;",
+          "answer": "Ναι, όσο δεν έχει παραδοθεί στον courier — συνήθως την ίδια ή την επόμενη εργάσιμη ημέρα. Επικοινωνήστε μαζί μας το συντομότερο, με τον αριθμό παραγγελίας σας, και θα το τακτοποιήσουμε."
+        },
+        {
+          "question": "Πώς παρακολουθώ την παραγγελία μου;",
+          "answer": "Μόλις η παραγγελία σας φύγει από το κατάστημα, σας στέλνουμε email με τον αριθμό αποστολής της ACS. Αν έχετε λογαριασμό, βλέπετε την κατάσταση κάθε παραγγελίας και στη σελίδα «Παραγγελίες» του λογαριασμού σας."
         }
       ]
     },
     {
-      "title": "Returns & Exchanges",
+      "title": "Επιστροφές & αλλαγές",
       "questions": [
         {
-          "question": "What's your return policy?",
-          "answer": "Unworn items with tags attached can be returned within 30 days of delivery for a full refund. Start a return from Account → Returns. Items marked 'Final Sale' aren't eligible."
+          "question": "Ποια είναι η πολιτική επιστροφών;",
+          "answer": "Έχετε 30 ημέρες από την παράδοση για να μας επιστρέψετε δωρεάν αφόρετα είδη στην αρχική τους συσκευασία, για πλήρη επιστροφή χρημάτων. Δοκιμάστε τα παπούτσια σε εσωτερικό χώρο — είδη που έχουν φορεθεί έξω δεν μπορούν να επιστραφούν. Ανεξάρτητα από αυτό, έχετε πάντα το νόμιμο δικαίωμα υπαναχώρησης εντός 14 ημερών."
         },
         {
-          "question": "Do you offer exchanges?",
-          "answer": "Not directly — return the item for a refund and place a new order for the size or colour you want, so you're not waiting on stock."
+          "question": "Πώς ξεκινώ μια επιστροφή;",
+          "answer": "Στείλτε μας email στο alexandrisstores@gmail.com με τον αριθμό παραγγελίας και το είδος που θέλετε να επιστρέψετε, και θα σας στείλουμε οδηγίες. Αν έχετε λογαριασμό, μπορείτε να ξεκινήσετε την επιστροφή και από τη σελίδα «Επιστροφές»."
         },
         {
-          "question": "How long do refunds take?",
-          "answer": "5–7 business days after we receive and inspect your return, plus however long your bank takes to post the credit."
+          "question": "Κάνετε αλλαγές μεγέθους;",
+          "answer": "Ναι. Πείτε μας ποιο νούμερο χρειάζεστε και, εφόσον υπάρχει διαθέσιμο, θα σας το στείλουμε μόλις παραλάβουμε το αρχικό. Αν το νούμερο έχει εξαντληθεί, σας επιστρέφουμε τα χρήματα."
+        },
+        {
+          "question": "Πότε επιστρέφονται τα χρήματα;",
+          "answer": "Το αργότερο 14 ημέρες αφότου παραλάβουμε το είδος, με τον ίδιο τρόπο που πληρώσατε. Για παραγγελίες με αντικαταβολή θα σας ζητήσουμε έναν IBAN για την επιστροφή."
         }
       ]
     },
     {
-      "title": "Product & Sizing",
+      "title": "Προϊόντα & μεγέθη",
       "questions": [
         {
-          "question": "How do I find my size?",
-          "answer": "Check the Size Guide, linked from every product page and in the site footer, for measurements by category."
+          "question": "Πώς βρίσκω το νούμερό μου;",
+          "answer": "Δείτε τον οδηγό μεγεθών, που αντιστοιχεί τα ευρωπαϊκά νούμερα σε εκατοστά. Μετρήστε το πόδι σας όρθιοι, από τη φτέρνα ως το μεγαλύτερο δάχτυλο, κατά προτίμηση το απόγευμα. Αν είστε ανάμεσα σε δύο νούμερα, επιλέξτε το μεγαλύτερο."
         },
         {
-          "question": "Are your products true to size?",
-          "answer": "Fit notes are listed on each product page. When a style runs small or large, we call it out there rather than only in the general size chart."
+          "question": "Είναι τα νούμερα κανονικά;",
+          "answer": "Κατά κανόνα ναι. Όπου κάποιο μοντέλο φοριέται μικρότερο ή μεγαλύτερο, το αναφέρουμε στην περιγραφή του. Αν δεν είστε σίγουροι, ρωτήστε μας πριν παραγγείλετε — ξέρουμε τα παπούτσια μας."
         },
         {
-          "question": "What are your products made from?",
-          "answer": "Primarily full-grain leather and suede uppers on leather or rubber soles. Full material composition is listed on each product page. See our Sustainability page for how we source them."
+          "question": "Είναι τα προϊόντα αυθεντικά;",
+          "answer": "Ναι. Είμαστε επίσημο σημείο πώλησης για κάθε μάρκα που θα βρείτε εδώ, και όλα τα είδη προέρχονται απευθείας από τους κατασκευαστές ή τους επίσημους αντιπροσώπους τους στην Ελλάδα."
         }
       ]
     },
     {
-      "title": "Account & Payment",
+      "title": "Λογαριασμός & πληρωμή",
       "questions": [
         {
-          "question": "Do I need an account to order?",
-          "answer": "No — guest checkout is available. Creating an account lets you track orders, save addresses, and check out faster next time."
+          "question": "Χρειάζομαι λογαριασμό για να παραγγείλω;",
+          "answer": "Όχι. Μπορείτε να ολοκληρώσετε την παραγγελία ως επισκέπτης. Ο λογαριασμός σάς επιτρέπει να βλέπετε τις παραγγελίες σας, να ξεκινάτε επιστροφές και να αποθηκεύετε τη λίστα επιθυμιών σας."
         },
         {
-          "question": "What payment methods do you accept?",
-          "answer": "Card, Apple Pay, Google Pay, and PayPal are shown at checkout. This is a demo store — no payment is actually charged."
+          "question": "Ποιους τρόπους πληρωμής δέχεστε;",
+          "answer": "Αντικαταβολή — πληρώνετε τον διανομέα με μετρητά κατά την παράδοση — και άμεση τραπεζική μεταφορά στον IBAN μας, οπότε η παραγγελία φεύγει μόλις εμφανιστεί η πληρωμή. Οι πληρωμές με κάρτα θα προστεθούν σύντομα."
+        },
+        {
+          "question": "Μπορώ να ζητήσω τιμολόγιο;",
+          "answer": "Ναι. Επιλέξτε «Θέλω τιμολόγιο» στο ταμείο και συμπληρώστε τα στοιχεία της επιχείρησής σας. Το ΑΦΜ συμπληρώνει αυτόματα την επωνυμία και τη ΔΟΥ."
         }
       ]
     }

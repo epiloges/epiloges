@@ -385,6 +385,15 @@
     "reviewEmailNote": "We'll email you once it's reviewed."
   },
   "Contact": {
+    "intro": "Questions about an order, a product, or anything else — we usually reply within 1 business day.",
+    "preferEmail": "Prefer email? Write to us directly at",
+    "topicOrder": "Order support",
+    "topicReturns": "Returns & exchanges",
+    "topicProduct": "Product question",
+    "topicPress": "Press & partnerships",
+    "topicOther": "Something else",
+    "submit": "Send message",
+    "sending": "Sending…",
     "messageSent": "Message sent",
     "name": "Name",
     "email": "Email",
@@ -393,6 +402,15 @@
     "message": "Message"
   },
   "Concierge": {
+    "intro": "A little guidance on sizing, an occasion, or building out a look — a real person on our team will reply personally.",
+    "topicStyling": "Styling advice",
+    "topicSizing": "Sizing & fit",
+    "topicOccasion": "A special occasion",
+    "topicGift": "Gift recommendations",
+    "topicOther": "Something else",
+    "messageLabel": "Tell us what you're looking for",
+    "submit": "Ask a stylist",
+    "sending": "Sending…",
     "requestSent": "Request sent",
     "stylistReply": "A stylist will reply within 1 business day.",
     "name": "Name",

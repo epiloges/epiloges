@@ -1,10 +1,10 @@
 import { z } from "zod";
 
 export const conciergeSchema = z.object({
-  name: z.string().trim().min(1, "Name is required"),
-  email: z.string().trim().min(1, "Email is required").email("Enter a valid email address"),
-  topic: z.string().trim().min(1, "Please select a topic"),
-  message: z.string().trim().min(10, "Tell us a bit more — at least 10 characters"),
+  name: z.string().trim().min(1, "Το ονοματεπώνυμο είναι υποχρεωτικό"),
+  email: z.string().trim().min(1, "Το email είναι υποχρεωτικό").email("Εισάγετε έγκυρη διεύθυνση email"),
+  topic: z.string().trim().min(1, "Επιλέξτε θέμα"),
+  message: z.string().trim().min(10, "Πείτε μας λίγα περισσότερα — τουλάχιστον 10 χαρακτήρες"),
 });
 
 export type ConciergeFormValues = z.infer<typeof conciergeSchema>;

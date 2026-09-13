@@ -1,10 +1,10 @@
 import { z } from "zod";
 
 export const contactSchema = z.object({
-  name: z.string().trim().min(1, "Name is required"),
-  email: z.string().trim().min(1, "Email is required").email("Enter a valid email address"),
-  subject: z.string().trim().min(1, "Please select a topic"),
-  message: z.string().trim().min(10, "Message must be at least 10 characters"),
+  name: z.string().trim().min(1, "Το ονοματεπώνυμο είναι υποχρεωτικό"),
+  email: z.string().trim().min(1, "Το email είναι υποχρεωτικό").email("Εισάγετε έγκυρη διεύθυνση email"),
+  subject: z.string().trim().min(1, "Επιλέξτε θέμα"),
+  message: z.string().trim().min(10, "Το μήνυμα πρέπει να έχει τουλάχιστον 10 χαρακτήρες"),
 });
 
 export type ContactFormValues = z.infer<typeof contactSchema>;

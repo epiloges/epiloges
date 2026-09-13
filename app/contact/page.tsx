@@ -18,6 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function ContactPage() {
   const t = await getTranslations("Pages");
+  const tContact = await getTranslations("Contact");
   const [navigation, settings] = await Promise.all([getNavigation(), getSiteSettings()]);
 
   return (
@@ -27,10 +28,10 @@ export default async function ContactPage() {
         <div className="container-luxe max-w-3xl py-14 md:py-20">
           <h1 className="font-heading text-4xl md:text-5xl">{t("contactTitle")}</h1>
           <p className="mt-4 text-lg text-luxe-gray-dark">
-            Questions about an order, a product, or anything else — we usually reply within 1 business day.
+            {tContact("intro")}
           </p>
           <p className="mt-2 text-sm text-luxe-gray-dark">
-            Prefer email? Write to us directly at{" "}
+            {tContact("preferEmail")}{" "}
             <a href={`mailto:${settings.contactEmail}`} className="underline underline-offset-4">
               {settings.contactEmail}
             </a>

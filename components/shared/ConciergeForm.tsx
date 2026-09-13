@@ -11,7 +11,7 @@ import { conciergeSchema, type ConciergeFormValues } from "@/lib/validation/conc
 const inputClass =
   "h-11 w-full border border-border bg-transparent px-3 text-sm outline-none focus:border-luxe-black aria-invalid:border-destructive";
 
-const TOPICS = ["Styling advice", "Sizing & fit", "A special occasion", "Gift recommendations", "Something else"];
+const TOPIC_KEYS = ["topicStyling", "topicSizing", "topicOccasion", "topicGift", "topicOther"] as const;
 
 export function ConciergeForm() {
   const t = useTranslations("Concierge");
@@ -90,7 +90,7 @@ export function ConciergeForm() {
           <option value="" disabled>
             {t("selectTopic")}
           </option>
-          {TOPICS.map((topic) => (
+          {TOPIC_KEYS.map((key) => t(key)).map((topic) => (
             <option key={topic} value={topic}>
               {topic}
             </option>
@@ -101,7 +101,7 @@ export function ConciergeForm() {
 
       <div>
         <label htmlFor="concierge-message" className="text-xs font-medium tracking-[0.05em] uppercase">
-          Tell us what you&apos;re looking for
+          {t("messageLabel")}
         </label>
         <textarea
           id="concierge-message"
@@ -118,7 +118,7 @@ export function ConciergeForm() {
         disabled={isSubmitting}
         className="flex h-12 w-full items-center justify-center bg-luxe-black text-xs font-medium tracking-[0.1em] text-luxe-white uppercase transition-opacity hover:opacity-85 disabled:opacity-50 sm:w-auto sm:px-10"
       >
-        {isSubmitting ? "Sending..." : "Ask a Stylist"}
+        {isSubmitting ? t("sending") : t("submit")}
       </button>
     </form>
   );

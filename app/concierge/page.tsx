@@ -18,6 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function ConciergePage() {
   const t = await getTranslations("Pages");
+  const tConcierge = await getTranslations("Concierge");
   const [navigation, settings] = await Promise.all([getNavigation(), getSiteSettings()]);
 
   return (
@@ -27,7 +28,7 @@ export default async function ConciergePage() {
         <div className="container-luxe max-w-3xl py-14 md:py-20">
           <h1 className="font-heading text-4xl md:text-5xl">{t("conciergeTitle")}</h1>
           <p className="mt-4 text-lg text-luxe-gray-dark">
-            A little guidance on sizing, an occasion, or building out a look — a real person on our team will reply personally.
+            {tConcierge("intro")}
           </p>
 
           <div className="mt-10">
