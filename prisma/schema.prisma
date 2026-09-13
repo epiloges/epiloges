@@ -554,6 +554,11 @@ model Order {
   billingAddress  Json
   /// ShippingRate — Zod-validated.
   shippingRate    Json
+  /// AppliedDiscount[] snapshot — which codes the shopper used, Zod-validated. Null on
+  /// orders placed before this was recorded; those show only the amount in `totals`.
+  discounts       Json?
+  /// AppliedGiftCard[] snapshot, same rules as `discounts`.
+  giftCards       Json?
 
   giftWrap    Boolean @default(false)
   giftMessage String?

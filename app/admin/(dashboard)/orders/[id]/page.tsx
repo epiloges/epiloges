@@ -4,6 +4,7 @@ import { OrderStatusSelect } from "@/components/admin/OrderStatusSelect";
 import { OrderTrackingForm } from "@/components/admin/OrderTrackingForm";
 import { formatDate, formatMoney } from "@/lib/format";
 import Link from "next/link";
+import Image from "next/image";
 import { getOrderById } from "@/services/orders";
 import { getPaymentsForOrder } from "@/services/payments";
 import { paymentProviderRegistry } from "@/lib/payments/registry";
@@ -61,12 +62,27 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderDetailP
             </h3>
             <div className="divide-y divide-border">
               {order.lineItems.map((item) => (
-                <div key={item.id} className="flex items-center justify-between gap-3 p-4 text-sm">
-                  <div>
-                    <p>{item.name}</p>
-                    <p className="text-xs text-luxe-gray-dark">
-                      {item.color} · {item.size} · Qty {item.quantity}
-                    </p>
+                <div key={item.id} className="flex items-center justify-between gap-4 p-4 text-sm">
+                  <div className="flex min-w-0 items-center gap-4">
+                    {/* The photo is what the person picking the box actually recognises the shoe by. */}
+                    <Link
+                      href={`/products/${item.slug}`}
+                      target="_blank"
+                      className="relative size-20 shrink-0 overflow-hidden bg-luxe-gray-light"
+                    >
+                      <Image src={item.image.src} alt={item.image.alt} fill sizes="80px" className="object-cover" />
+                    </Link>
+                    <div className="min-w-0">
+                      <p>{item.name}</p>
+                      <p className="text-xs text-luxe-gray-dark">
+                        {item.color} · {item.size} · Qty {item.quantity}
+                      </p>
+                      <p className="mt-1 text-xs">
+                        <Link href={`/admin/products/${item.productId}`} className="underline underline-offset-4">
+                          Open in Products
+                        </Link>
+                      </p>
+                    </div>
                   </div>
                   <p>{formatMoney({ amount: item.unitPrice.amount * item.quantity, currencyCode: item.unitPrice.currencyCode })}</p>
                 </div>
@@ -78,14 +94,38 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderDetailP
                 <span>{formatMoney(order.totals.subtotal)}</span>
               </div>
               {order.totals.discountTotal.amount > 0 ? (
-                <div className="flex justify-between text-luxe-gray-dark">
-                  <span>Discount</span>
+                <div className="flex justify-between gap-4 text-luxe-gray-dark">
+                  <span>
+                    Discount
+                    {order.discounts.length > 0 ? (
+                      <span className="ml-2 inline-flex flex-wrap gap-1.5 align-middle">
+                        {order.discounts.map((discount) => (
+                          <span key={discount.code} className="bg-amber-100 px-1.5 py-px font-mono text-xs text-amber-800">
+                            {discount.code} · {discount.type === "percentage" ? `${discount.value}%` : formatMoney(discount.amount)}
+                          </span>
+                        ))}
+                      </span>
+                    ) : (
+                      <span className="ml-2 text-xs">(code not recorded — order predates code tracking)</span>
+                    )}
+                  </span>
                   <span>-{formatMoney(order.totals.discountTotal)}</span>
                 </div>
               ) : null}
               {order.totals.giftCardTotal.amount > 0 ? (
-                <div className="flex justify-between text-luxe-gray-dark">
-                  <span>Gift Card</span>
+                <div className="flex justify-between gap-4 text-luxe-gray-dark">
+                  <span>
+                    Gift Card
+                    {order.giftCards.length > 0 ? (
+                      <span className="ml-2 inline-flex flex-wrap gap-1.5 align-middle">
+                        {order.giftCards.map((giftCard) => (
+                          <span key={giftCard.code} className="bg-luxe-gray-light px-1.5 py-px font-mono text-xs">
+                            {giftCard.code}
+                          </span>
+                        ))}
+                      </span>
+                    ) : null}
+                  </span>
                   <span>-{formatMoney(order.totals.giftCardTotal)}</span>
                 </div>
               ) : null}

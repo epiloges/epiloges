@@ -353,7 +353,7 @@ export async function completeCheckout(checkoutId: string): Promise<CompleteChec
       })
     : null;
 
-  const { totals, giftCards } = resolveCartAmounts({
+  const { totals, discounts, giftCards } = resolveCartAmounts({
     lineItems: lineItemsForTotals,
     discounts: discountRules,
     giftCards: giftCardRules,
@@ -482,6 +482,10 @@ export async function completeCheckout(checkoutId: string): Promise<CompleteChec
           shippingAddress: toJsonInput(shippingAddress),
           billingAddress: toJsonInput(billingAddress),
           shippingRate: toJsonInput(shippingRate),
+          // Snapshotted so the admin can see WHICH code produced the discount line. The
+          // cart's own rows are deleted a few lines down and the totals only keep the sum.
+          discounts: toJsonInput(discounts),
+          giftCards: toJsonInput(giftCards),
           giftWrap: checkoutRow.giftWrap,
           giftMessage: checkoutRow.giftMessage,
           customerNote: checkoutRow.customerNote,

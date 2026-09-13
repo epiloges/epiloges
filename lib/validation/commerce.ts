@@ -30,6 +30,19 @@ export const cartLineItemSchema = z.object({
   addedAt: z.string(),
 });
 
+export const appliedDiscountSchema = z.object({
+  code: z.string(),
+  type: z.enum(["percentage", "fixed"]),
+  value: z.number(),
+  amount: moneySchema,
+});
+
+export const appliedGiftCardSchema = z.object({
+  code: z.string(),
+  balance: moneySchema,
+  amountApplied: moneySchema,
+});
+
 export const cartTotalsSchema = z.object({
   subtotal: moneySchema,
   discountTotal: moneySchema,

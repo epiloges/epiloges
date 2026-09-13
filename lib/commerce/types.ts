@@ -210,6 +210,10 @@ export interface Order {
   shippingAddress: Address;
   billingAddress: Address;
   shippingRate: ShippingRate;
+  /** The codes behind `totals.discountTotal`. Empty on orders placed before they were recorded. */
+  discounts: AppliedDiscount[];
+  /** The codes behind `totals.giftCardTotal`, with the same caveat. */
+  giftCards: AppliedGiftCard[];
   giftWrap?: boolean;
   giftMessage?: string;
   /** A free-text delivery instruction from the shopper. Never a gift message — see the schema. */

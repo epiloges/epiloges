@@ -14,7 +14,13 @@ import {
   imageSchema,
 } from "@/lib/validation/product";
 import { storedAddressSchema } from "@/lib/validation/checkout";
-import { shippingRateSchema, cartLineItemSchema, cartTotalsSchema } from "@/lib/validation/commerce";
+import {
+  shippingRateSchema,
+  cartLineItemSchema,
+  cartTotalsSchema,
+  appliedDiscountSchema,
+  appliedGiftCardSchema,
+} from "@/lib/validation/commerce";
 import { resolveCartAmounts } from "@/lib/commerce/postgres/cart-totals";
 import { returnItemSchema } from "@/lib/validation/commerce";
 import type {
@@ -355,6 +361,9 @@ export function toOrder(row: OrderRow): Order {
     shippingAddress: storedAddressSchema.parse(row.shippingAddress),
     billingAddress: storedAddressSchema.parse(row.billingAddress),
     shippingRate: shippingRateSchema.parse(row.shippingRate),
+    // Null on orders placed before the codes were snapshotted — see the schema comment.
+    discounts: row.discounts ? z.array(appliedDiscountSchema).parse(row.discounts) : [],
+    giftCards: row.giftCards ? z.array(appliedGiftCardSchema).parse(row.giftCards) : [],
     giftWrap: row.giftWrap,
     giftMessage: row.giftMessage ?? undefined,
     customerNote: row.customerNote ?? undefined,
