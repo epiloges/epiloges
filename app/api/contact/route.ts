@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { contactSchema } from "@/lib/validation/contact";
 import { createContactMessage } from "@/services/contact";
-import { getEmailProvider, contactMessageNotificationEmail } from "@/lib/email";
+import { getEmailProvider, contactAcknowledgementEmail, contactMessageNotificationEmail } from "@/lib/email";
 import { getSiteSettings } from "@/services/settings";
 import { invalidInputResponse, rateLimitedResponse } from "@/lib/commerce/http-errors";
 import { getClientIp, isRateLimited, recordAttempt } from "@/lib/rate-limit";
@@ -25,7 +25,13 @@ export async function POST(request: Request) {
     const settings = await getSiteSettings();
     const to = process.env.CONTACT_EMAIL || settings.contactEmail;
     const message = contactMessageNotificationEmail({ siteName: settings.siteName, ...parsed.data });
-    await getEmailProvider().send({ to, template: "contact-message", ...message });
+    // Reply-To is the visitor, so "Reply" in the mail client answers them directly.
+    await getEmailProvider().send({ to, template: "contact-message", replyTo: parsed.data.email, ...message });
+    await getEmailProvider().send({
+      to: parsed.data.email,
+      template: "contact-acknowledgement",
+      ...contactAcknowledgementEmail({ siteName: settings.siteName, name: parsed.data.name, subject: parsed.data.subject, message: parsed.data.message }),
+    });
   } catch (error) {
     console.error("Failed to send contact notification email", error);
   }

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createReturn, getReturnsForCustomer } from "@/services/returns";
+import { createReturn, getReturnsForCustomer, notifyReturnRequested } from "@/services/returns";
 import { requireCustomerSession } from "@/lib/customer-session";
 import { createReturnInputSchema } from "@/lib/validation/commerce";
 import { commerceErrorResponse, invalidInputResponse } from "@/lib/commerce/http-errors";
@@ -28,6 +28,7 @@ export async function POST(request: Request) {
       items: parsed.data.items,
       reason: parsed.data.reason,
     });
+    await notifyReturnRequested(created);
     return NextResponse.json({ return: created });
   } catch (error) {
     return commerceErrorResponse(error);

@@ -12,6 +12,7 @@ import {
 import { commerceErrorResponse, invalidInputResponse, rateLimitedResponse } from "@/lib/commerce/http-errors";
 import { getClientIp, isRateLimited, recordAttempt } from "@/lib/rate-limit";
 import { getEmailProvider, welcomeEmail, accountAlreadyExistsEmail } from "@/lib/email";
+import { getSiteUrl } from "@/lib/site-url";
 import { getSiteSettings } from "@/services/settings";
 import { recordReferralSignup } from "@/services/referrals";
 
@@ -46,7 +47,7 @@ export async function POST(request: Request) {
         const settings = await getSiteSettings();
         const message = accountAlreadyExistsEmail({
           siteName: settings.siteName,
-          loginUrl: new URL("/account/login", request.url).toString(),
+          loginUrl: `${getSiteUrl().replace(/\/$/, "")}/account/login`,
         });
         await getEmailProvider().send({ to: email, template: "account-already-exists", ...message });
       } catch (emailError) {
@@ -78,7 +79,7 @@ export async function POST(request: Request) {
       const message = welcomeEmail({
         siteName: settings.siteName,
         firstName: customer.firstName,
-        shopUrl: new URL("/", request.url).toString(),
+        shopUrl: getSiteUrl(),
       });
       await getEmailProvider().send({ to: customer.email, template: "welcome", ...message });
     } catch (emailError) {

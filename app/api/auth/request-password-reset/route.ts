@@ -6,6 +6,7 @@ import { createPasswordResetToken } from "@/lib/password-reset";
 import { getCustomerByEmail } from "@/services/customers";
 import { getEmailProvider, passwordResetEmail } from "@/lib/email";
 import { getSiteSettings } from "@/services/settings";
+import { getSiteUrl } from "@/lib/site-url";
 
 /** Always 200 on valid input, regardless of whether the email exists — the response can't be used to enumerate accounts, matching the sign-up route's rate-limit-as-primary-defense approach for the same class of leak. */
 export async function POST(request: Request) {
@@ -24,7 +25,7 @@ export async function POST(request: Request) {
   if (customer) {
     try {
       const { rawToken, expiresInMinutes } = await createPasswordResetToken(customer.id);
-      const resetUrl = new URL(`/account/reset-password?token=${rawToken}`, request.url).toString();
+      const resetUrl = `${getSiteUrl().replace(/\/$/, "")}/account/reset-password?token=${rawToken}`;
       const settings = await getSiteSettings();
       const message = passwordResetEmail({ siteName: settings.siteName, resetUrl, expiresInMinutes });
       await getEmailProvider().send({ to: email, template: "password-reset", ...message });

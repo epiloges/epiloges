@@ -1,7 +1,9 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import { toJsonInput, toReturn } from "@/lib/commerce/postgres/mappers";
-import { getEmailProvider, returnStatusUpdateEmail } from "@/lib/email";
+import { adminNotificationEmail, getEmailProvider, returnRequestedEmail, returnStatusUpdateEmail } from "@/lib/email";
+import { getSiteUrl } from "@/lib/site-url";
+import { orderReference } from "@/lib/format";
 import { getSiteSettings } from "@/services/settings";
 import { creditStockForLines } from "@/services/restock";
 import { CommerceError, type Return, type ReturnItem } from "@/lib/commerce/types";
@@ -125,4 +127,47 @@ export async function getReturnsForEmail(email: string): Promise<Return[]> {
     orderBy: { createdAt: "desc" },
   });
   return rows.map(toReturn);
+}
+
+/**
+ * "We got your return request" to the customer, and the request to the shop. Until now the
+ * first thing a customer heard after filing was the approval — or nothing, for as long as
+ * it sat in the queue. Best-effort: the return row already exists.
+ */
+export async function notifyReturnRequested(returnRow: Return): Promise<void> {
+  try {
+    const settings = await getSiteSettings();
+    const provider = getEmailProvider();
+    await provider.send({
+      to: returnRow.customerEmail,
+      template: "return-requested",
+      idempotencyKey: `return-requested:${returnRow.id}`,
+      ...returnRequestedEmail({
+        siteName: settings.siteName,
+        orderId: returnRow.orderId,
+        items: returnRow.items.map((item) => ({ name: item.name, size: item.size, quantity: item.quantity })),
+        reason: returnRow.reason,
+      }),
+    });
+    const to = process.env.ADMIN_NOTIFY_EMAIL || process.env.CONTACT_EMAIL || settings.contactEmail;
+    if (to) {
+      await provider.send({
+        to,
+        template: "admin-notification",
+        idempotencyKey: `admin-return-requested:${returnRow.id}`,
+        ...adminNotificationEmail({
+          siteName: settings.siteName,
+          title: `Νέο αίτημα επιστροφής — παραγγελία #${orderReference(returnRow.orderId)}`,
+          summary: `${returnRow.items.reduce((sum, item) => sum + item.quantity, 0)} τεμ. από ${returnRow.customerEmail}`,
+          rows: [
+            { label: "Προϊόντα", value: returnRow.items.map((item) => `${item.name} · ${item.size} · ×${item.quantity}`).join("\n") },
+            { label: "Αιτία", value: returnRow.reason },
+          ],
+          adminUrl: `${getSiteUrl().replace(/\/$/, "")}/admin/returns`,
+        }),
+      });
+    }
+  } catch (error) {
+    console.error("Failed to send return-requested emails", error);
+  }
 }

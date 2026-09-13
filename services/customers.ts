@@ -48,12 +48,12 @@ export async function findOrCreateCustomerForOAuth(input: {
   email: string | null;
   firstName: string | null;
   lastName: string | null;
-}): Promise<Customer> {
+}): Promise<{ customer: Customer; created: boolean }> {
   const existingAccount = await prisma.customerOAuthAccount.findUnique({
     where: { provider_providerUserId: { provider: input.provider, providerUserId: input.providerUserId } },
     include: { customer: { include: customerInclude } },
   });
-  if (existingAccount) return toCustomer(existingAccount.customer);
+  if (existingAccount) return { customer: toCustomer(existingAccount.customer), created: false };
 
   const email = input.email?.toLowerCase();
   const existingCustomer = email ? await prisma.customer.findUnique({ where: { email } }) : null;
@@ -62,7 +62,7 @@ export async function findOrCreateCustomerForOAuth(input: {
     await prisma.customerOAuthAccount.create({
       data: { customerId: existingCustomer.id, provider: input.provider, providerUserId: input.providerUserId, email: input.email },
     });
-    return (await getCustomerById(existingCustomer.id))!;
+    return { customer: (await getCustomerById(existingCustomer.id))!, created: false };
   }
 
   const created = await prisma.customer.create({
@@ -75,7 +75,7 @@ export async function findOrCreateCustomerForOAuth(input: {
     },
     include: customerInclude,
   });
-  return toCustomer(created);
+  return { customer: toCustomer(created), created: true };
 }
 
 export async function updateCustomerProfile(

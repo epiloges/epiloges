@@ -4,6 +4,9 @@ import { isSafeRedirectPath, OAUTH_STATE_COOKIE, OAUTH_STATE_COOKIE_OPTIONS, par
 import { CUSTOMER_SESSION_COOKIE, CUSTOMER_SESSION_COOKIE_OPTIONS, signCustomerSession } from "@/lib/customer-auth";
 import { findOrCreateCustomerForOAuth } from "@/services/customers";
 import { getClientIp, isRateLimited, recordAttempt } from "@/lib/rate-limit";
+import { getEmailProvider, welcomeEmail } from "@/lib/email";
+import { getSiteSettings } from "@/services/settings";
+import { getSiteUrl } from "@/lib/site-url";
 
 function isKnownProvider(value: string): value is OAuthProviderName {
   return (OAUTH_PROVIDER_NAMES as string[]).includes(value);
@@ -39,13 +42,25 @@ async function handleCallback(request: NextRequest, provider: string, rawParams:
 
   try {
     const profile = await client.exchangeCode({ code, redirectUri, rawParams });
-    const customer = await findOrCreateCustomerForOAuth({
+    const { customer, created } = await findOrCreateCustomerForOAuth({
       provider,
       providerUserId: profile.providerUserId,
       email: profile.email,
       firstName: profile.firstName,
       lastName: profile.lastName,
     });
+
+    // A first sign-in with Google/Apple/Facebook IS the sign-up — same welcome as the
+    // form. Only when the provider gave us a real address (a placeholder gets no mail).
+    if (created && profile.email) {
+      try {
+        const settings = await getSiteSettings();
+        const message = welcomeEmail({ siteName: settings.siteName, firstName: customer.firstName, shopUrl: getSiteUrl() });
+        await getEmailProvider().send({ to: customer.email, template: "welcome", ...message });
+      } catch (emailError) {
+        console.error("Failed to send welcome email", emailError);
+      }
+    }
 
     const token = await signCustomerSession({
       sub: customer.id,

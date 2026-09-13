@@ -15,12 +15,18 @@ import type { NewsletterSubscriber } from "@/types";
  * "already subscribed" indistinguishable from "newly subscribed" to the caller, so the
  * endpoint can't be used to test whether an address is on the list.
  */
-export async function subscribeToNewsletter(email: string, source?: string): Promise<void> {
+/** Returns whether this was a NEW subscription — the welcome email is only for those. */
+export async function subscribeToNewsletter(email: string, source?: string): Promise<{ created: boolean }> {
+  const address = email.trim().toLowerCase();
+  const existing = await prisma.newsletterSubscriber.findUnique({ where: { email: address }, select: { email: true } });
   await prisma.newsletterSubscriber.upsert({
-    where: { email },
-    create: { email, source },
+    where: { email: address },
+    create: { email: address, source },
     update: {},
   });
+  // Signing up again is the clearest possible "I do want these" — clear a previous opt-out.
+  await prisma.emailUnsubscribe.deleteMany({ where: { email: address } });
+  return { created: !existing };
 }
 
 export async function getNewsletterSubscribers(): Promise<NewsletterSubscriber[]> {
