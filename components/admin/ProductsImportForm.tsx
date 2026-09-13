@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ImportRowResult, CommitRowResult } from "@/lib/products-import/types";
+import { IMPORT_COLUMNS } from "@/lib/products-import/columns";
 
 const inputClass = "block w-full text-sm";
 const sectionClass = "border border-border p-6";
@@ -86,8 +87,39 @@ export function ProductsImportForm() {
         <h3 className="text-sm font-medium">1. Choose files</h3>
         <p className="mt-1 text-sm text-luxe-gray-dark">
           A CSV of products, plus (optionally) the image files it references by filename in an <code>imageFilenames</code>{" "}
-          column. Products can also just reference already-hosted image URLs directly in an <code>images</code> column.
+          column. Products can also just reference already-hosted image URLs directly in an <code>images</code> column.{" "}
+          <a href="/api/admin/products/import/template" className="underline underline-offset-4">
+            Download the template
+          </a>{" "}
+          — it has every column and one example row. Rows import as <strong>draft</strong> unless{" "}
+          <code>status</code> says <code>active</code>; a row whose slug already exists updates that product.
         </p>
+        <details className="mt-3 text-sm">
+          <summary className="cursor-pointer text-xs tracking-[0.05em] uppercase text-luxe-gray-dark">Column reference</summary>
+          <div className="mt-3 overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="border-b border-border text-luxe-gray-dark">
+                  <th className="py-1.5 pr-3 font-medium">Column</th>
+                  <th className="py-1.5 pr-3 font-medium">Meaning</th>
+                  <th className="py-1.5 font-medium">Example</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {IMPORT_COLUMNS.map((column) => (
+                  <tr key={column.name}>
+                    <td className="py-1.5 pr-3 align-top font-mono whitespace-nowrap">
+                      {column.name}
+                      {column.required ? <span className="text-destructive"> *</span> : null}
+                    </td>
+                    <td className="py-1.5 pr-3 align-top">{column.description}</td>
+                    <td className="py-1.5 align-top font-mono text-luxe-gray-dark">{column.example}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </details>
         <div className="mt-4 space-y-3">
           <div>
             <label className="mb-1 block text-eyebrow">CSV file</label>

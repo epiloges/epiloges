@@ -6,6 +6,7 @@ import { productFormSchema } from "@/lib/validation/product";
 import { parseProductsCsv } from "@/lib/products-import/csv";
 import { mapCsvRowToProductForm } from "@/lib/products-import/mapper";
 import { uploadImageToBlob } from "@/lib/blob";
+import { categorySlugFor } from "@/services/categories";
 import { createMediaAsset } from "@/services/media";
 import type { ImportRowResult } from "@/lib/products-import/types";
 
@@ -64,12 +65,35 @@ export async function POST(request: Request) {
         continue;
       }
 
-      const existing = await prisma.product.findUnique({ where: { slug: parsed.data.slug }, select: { id: true } });
+      const [existing, category] = await Promise.all([
+        prisma.product.findUnique({ where: { slug: parsed.data.slug }, select: { id: true, status: true } }),
+        prisma.category.findUnique({ where: { slug: categorySlugFor(parsed.data.category) }, select: { id: true } }),
+      ]);
+      /**
+       * Every warning here is something the row will DO that the admin may not have meant:
+       * overwrite a product (including republishing an archived one), invent a category
+       * from a typo, or publish. None blocks the import — the point is that the preview
+       * says it before the commit does it.
+       */
+      const warnings: string[] = [];
+      if (existing) {
+        warnings.push(
+          existing.status !== "active" && parsed.data.status === "active"
+            ? `A ${existing.status} product with this slug already exists — this row will update it AND publish it.`
+            : "A product with this slug already exists — this row will update it."
+        );
+      }
+      if (!category) {
+        warnings.push(
+          `Category "${parsed.data.category}" doesn't exist. It will be created hidden, with an English name and no Greek one — rename it under Categories, or fix the cell if it's a typo.`
+        );
+      }
+      if (parsed.data.status === "active" && !existing) warnings.push("Will be published to the storefront on import.");
       results.push({
         rowNumber,
         values: parsed.data,
         errors: [],
-        warning: existing ? "A product with this slug already exists — this row will update it." : undefined,
+        warning: warnings.length > 0 ? warnings.join(" ") : undefined,
         existingId: existing?.id,
       });
     }

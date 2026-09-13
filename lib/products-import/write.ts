@@ -109,7 +109,11 @@ export function resolveSizeQuantity(
  * uses, so nothing downstream needed a stable id it wasn't already living without.
  */
 export async function writeProductRow(data: ProductFormValues, existingId?: string): Promise<{ id: string }> {
-  const { id: categoryId } = await findOrCreateCategoryBySlug(data.category);
+  // For an UPDATE the category is resolved up front (the transaction below is a batch of
+  // independent statements). For a CREATE it is resolved inside the same interactive
+  // transaction as the product row, so a row that then fails cannot leave a brand-new
+  // category behind with nothing in it — which is what a failed import used to do.
+  const { id: categoryId } = existingId ? await findOrCreateCategoryBySlug(data.category) : { id: "" };
 
   const colorWrites = {
     create: data.colors.map((color, position) => ({
@@ -222,23 +226,27 @@ export async function writeProductRow(data: ProductFormValues, existingId?: stri
     return { id: existingId };
   }
 
-  const product = await prisma.product.create({
-    data: {
-      ...toProductWriteData(data, categoryId),
-      colors: colorWrites,
-      collections: collectionWrites,
-      sizes: {
-        // Nothing exists yet, so every quantity here is authoritative by definition.
-        create: data.sizes.map((size, position) => ({
-          position,
-          name: size.name,
-          inStock: size.inStock,
-          quantity: Math.max(0, size.quantity),
-          sku: size.sku,
-          barcode: size.barcode,
-        })),
+  const product = await prisma.$transaction(async (tx) => {
+    const { id: createdCategoryId } = await findOrCreateCategoryBySlug(data.category, tx);
+    return tx.product.create({
+      data: {
+        ...toProductWriteData(data, createdCategoryId),
+        colors: colorWrites,
+        collections: collectionWrites,
+        sizes: {
+          // Nothing exists yet, so every quantity here is authoritative by definition.
+          create: data.sizes.map((size, position) => ({
+            position,
+            name: size.name,
+            inStock: size.inStock,
+            quantity: Math.max(0, size.quantity),
+            sku: size.sku,
+            barcode: size.barcode,
+          })),
+        },
       },
-    },
+      select: { id: true },
+    });
   });
   return { id: product.id };
 }

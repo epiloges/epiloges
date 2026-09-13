@@ -38,12 +38,18 @@ function parseNumber(value: string | undefined): number | undefined {
   return Number.isFinite(n) ? n : undefined;
 }
 
-/** Unrecognized/blank values fall back to "active" rather than failing the row — see the
- * `status` note in mapCsvRowToProductForm. An invalid value is a typo, not a reason to
- * reject an otherwise-good product. */
-function normalizeStatus(value: string | undefined): "draft" | "active" | "archived" {
+/**
+ * Blank means draft — the same default as the single-product form, for the same reason:
+ * nothing should reach the storefront because a column was left empty. Publishing is the
+ * explicit `status=active`. Anything else ("publishedd") is a row error rather than a
+ * silent fallback, because the previous fallback was "active": a typo in this column used
+ * to be exactly the thing that put a row live.
+ */
+function normalizeStatus(value: string | undefined): { status: "draft" | "active" | "archived"; error?: string } {
   const normalized = value?.trim().toLowerCase();
-  return normalized === "draft" || normalized === "archived" ? normalized : "active";
+  if (!normalized) return { status: "draft" };
+  if (normalized === "draft" || normalized === "active" || normalized === "archived") return { status: normalized };
+  return { status: "draft", error: `status: "${value}" isn't one of draft, active or archived.` };
 }
 
 export interface MappedRow {
@@ -90,6 +96,9 @@ export function mapCsvRowToProductForm(row: RawCsvRow, resolvedImageUrls: Map<st
     };
   });
 
+  const status = normalizeStatus(row.status);
+  if (status.error) errors.push(status.error);
+
   const values: Record<string, unknown> = {
     slug: row.slug?.trim() ?? "",
     name: row.name?.trim() ?? "",
@@ -120,12 +129,9 @@ export function mapCsvRowToProductForm(row: RawCsvRow, resolvedImageUrls: Map<st
     inventoryPolicy: row.inventoryPolicy?.trim() || "deny",
     shippingWeightGrams: parseNumber(row.shippingWeightGrams),
     availableForSale: parseBool(row.availableForSale, true),
-    // Imports default to "active" (not "draft" like the manual form): a bulk import is an
-    // explicit act of publishing a prepared catalog, and defaulting hundreds of rows to
-    // draft would mean hand-publishing every one. An explicit `status` column still wins.
     brand: row.brand?.trim() || undefined,
     vendor: row.vendor?.trim() || undefined,
-    status: normalizeStatus(row.status),
+    status: status.status,
   };
 
   return { values, errors };

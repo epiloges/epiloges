@@ -165,12 +165,20 @@ export async function getCategoryOptions(excludeSubtreeRootId?: string): Promise
  * created category starts as top-level (no parent) — fully visible and browsable, just
  * needs an admin to place it in the hierarchy and add imagery later.
  */
-export async function findOrCreateCategoryBySlug(rawSlug: string): Promise<{ id: string }> {
-  const slug = rawSlug
+/** The slug a free-text category cell resolves to — shared with the import preview so it can warn about categories that don't exist yet. */
+export function categorySlugFor(rawSlug: string): string {
+  return rawSlug
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+export async function findOrCreateCategoryBySlug(
+  rawSlug: string,
+  db: Pick<typeof prisma, "category"> = prisma
+): Promise<{ id: string }> {
+  const slug = categorySlugFor(rawSlug);
   if (!slug) throw new Error(`"${rawSlug}" doesn't contain any usable category name.`);
 
   const name = slug
@@ -183,9 +191,12 @@ export async function findOrCreateCategoryBySlug(rawSlug: string): Promise<{ id:
   // an import racing a product save) referencing the same new category both saw "missing"
   // and both inserted — one then died on the slug unique constraint, failing that row with
   // a confusing error. `upsert` pushes the check into the same statement as the write.
-  return prisma.category.upsert({
+  // A category that exists only because a CSV cell named it starts HIDDEN. It has an
+  // English name derived from the slug and no Greek one; showing it on the storefront the
+  // instant it was invented is how "Womens Sneekers" (a typo) became a live category.
+  return db.category.upsert({
     where: { slug },
-    create: { slug, name },
+    create: { slug, name, isVisible: false },
     update: {},
     select: { id: true },
   });

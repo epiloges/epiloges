@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireCapability } from "@/lib/admin-session";
+import { Prisma } from "@/lib/generated/prisma/client";
+import { uniqueConflictMessage } from "@/lib/prisma-conflicts";
 import { commerceErrorResponse, invalidInputResponse } from "@/lib/commerce/http-errors";
 import { productFormSchema } from "@/lib/validation/product";
 import { writeProductRow } from "@/lib/products-import/write";
@@ -20,6 +22,16 @@ interface CommitRequestRow {
  * roll back the rest, and the per-row result list lets the admin see exactly what
  * happened to each one.
  */
+function describeWriteError(error: unknown): string {
+  const conflict = uniqueConflictMessage(error, "product");
+  if (conflict) return conflict;
+  if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") {
+    return "A collection id or related product id in this row doesn't exist.";
+  }
+  console.error("[products-import] row failed", error);
+  return "Couldn't write this row — the error has been logged.";
+}
+
 export async function POST(request: Request) {
   try {
     // Bulk-writes the catalog, so it takes the same capability as the single-product
@@ -46,7 +58,10 @@ export async function POST(request: Request) {
         await writeProductRow(parsed.data, existing?.id);
         results.push({ rowNumber: row.rowNumber, ok: true });
       } catch (error) {
-        results.push({ rowNumber: row.rowNumber, ok: false, error: error instanceof Error ? error.message : "Failed to write row." });
+        // Never the raw Prisma text: it carries server file paths and a stack, and reads as
+        // a crash to the person importing. A unique-constraint hit names the field; a bad
+        // foreign key names what was unknown; anything else is logged and summarised.
+        results.push({ rowNumber: row.rowNumber, ok: false, error: describeWriteError(error) });
       }
     }
 
