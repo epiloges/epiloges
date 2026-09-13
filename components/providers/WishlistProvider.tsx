@@ -5,6 +5,7 @@ import { getCommerceProvider } from "@/lib/commerce";
 import type { Wishlist } from "@/lib/commerce/types";
 import { generateId, readStorage, writeStorage } from "@/lib/client-storage";
 import { useToast } from "@/components/providers/ToastProvider";
+import { useTranslations } from "next-intl";
 
 const ANONYMOUS_ID_KEY = "alexandris_anonymous_id";
 
@@ -33,6 +34,7 @@ const WishlistContext = createContext<WishlistContextValue | null>(null);
 export function WishlistProvider({ children }: { children: ReactNode }) {
   const commerce = useMemo(() => getCommerceProvider(), []);
   const { toast } = useToast();
+  const t = useTranslations("Wishlist");
   const [ownerId, setOwnerId] = useState<string | null>(null);
   const [wishlist, setWishlist] = useState<Wishlist | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -68,9 +70,9 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
         : await commerce.wishlist.addItem(ownerId, productId);
       setWishlist(updated);
       commerce.analytics.track({ name: alreadyIn ? "remove_from_wishlist" : "add_to_wishlist", properties: { productId } });
-      toast({ title: alreadyIn ? "Removed from wishlist" : "Added to wishlist" });
+      toast({ title: alreadyIn ? t("removed") : t("added") });
     },
-    [ownerId, wishlist, commerce, toast]
+    [ownerId, wishlist, commerce, toast, t]
   );
 
   const productIds = useMemo(() => new Set((wishlist?.items ?? []).map((item) => item.productId)), [wishlist]);

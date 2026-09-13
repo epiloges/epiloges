@@ -67,3 +67,23 @@ export const COUNTRIES: Country[] = [
 export function isSupportedCountryCode(code: string): boolean {
   return COUNTRIES.some((country) => country.code === code.trim().toUpperCase());
 }
+
+/**
+ * The country's name in the shopper's language — "Ελλάδα", not "Greece", on a Greek form.
+ * `Intl.DisplayNames` knows every locale the site could ever add; the English `name` on
+ * each entry stays as the fallback for a runtime without it. Greece first, then the rest in
+ * the locale's own alphabetical order.
+ */
+export function localizedCountries(locale: string): Country[] {
+  let names: Intl.DisplayNames | null = null;
+  try {
+    names = new Intl.DisplayNames([locale], { type: "region" });
+  } catch {
+    names = null;
+  }
+  const collator = new Intl.Collator(locale);
+  const localized = COUNTRIES.map((country) => ({ code: country.code, name: names?.of(country.code) ?? country.name }));
+  const home = localized.find((country) => country.code === DEFAULT_COUNTRY_CODE);
+  const rest = localized.filter((country) => country.code !== DEFAULT_COUNTRY_CODE).sort((a, b) => collator.compare(a.name, b.name));
+  return home ? [home, ...rest] : rest;
+}

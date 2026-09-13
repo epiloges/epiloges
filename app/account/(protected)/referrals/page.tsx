@@ -65,7 +65,7 @@ export default function AccountReferralsPage() {
       <div className="mt-8">
         <h2 className="text-xs font-medium tracking-[0.05em] uppercase text-luxe-gray-dark">{t("yourReferrals")}</h2>
         {referrals === null ? (
-          <p className="mt-3 text-sm text-luxe-gray-dark">Loading...</p>
+          <p className="mt-3 text-sm text-luxe-gray-dark">{t("loading")}</p>
         ) : referrals.length === 0 ? (
           <div className="mt-3 flex flex-col items-center gap-3 border border-border py-16 text-center">
             <Gift className="size-10 text-luxe-gray-dark" strokeWidth={1} />

@@ -1,5 +1,5 @@
 "use client";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowRight } from "lucide-react";
 import { buildContactAndAddressSchema, buildInvoiceSchema, type ContactAndAddressFormValues, type InvoiceDetails } from "@/lib/validation/checkout";
 import { isValidGreekVatNumber, normaliseGreekVatNumber } from "@/lib/greek-vat";
-import { COUNTRIES, DEFAULT_COUNTRY_CODE } from "@/constants/countries";
+import { localizedCountries, DEFAULT_COUNTRY_CODE } from "@/constants/countries";
 import { useCheckout } from "@/components/providers/CheckoutProvider";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { AddressAutocompleteInput } from "@/components/checkout/AddressAutocompleteInput";
@@ -18,6 +18,8 @@ const inputClass =
 
 export function ShippingAddressStep() {
   const t = useTranslations("Checkout");
+  const locale = useLocale();
+  const countries = useMemo(() => localizedCountries(locale), [locale]);
   const tAddr = useTranslations("Address");
   /**
    * The validation messages, in the shopper's language. `useTranslations` returns exactly the
@@ -378,7 +380,7 @@ export function ShippingAddressStep() {
             className={cn(inputClass, "appearance-none")}
             {...register("countryCode")}
           >
-            {COUNTRIES.map((country) => (
+            {countries.map((country) => (
               <option key={country.code} value={country.code}>
                 {country.name}
               </option>

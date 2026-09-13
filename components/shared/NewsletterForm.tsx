@@ -56,7 +56,7 @@ export function NewsletterForm({
         });
         if (!response.ok) {
           const body = await response.json().catch(() => null);
-          throw new Error(body?.error?.message ?? "Something went wrong. Please try again.");
+          throw new Error(body?.error?.message ?? t("failed"));
         }
       }
       setSubmitted(true);
@@ -64,7 +64,7 @@ export function NewsletterForm({
     } catch (error) {
       // Staying on the form with the address intact is the point — showing the success
       // state here would repeat the original bug in a subtler form.
-      setSubmitError(error instanceof Error ? error.message : "Something went wrong. Please try again.");
+      setSubmitError(error instanceof Error ? error.message : t("failed"));
     }
   };
 
@@ -72,7 +72,7 @@ export function NewsletterForm({
     return (
       <p className={cn("flex items-center gap-2 text-sm", className)}>
         <Check className="size-4" strokeWidth={1.5} />
-        Thank you — you&apos;re on the list.
+        {t("thanks")}
       </p>
     );
   }

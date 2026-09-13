@@ -26,7 +26,7 @@ export default function AccountOrdersPage() {
       <h1 className="font-heading text-3xl">{t("orders")}</h1>
 
       {orders === null ? (
-        <p className="mt-8 text-sm text-luxe-gray-dark">Loading...</p>
+        <p className="mt-8 text-sm text-luxe-gray-dark">{t("loading")}</p>
       ) : orders.length === 0 ? (
         <div className="mt-8 flex flex-col items-center gap-3 border border-border py-16 text-center">
           <Package className="size-10 text-luxe-gray-dark" strokeWidth={1} />

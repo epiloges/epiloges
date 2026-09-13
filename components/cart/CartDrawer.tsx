@@ -80,10 +80,10 @@ export function CartDrawer({ freeShippingThreshold = null }: { freeShippingThres
                   onClick={closeDrawer}
                   className="mt-4 flex h-12 w-full items-center justify-center bg-luxe-black text-sm font-medium tracking-[0.08em] text-luxe-white uppercase transition-opacity hover:opacity-90"
                 >
-                  View Bag & Checkout
+                  {t("viewBagAndCheckout")}
                 </Link>
                 <p className="mt-2 text-center text-[11px] text-luxe-gray-dark">
-                  Shipping, taxes, and discounts calculated in your bag.
+                  {t("drawerFootnote")}
                 </p>
               </div>
             ) : null}

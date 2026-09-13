@@ -3,7 +3,8 @@ import { useTranslations } from "next-intl";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { PackageSearch } from "lucide-react";
+import { PackageSearch, X } from "lucide-react";
+import { useCategoryName } from "@/components/providers/CategoryNamesProvider";
 import { getCommerceProvider } from "@/lib/commerce";
 import { ProductCard } from "@/components/product/ProductCard";
 import { PlpToolbar } from "@/components/plp/PlpToolbar";
@@ -269,6 +270,15 @@ export function ProductListingPage({
 
   const canLoadMore = products.length < total;
 
+  /**
+   * A category chosen from the mega-menu arrives as `?category=gynaikeia-sneakers` on top of
+   * a page whose heading is the gender. Without saying so, the shopper sees "Γυναικεία, 14
+   * products" and cannot tell why most of the shoes are missing or how to get them back.
+   */
+  const subCategory = !baseFilters.category && query.category ? query.category : null;
+  const subCategoryName = useCategoryName(subCategory ?? "");
+  const clearSubCategory = useCallback(() => updateParams({ category: null, page: null }), [updateParams]);
+
   useEffect(() => {
     const sentinel = sentinelRef.current;
     if (!sentinel || !canLoadMore) return;
@@ -306,8 +316,28 @@ export function ProductListingPage({
       <div className="-mx-3 sm:mx-0">
         {showHeader ? (
           <div className="mb-8">
-            <h1 className="font-heading text-3xl md:text-4xl">{title}</h1>
-            {description ? <p className="mt-2 text-luxe-gray-dark">{description}</p> : null}
+            {subCategory ? (
+              <nav aria-label={t("breadcrumb")} className="mb-2 text-xs text-luxe-gray-dark">
+                <button type="button" onClick={clearSubCategory} className="hover:text-luxe-black">
+                  {title}
+                </button>
+                <span className="mx-1.5">/</span>
+                <span className="text-luxe-black">{subCategoryName}</span>
+              </nav>
+            ) : null}
+            <h1 className="font-heading text-3xl md:text-4xl">{subCategory ? subCategoryName : title}</h1>
+            {subCategory ? (
+              <button
+                type="button"
+                onClick={clearSubCategory}
+                className="mt-3 inline-flex items-center gap-1.5 border border-border px-3 py-1.5 text-xs hover:border-luxe-black"
+              >
+                <X className="size-3" strokeWidth={1.5} aria-hidden />
+                {t("showAllIn", { title })}
+              </button>
+            ) : description ? (
+              <p className="mt-2 text-luxe-gray-dark">{description}</p>
+            ) : null}
           </div>
         ) : null}
 
@@ -340,7 +370,7 @@ export function ProductListingPage({
             />
 
             {isLoading && products.length === 0 ? (
-              <p className="py-16 text-center text-sm text-luxe-gray-dark">Loading...</p>
+              <p className="py-16 text-center text-sm text-luxe-gray-dark">{t("loading")}</p>
             ) : loadFailed && products.length === 0 ? (
               /* Distinct from the empty state on purpose — see the catch above. */
               <div className="flex flex-col items-center gap-3 py-16 text-center">
@@ -382,7 +412,7 @@ export function ProductListingPage({
                       onClick={() => updateParams({ page: String(urlPage + 1) })}
                       className="h-12 border border-luxe-black px-8 text-xs font-medium tracking-[0.08em] uppercase transition-opacity hover:opacity-70 disabled:opacity-50"
                     >
-                      {isLoading ? "Loading..." : "Load More"}
+                      {isLoading ? t("loading") : t("loadMore")}
                     </button>
                   </div>
                 ) : null}

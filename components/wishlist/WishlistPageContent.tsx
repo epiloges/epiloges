@@ -39,7 +39,7 @@ export function WishlistPageContent() {
       <div className="flex flex-col items-center gap-4 py-32 text-center">
         <Heart className="size-12 text-luxe-gray-dark" strokeWidth={1} />
         <h1 className="font-heading text-2xl">{t("empty")}</h1>
-        <p className="text-sm text-luxe-gray-dark">Save items you love to find them here later.</p>
+        <p className="text-sm text-luxe-gray-dark">{t("emptyBody")}</p>
         <Link
           href="/"
           className="mt-2 flex h-12 items-center justify-center bg-luxe-black px-8 text-xs font-medium tracking-[0.08em] text-luxe-white uppercase"

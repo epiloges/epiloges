@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useCart } from "@/components/providers/CartProvider";
 import { useCheckout } from "@/components/providers/CheckoutProvider";
 import { CheckoutSteps } from "@/components/checkout/CheckoutSteps";
@@ -19,6 +20,7 @@ const STEP_COMPONENTS = {
 };
 
 export default function CheckoutPage() {
+  const t = useTranslations("Checkout");
   const router = useRouter();
   const { cart, isLoading: isCartLoading } = useCart();
   const { step, isReady, orderPlaced } = useCheckout();
@@ -31,20 +33,23 @@ export default function CheckoutPage() {
   }, [isCartLoading, cart, orderPlaced, router]);
 
   if (isCartLoading || !isReady) {
-    return <div className="container-luxe py-24 text-center text-sm text-luxe-gray-dark">Loading checkout...</div>;
+    return <div className="container-luxe py-24 text-center text-sm text-luxe-gray-dark">{t("loading")}</div>;
   }
 
   const StepComponent = STEP_COMPONENTS[step];
 
   return (
     <div className="container-luxe py-10 md:py-14">
-      <div className="grid grid-cols-1 gap-12 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+      {/* On a phone the collapsed summary sits ABOVE the form: a shopper should see what they
+          are paying before typing an address, not after the continue button. On desktop it is
+          the right-hand column as before. */}
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3 lg:gap-12">
+        <div className="order-1 lg:order-2 lg:col-span-1">
+          <OrderSummary />
+        </div>
+        <div className="order-2 lg:order-1 lg:col-span-2">
           <CheckoutSteps />
           <StepComponent />
-        </div>
-        <div className="lg:col-span-1">
-          <OrderSummary />
         </div>
       </div>
     </div>

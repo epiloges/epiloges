@@ -1,12 +1,12 @@
 "use client";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 import { useMemo, useState, useSyncExternalStore } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowRight, RefreshCw, ShieldCheck } from "lucide-react";
 import { buildAddressSchema, type AddressFormValues } from "@/lib/validation/checkout";
-import { COUNTRIES } from "@/constants/countries";
+import { localizedCountries } from "@/constants/countries";
 import { useCheckout, type CheckoutPaymentMethod } from "@/components/providers/CheckoutProvider";
 import { PaymentMethodIcon } from "@/components/checkout/PaymentMethodIcon";
 import { formatMoney } from "@/lib/format";
@@ -60,6 +60,8 @@ function subscribeToNothing(): () => void {
  */
 export function PaymentStep() {
   const t = useTranslations("Checkout");
+  const locale = useLocale();
+  const countries = useMemo(() => localizedCountries(locale), [locale]);
   // Validation messages in the shopper's language — useTranslations has exactly the resolver
   // signature the schema factory takes. Memoised so zodResolver keeps a stable identity.
   const tValidation = useTranslations("Validation");
@@ -205,7 +207,7 @@ export function PaymentStep() {
               {t("country")}
             </label>
             <select id="billingCountryCode" className={cn(inputClass, "appearance-none")} {...billingForm.register("countryCode")}>
-              {COUNTRIES.map((country) => (
+              {countries.map((country) => (
                 <option key={country.code} value={country.code}>
                   {country.name}
                 </option>

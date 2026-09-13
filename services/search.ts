@@ -96,7 +96,9 @@ function scopeWhere(scope: ScopeInput): Prisma.Sql {
       Prisma.sql`EXISTS (SELECT 1 FROM product_collections pc WHERE pc."productId" = p.id AND pc."collectionId" = ${scope.collectionId})`
     );
   }
-  if (scope.isNew) clauses.push(Prisma.sql`p."isNew" = true`);
+  // "New" is the admin's flag OR anything added in the last six weeks — so the New In page
+  // stays true on its own as stock arrives, instead of listing the whole catalogue.
+  if (scope.isNew) clauses.push(Prisma.sql`(p."isNew" = true OR p."createdAt" >= now() - interval '45 days')`);
   if (scope.isSale) clauses.push(Prisma.sql`p."isSale" = true`);
 
   if (scope.query) {

@@ -30,6 +30,8 @@
     "collection": "Collection"
   },
   "Cart": {
+    "viewBagAndCheckout": "View bag & checkout",
+    "drawerFootnote": "Shipping and discounts are calculated in your bag.",
     "remove": "Remove",
     "moveToBag": "Move to Bag",
     "saveForLater": "Save for later",
@@ -92,6 +94,7 @@
     "INVALID_VARIANT": "That option isn't available."
   },
   "Checkout": {
+    "loading": "Loading checkout…",
     "contactTitle": "Contact",
     "contactSubtitle": "We'll send your order confirmation here.",
     "emailAddress": "Email address",
@@ -161,6 +164,10 @@
     "manualConfirmNote": "We will confirm your payment before dispatching your order."
   },
   "Plp": {
+    "loadMore": "Load more",
+    "loading": "Loading…",
+    "breadcrumb": "Breadcrumb",
+    "showAllIn": "All {title}",
     "filter": "Filter",
     "closeFilters": "Close filters",
     "clearAll": "Clear all",
@@ -214,6 +221,7 @@
     "returnsBody": "Free returns within 30 days of delivery. Items must be unworn, unwashed, and with tags attached."
   },
   "Account": {
+    "loading": "Loading…",
     "overview": "Overview",
     "orders": "Orders",
     "addresses": "Addresses",
@@ -316,6 +324,8 @@
     "lastUpdated": "Last updated {date}"
   },
   "Newsletter": {
+    "thanks": "Thank you — you're on the list.",
+    "failed": "Something went wrong. Please try again.",
     "emailLabel": "Email address",
     "emailPlaceholder": "Your email address",
     "subscribe": "Subscribe"
@@ -512,6 +522,9 @@
     "expired": "Expired"
   },
   "Wishlist": {
+    "emptyBody": "Save items you love to find them here later.",
+    "added": "Added to wishlist",
+    "removed": "Removed from wishlist",
     "empty": "Your wishlist is empty",
     "linkCopied": "Link copied",
     "linkCopiedBody": "Anyone with this link can view your wishlist.",
@@ -552,5 +565,8 @@
     "invoiceCompanyRequired": "Company name is required",
     "invoiceVatInvalid": "That VAT number is not valid",
     "invoiceTaxOfficeRequired": "Tax office is required"
+  },
+  "Footer": {
+    "allRightsReserved": "All rights reserved."
   }
 }

@@ -37,14 +37,13 @@ export default async function NewInPage({ searchParams }: ListingPageProps) {
       <Header navigation={navigation} siteName={settings.siteName} announcementMessages={settings.announcementMessages} />
       <main id="main" className="flex-1 pt-header">
         <Suspense fallback={null}>
-          {/* No isNew filter: that flag is a merchandising badge nobody had set, so this page
-              showed "0 items" while the catalog held 175 products. Sorting by when a product
-              was actually added is what "New In" means, and it stays correct on its own as
-              stock is added. */}
+          {/* isNew here means "flagged new, or added in the last six weeks" (services/search.ts).
+              With no filter this page was the entire catalogue — 223 of 223 products — which
+              made "new arrivals" mean nothing. */}
           <ProductListingSection
             title={t("newInTitle")}
             description={t("newInDescription")}
-            baseFilters={{}}
+            baseFilters={{ isNew: true }}
             defaultSort="newest"
             searchParams={resolvedSearchParams}
           />
