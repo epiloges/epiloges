@@ -1,10 +1,13 @@
-import { NextResponse } from "next/server";
+import { connection, NextResponse } from "next/server";
 import { requireCapability } from "@/lib/admin-session";
 import { commerceErrorResponse } from "@/lib/commerce/http-errors";
 import { getCourierProvider, CourierError } from "@/lib/courier";
 
 /** A pickup list as a PDF: `?no=<PickupList_No>&date=YYYY-MM-DD`. Same reasoning as the voucher route. */
 export async function GET(request: Request) {
+  // A GET is attempted as a prerender at build; the session cookie is only readable per
+  // request. Mark the route dynamic before touching it (same as newsletter/export).
+  await connection();
   try {
     await requireCapability("orders:manage");
 

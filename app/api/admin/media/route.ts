@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { connection, NextResponse } from "next/server";
 import { requireCapability } from "@/lib/admin-session";
 import { commerceErrorResponse } from "@/lib/commerce/http-errors";
 import { listMediaForAdmin } from "@/services/media";
@@ -12,6 +12,9 @@ import { listMediaForAdmin } from "@/services/media";
  * library page itself calls, so what the picker shows is exactly what the library shows.
  */
 export async function GET(request: Request) {
+  // A GET is attempted as a prerender at build; the session cookie is only readable per
+  // request. Mark the route dynamic before touching it (same as newsletter/export).
+  await connection();
   try {
     await requireCapability("content:media");
 

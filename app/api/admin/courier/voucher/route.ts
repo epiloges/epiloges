@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { connection, NextResponse } from "next/server";
 import { requireCapability } from "@/lib/admin-session";
 import { commerceErrorResponse } from "@/lib/commerce/http-errors";
 import { getCourierProvider, CourierError, ACS_CARRIER_NAME, type LabelFormat } from "@/lib/courier";
@@ -18,6 +18,9 @@ import { getOrderById, markVouchersPrinted } from "@/services/orders";
  * what the courier page's "still to print" list runs on.
  */
 export async function GET(request: Request) {
+  // A GET is attempted as a prerender at build; the session cookie is only readable per
+  // request. Mark the route dynamic before touching it (same as newsletter/export).
+  await connection();
   try {
     await requireCapability("orders:manage");
 
