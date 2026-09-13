@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { ResendEmailButton } from "@/components/admin/ResendEmailButton";
 import { formatDate } from "@/lib/format";
 import { getEmailLogById } from "@/services/emails";
 
@@ -25,7 +26,17 @@ export default async function AdminEmailDetailPage({ params }: EmailDetailPagePr
         Back to Emails
       </Link>
 
-      <AdminPageHeader title={email.subject} description={`To ${email.to} · ${formatDate(email.sentAt)} · template: ${email.template}`} />
+      <AdminPageHeader
+        title={email.subject}
+        description={`To ${email.to} · ${formatDate(email.sentAt)} · template: ${email.template} · ${email.status}${email.attempts > 1 ? ` after ${email.attempts} attempts` : ""}${email.providerMessageId ? ` · provider id ${email.providerMessageId}` : ""}`}
+        actions={<ResendEmailButton id={email.id} failed={email.status === "failed"} />}
+      />
+      {email.status !== "sent" ? (
+        <p className="mb-6 border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
+          {email.status === "failed" ? "This email was NOT delivered" : "This email was skipped"}
+          {email.error ? `: ${email.error}` : "."}
+        </p>
+      ) : null}
 
       <div className="border border-border bg-luxe-white">
         <div className="border-b border-border px-5 py-3 text-xs font-medium tracking-[0.05em] text-luxe-gray-dark uppercase">

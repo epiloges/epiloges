@@ -7,6 +7,8 @@ import { OrderStatusBadge } from "@/components/admin/OrderStatusBadge";
 import { formatDate, formatMoney, orderReference } from "@/lib/format";
 import { DEFAULT_LOCALE, LOCALE_TAG } from "@/i18n/config";
 import { getDashboardSummary } from "@/services";
+import { countRecentEmailFailures } from "@/services/emails";
+import { getEmailHealth } from "@/lib/email";
 import type { Order } from "@/lib/commerce/types";
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
@@ -59,11 +61,33 @@ export default async function AdminDashboardPage() {
   // under `instant = false` — same as the blog editor's date field. A cached dashboard
   // would show yesterday's morning all day, so it is made per-request instead.
   await connection();
-  const { stats, todayOrders, awaitingShipment } = await getDashboardSummary();
+  const [{ stats, todayOrders, awaitingShipment }, recentEmailFailures] = await Promise.all([getDashboardSummary(), countRecentEmailFailures()]);
+  const emailHealth = getEmailHealth();
 
   return (
     <div>
       <AdminPageHeader title="Dashboard" description={`What needs doing today, ${formatDate(new Date().toISOString(), "en-GB")}.`} />
+
+      {/*
+        The two ways email fails without anyone noticing: nothing is configured to send, or
+        the sender is Resend's test address and every customer is refused. Both leave the
+        shop taking orders whose confirmations go nowhere — so they are the first thing on
+        the dashboard, not a line in a server log.
+      */}
+      {emailHealth.customersWillNotReceiveMail || recentEmailFailures > 0 ? (
+        <div className="mb-6 border border-destructive/40 bg-destructive/5 p-4 text-sm" role="alert">
+          <p className="font-medium text-destructive">
+            {emailHealth.customersWillNotReceiveMail ? "Customers are not receiving email." : `${recentEmailFailures} email${recentEmailFailures === 1 ? "" : "s"} failed to send in the last 24 hours.`}
+          </p>
+          <p className="mt-1 text-luxe-gray-dark">
+            {emailHealth.customersWillNotReceiveMail ? emailHealth.reason : "Order confirmations or updates may not have reached customers."}{" "}
+            <Link href="/admin/emails?status=failed" className="underline underline-offset-4">
+              See the failed emails
+            </Link>
+            .
+          </p>
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         {stats.map((stat) => (

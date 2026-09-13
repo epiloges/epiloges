@@ -1,29 +1,18 @@
 import "server-only";
-import { prisma } from "@/lib/prisma";
-import type { EmailMessage, EmailProvider } from "@/lib/email/types";
+import type { EmailMessage, EmailTransport } from "@/lib/email/types";
 
 /**
- * Doesn't call any real email API — writes to `EmailLog` instead, which the admin
- * Emails page reads back. Same "honest placeholder" pattern as the Express
- * Checkout / social-sign-in buttons elsewhere in this app: nothing pretends to
- * have sent real mail, but the full rendered content (subject/html/text) is
- * genuinely produced and genuinely persisted, not just console.log'd and
- * forgotten — swapping in a real provider (Resend/SendGrid/Postmark) later means
- * writing one more file here and changing `EMAIL_PROVIDER`, not touching any caller.
+ * Doesn't call any real email API. The pipeline still writes the full rendered message to
+ * `EmailLog`, which the admin Emails page reads back — so an unconfigured environment shows
+ * exactly what WOULD have gone out, and nothing pretends to have sent real mail.
  */
-export function createDevEmailProvider(): EmailProvider {
+export function createDevTransport(): EmailTransport {
   return {
-    async send(message: EmailMessage) {
-      await prisma.emailLog.create({
-        data: {
-          to: message.to,
-          subject: message.subject,
-          html: message.html,
-          text: message.text,
-          template: message.template,
-        },
-      });
+    name: "dev",
+    from: process.env.EMAIL_FROM ?? "dev@localhost",
+    async deliver(message: EmailMessage) {
       console.log(`[email:dev] ${message.template} -> ${message.to}: "${message.subject}"`);
+      return { status: "sent" };
     },
   };
 }

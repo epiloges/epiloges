@@ -69,7 +69,8 @@ export type AuditAction =
   | "paymentMethod.updated"
   | "paymentProvider.updated"
   | "dataSubject.exported"
-  | "dataSubject.erased";
+  | "dataSubject.erased"
+  | "email.resent";
 
 export interface AuditEntryInput {
   action: AuditAction;
@@ -90,7 +91,8 @@ export interface AuditEntryInput {
     | "media"
     | "blogPost"
     | "paymentMethod"
-    | "paymentProvider";
+    | "paymentProvider"
+    | "email";
   targetId: string;
   summary: string;
   metadata?: Record<string, unknown>;

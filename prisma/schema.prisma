@@ -770,12 +770,20 @@ model EmailLog {
   subject  String
   html     String
   text     String
-  /// "order-confirmation" | "shipping-update" | "password-reset" | "return-status-update" | "welcome"
+  /// "order-confirmation" | "shipping-update" | "password-reset" | "return-status-update" | "welcome" … — see lib/email/types.ts
   template String
   sentAt   DateTime @default(now())
+  /// "sent" | "failed" | "skipped". A failed row is the durable record of a customer who did
+  /// NOT get an email — before this column, that fact lived only in a console line.
+  status            String  @default("sent")
+  /// The provider's reason, on a failed row.
+  error             String?
+  providerMessageId String?
+  attempts          Int     @default(1)
 
   @@index([to])
   @@index([sentAt])
+  @@index([status])
   @@map("email_log")
 }
 
@@ -783,6 +791,16 @@ model EmailLog {
 /// settings. A generic key/Json store rather than one bespoke table per document: none
 /// of these are queried by field (always read/written whole), and it lets every admin
 /// CMS editor share one real persistence path instead of four near-identical tables.
+/// An address that opted out of marketing mail — see lib/email/unsubscribe.ts. Keyed by the
+/// lower-cased address; guests and account holders alike.
+model EmailUnsubscribe {
+  email     String   @id
+  reason    String?
+  createdAt DateTime @default(now())
+
+  @@map("email_unsubscribes")
+}
+
 model SiteContent {
   key       String   @id
   data      Json

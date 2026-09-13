@@ -11,10 +11,27 @@ export interface EmailLogEntry {
   text: string;
   template: string;
   sentAt: string;
+  status: "sent" | "failed" | "skipped";
+  error: string | null;
+  providerMessageId: string | null;
+  attempts: number;
 }
 
-function toEmailLogEntry(row: { id: string; to: string; subject: string; html: string; text: string; template: string; sentAt: Date }): EmailLogEntry {
-  return { ...row, sentAt: row.sentAt.toISOString() };
+function toEmailLogEntry(row: {
+  id: string;
+  to: string;
+  subject: string;
+  html: string;
+  text: string;
+  template: string;
+  sentAt: Date;
+  status: string;
+  error: string | null;
+  providerMessageId: string | null;
+  attempts: number;
+}): EmailLogEntry {
+  const status = row.status === "failed" || row.status === "skipped" ? row.status : "sent";
+  return { ...row, status, sentAt: row.sentAt.toISOString() };
 }
 
 export async function getAllEmailLogsForAdmin(): Promise<EmailLogEntry[]> {
@@ -25,6 +42,7 @@ export async function getAllEmailLogsForAdmin(): Promise<EmailLogEntry[]> {
 export interface EmailLogQuery {
   search?: string;
   template?: string;
+  status?: "sent" | "failed" | "skipped";
   page?: number;
   pageSize?: number;
 }
@@ -39,6 +57,7 @@ export async function listEmailLogsForAdmin(query: EmailLogQuery = {}): Promise<
   const search = query.search?.trim();
   const where: Prisma.EmailLogWhereInput = {
     ...(query.template ? { template: query.template } : {}),
+    ...(query.status ? { status: query.status } : {}),
     ...(search
       ? { OR: [{ to: { contains: search, mode: "insensitive" } }, { subject: { contains: search, mode: "insensitive" } }] }
       : {}),
@@ -58,4 +77,9 @@ export function emailProviderLabel(): string {
 export async function getEmailLogById(id: string): Promise<EmailLogEntry | null> {
   const row = await prisma.emailLog.findUnique({ where: { id } });
   return row ? toEmailLogEntry(row) : null;
+}
+
+/** Failed sends in the last day — the dashboard's "something is wrong with email" signal. */
+export async function countRecentEmailFailures(hours = 24): Promise<number> {
+  return prisma.emailLog.count({ where: { status: "failed", sentAt: { gte: new Date(Date.now() - hours * 60 * 60 * 1000) } } });
 }
