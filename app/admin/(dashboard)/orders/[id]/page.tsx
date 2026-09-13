@@ -9,6 +9,7 @@ import Image from "next/image";
 import { getOrderById } from "@/services/orders";
 import { getPaymentsForOrder } from "@/services/payments";
 import { paymentProviderRegistry } from "@/lib/payments/registry";
+import { isSettled } from "@/lib/payments/status";
 import { PaymentStatusPill } from "@/components/admin/PaymentStatusPill";
 import {
   updateOrderStatusAction,
@@ -65,7 +66,7 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderDetailP
       <AdminPageHeader
         title={`Order #${order.id.slice(-8).toUpperCase()}`}
         description={`Placed ${formatDate(order.createdAt)} by ${order.customerEmail}`}
-        actions={<OrderStatusSelect orderId={order.id} defaultStatus={order.status} onChange={updateOrderStatusAction} />}
+        actions={<OrderStatusSelect orderId={order.id} defaultStatus={order.status} hasTracking={Boolean(order.trackingNumber)} onChange={updateOrderStatusAction} />}
       />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -215,6 +216,21 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderDetailP
                         {formatMoney(payment.amount)}
                         {payment.refundedAmount.amount > 0 ? ` · ${formatMoney(payment.refundedAmount)} refunded` : ""}
                       </p>
+                      {/*
+                        A delivered Cash-on-Delivery (or bank-transfer) order whose payment
+                        is still pending is the one state that is almost always a forgotten
+                        click rather than a real fact: the courier collected at the door.
+                        Point at the place to record it, rather than merging the two statuses.
+                      */}
+                      {order.status === "delivered" && definition?.requiresManualConfirmation && !isSettled(payment.status) ? (
+                        <p className="mt-2 border border-amber-300 bg-amber-50 px-2 py-1.5 text-xs text-amber-900">
+                          Delivered, but this payment is still {payment.status.replace(/_/g, " ")}. If the money was collected,{" "}
+                          <Link href={`/admin/payments/${payment.id}`} className="underline">
+                            mark it as received
+                          </Link>
+                          .
+                        </p>
+                      ) : null}
                     </li>
                   );
                 })}

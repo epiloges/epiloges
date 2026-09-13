@@ -7,7 +7,8 @@ import { toOrder } from "@/lib/commerce/postgres/mappers";
 import { getEmailProvider, shippingUpdateEmail } from "@/lib/email";
 import { getSiteSettings } from "@/services/settings";
 import { creditStockForLines, quantitiesCreditedByReturns, subtractCreditedQuantities } from "@/services/restock";
-import type { Order } from "@/lib/commerce/types";
+import { CommerceError, type Order } from "@/lib/commerce/types";
+import { canTransitionOrder } from "@/lib/order-transitions";
 
 export async function getOrderById(id: string): Promise<Order | null> {
   const row = await prisma.order.findUnique({ where: { id } });
@@ -134,7 +135,99 @@ async function restockOrderIfNeeded(orderId: string, lineItems: Order["lineItems
   }
 }
 
+/**
+ * The mirror image of `restockOrderIfNeeded`, for un-cancelling.
+ *
+ * Cancelling put the order's units back on the shelf; moving it back to "confirmed" means
+ * they are going out after all, so they have to come off again — and they may have sold in
+ * the meantime. The take is the same conditional decrement checkout uses
+ * (services/checkout.ts): the availability check IS the write, inside one transaction, so
+ * either every line is re-taken or none is. Only lines whose product denies overselling are
+ * touched, matching what the restock credited.
+ *
+ * The `restockedAt` claim is cleared only if every line was re-taken, so an order that
+ * could not be resurrected keeps its record of having been restocked.
+ */
+async function retakeStockForOrder(orderId: string, lineItems: Order["lineItems"]): Promise<void> {
+  const current = await prisma.order.findUnique({ where: { id: orderId }, select: { restockedAt: true } });
+  // Never restocked (an order cancelled before restocking existed, or one that failed to
+  // restock) holds nothing to re-take.
+  if (!current?.restockedAt) return;
+
+  const positive = lineItems.filter((line) => line.quantity > 0);
+  if (positive.length === 0) return;
+
+  await prisma.$transaction(async (tx) => {
+    const productIds = [...new Set(positive.map((line) => line.productId))];
+    const [products, sizes] = await Promise.all([
+      tx.product.findMany({ where: { id: { in: productIds } }, select: { id: true, inventoryPolicy: true } }),
+      tx.productSize.findMany({
+        where: { OR: positive.map((line) => ({ productId: line.productId, name: line.size })) },
+        select: { id: true, productId: true, name: true },
+      }),
+    ]);
+    const policyById = new Map(products.map((product) => [product.id, product.inventoryPolicy]));
+    const sizeIdByKey = new Map(sizes.map((size) => [`${size.productId}:${size.name}`, size.id]));
+
+    // Aggregate per stock row first — two lines for the same size must be one decrement.
+    const needed = new Map<string, { quantity: number; label: string }>();
+    for (const line of positive) {
+      if (policyById.get(line.productId) !== "deny") continue;
+      const sizeId = sizeIdByKey.get(`${line.productId}:${line.size}`);
+      if (!sizeId) continue;
+      const existing = needed.get(sizeId);
+      if (existing) existing.quantity += line.quantity;
+      else needed.set(sizeId, { quantity: line.quantity, label: `${line.name} (${line.size})` });
+    }
+
+    for (const [sizeId, { quantity, label }] of needed) {
+      const { count } = await tx.productSize.updateMany({
+        where: { id: sizeId, quantity: { gte: quantity } },
+        data: { quantity: { decrement: quantity } },
+      });
+      if (count === 0) {
+        throw new CommerceError(
+          "OUT_OF_STOCK",
+          `${label} has sold since this order was cancelled — there is no stock left to fulfil it. Leave it cancelled, or restock the product first.`
+        );
+      }
+    }
+
+    await tx.order.update({ where: { id: orderId }, data: { restockedAt: null } });
+  });
+}
+
+/**
+ * Moves an order to `status`, refusing anything the fulfilment graph does not allow.
+ *
+ * Throws `CommerceError("INVALID_STATUS_TRANSITION")` for a disallowed step and
+ * `CommerceError("OUT_OF_STOCK")` when un-cancelling an order whose units have since sold.
+ * Both carry a message written for the admin, so callers can show it as-is.
+ *
+ * Whether the PAYMENT allows the step (a paid order cannot be refunded or cancelled until
+ * the money has actually gone back) is decided by the caller — see
+ * app/admin/(dashboard)/orders/actions.ts — because this module deliberately knows nothing
+ * about payments.
+ */
 export async function updateOrderStatus(id: string, status: Order["status"]): Promise<Order> {
+  const before = await prisma.order.findUnique({ where: { id } });
+  if (!before) throw new CommerceError("CART_NOT_FOUND", "Order not found.");
+  const previous = toOrder(before);
+
+  if (!canTransitionOrder(previous.status, status)) {
+    throw new CommerceError(
+      "INVALID_STATUS_TRANSITION",
+      `An order can't go from ${previous.status} to ${status}.`
+    );
+  }
+  if (previous.status === status) return previous;
+
+  // Stock first, before the status is written: if the units are gone the order must stay
+  // cancelled, and the customer must not be told otherwise.
+  if (previous.status === "cancelled" && status === "confirmed") {
+    await retakeStockForOrder(previous.id, previous.lineItems);
+  }
+
   const row = await prisma.order.update({
     where: { id },
     // deliveredAt schedules the post-delivery review-request follow-up (services/email-followups.ts).

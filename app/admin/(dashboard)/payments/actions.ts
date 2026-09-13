@@ -5,6 +5,8 @@ import { capabilityDenied, getAdminSession } from "@/lib/admin-session";
 import { cancelPayment, confirmManualPayment, refundPayment, verifyPaymentWithProvider } from "@/services/payments";
 import { recordAdminAction } from "@/services/audit-log";
 import { PaymentError } from "@/lib/payments/types";
+import { getOrderById, updateOrderStatus } from "@/services/orders";
+import { canTransitionOrder } from "@/lib/order-transitions";
 
 /**
  * Payment mutations, each gated on the narrowest capability that fits what it does.
@@ -69,6 +71,13 @@ export async function cancelPaymentAction(paymentId: string, reason?: string): P
   } catch (error) {
     return { error: toActionError(error, "Could not cancel this payment.") };
   }
+  await recordAdminAction({
+    action: "payment.cancelled",
+    targetType: "payment",
+    targetId: paymentId,
+    summary: "Cancelled the payment attempt",
+    metadata: { reason: reason ?? null },
+  });
   revalidatePayment(paymentId);
   return { success: "Payment cancelled." };
 }
@@ -84,8 +93,9 @@ export async function refundPaymentAction(
 
   if (!Number.isFinite(amount) || amount <= 0) return { error: "Enter a refund amount greater than zero." };
 
+  let record;
   try {
-    await refundPayment(paymentId, amount, session?.sub ?? "unknown", reason);
+    record = await refundPayment(paymentId, amount, session?.sub ?? "unknown", reason);
   } catch (error) {
     return { error: toActionError(error, "Could not process this refund.") };
   }
@@ -98,8 +108,37 @@ export async function refundPaymentAction(
     summary: `Refunded ${amount}`,
     metadata: { amount, reason: reason ?? null },
   });
+
+  /**
+   * A FULL refund carries the order with it. Until now the two records were independent:
+   * money went back, and the order stayed "delivered" with its units still off the shelf,
+   * unless someone remembered to change it by hand in a second place. The order-side
+   * transition is what restocks and tells the customer, so it is triggered here rather
+   * than duplicated — and only for a full refund, because a partial one (one item of
+   * three) is a return, not the end of the order.
+   */
+  let orderNote = "";
+  if (record.status === "refunded") {
+    const order = await getOrderById(record.orderId);
+    if (order && order.status !== "refunded" && canTransitionOrder(order.status, "refunded")) {
+      try {
+        await updateOrderStatus(order.id, "refunded");
+        await recordAdminAction({
+          action: "order.status_changed",
+          targetType: "order",
+          targetId: order.id,
+          summary: "Set order status to refunded (payment fully refunded)",
+          metadata: { status: "refunded", previousStatus: order.status, paymentId },
+        });
+        orderNote = " The order is now marked refunded and its stock is back on the shelf.";
+      } catch (error) {
+        orderNote = ` The order could not be marked refunded: ${toActionError(error, "unknown error")}`;
+      }
+    }
+  }
+
   revalidatePayment(paymentId);
-  return { success: "Refund recorded." };
+  return { success: `Refund recorded.${orderNote}` };
 }
 
 /**

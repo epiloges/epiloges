@@ -84,7 +84,7 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
               {
                 header: "Status",
                 cell: (row) => (
-                  <OrderStatusSelect orderId={row.id} defaultStatus={row.status} onChange={updateOrderStatusAction} />
+                  <OrderStatusSelect orderId={row.id} defaultStatus={row.status} hasTracking={Boolean(row.trackingNumber)} onChange={updateOrderStatusAction} />
                 ),
               },
               {

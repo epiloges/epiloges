@@ -33,6 +33,11 @@ export async function getReturnsForCustomer(customerId: string): Promise<Return[
   return rows.map(toReturn);
 }
 
+export async function getReturnById(id: string): Promise<Return | null> {
+  const row = await prisma.return.findUnique({ where: { id } });
+  return row ? toReturn(row) : null;
+}
+
 export async function getAllReturnsForAdmin(): Promise<Return[]> {
   const rows = await prisma.return.findMany({ orderBy: { createdAt: "desc" } });
   return rows.map(toReturn);

@@ -169,7 +169,8 @@ export class CommerceError extends Error {
     | "INVALID_VARIANT"
     | "INVALID_CREDENTIALS"
     | "EMAIL_IN_USE"
-    | "CHECKOUT_INCOMPLETE";
+    | "CHECKOUT_INCOMPLETE"
+    | "INVALID_STATUS_TRANSITION";
 
   constructor(code: CommerceError["code"], message: string) {
     super(message);

@@ -7,11 +7,55 @@ import { getOrderById, updateOrderStatus, updateOrderTracking, type OrderTrackin
 import { getCourierProvider, ACS_CARRIER_NAME } from "@/lib/courier";
 import { getPrimaryPaymentForOrder } from "@/services/payments";
 import { getSiteSettings } from "@/services/settings";
-import type { Order } from "@/lib/commerce/types";
+import { CommerceError, type Order } from "@/lib/commerce/types";
+import { canTransitionOrder, paymentBlocksTransition } from "@/lib/order-transitions";
 
-export async function updateOrderStatusAction(orderId: string, status: Order["status"]): Promise<void> {
+/** A courier voucher only makes sense for an order that is actually going out. */
+const SHIPPABLE_ORDER_STATUSES = new Set<Order["status"]>(["confirmed", "processing", "shipped"]);
+
+export interface OrderStatusActionState {
+  error?: string;
+}
+
+/**
+ * Changes an order's status, or explains why it can't.
+ *
+ * Returns `{ error }` rather than throwing: this is called from a `<select>` in the orders
+ * list, and an unhandled rejection there used to leave the dropdown showing the status the
+ * admin picked while the database kept the old one. Two things are checked before anything
+ * is written — the fulfilment graph (lib/order-transitions.ts, enforced again inside
+ * `updateOrderStatus`) and the money: an order whose payment is still `paid` cannot be
+ * called refunded or cancelled, because either status emails the customer a claim about
+ * their money that the payment record contradicts.
+ */
+export async function updateOrderStatusAction(orderId: string, status: Order["status"]): Promise<OrderStatusActionState> {
   await requireCapability("orders:manage");
-  await updateOrderStatus(orderId, status);
+
+  const order = await getOrderById(orderId);
+  if (!order) return { error: "Order not found." };
+  if (!canTransitionOrder(order.status, status)) {
+    return { error: `An order can't go from ${order.status} to ${status}.` };
+  }
+
+  const payment = await getPrimaryPaymentForOrder(orderId);
+  const blocked = paymentBlocksTransition(
+    status,
+    payment
+      ? {
+          status: payment.status,
+          amountHeld: payment.amount.amount - payment.refundedAmount.amount,
+          currencyCode: payment.amount.currencyCode,
+        }
+      : null
+  );
+  if (blocked) return { error: blocked };
+
+  try {
+    await updateOrderStatus(orderId, status);
+  } catch (error) {
+    if (error instanceof CommerceError) return { error: error.message };
+    throw error;
+  }
   /**
    * OBS-003. `order.status_changed` was declared in the audit vocabulary from the start and
    * never written by anything — the verb existed, the record did not. Altering an order
@@ -23,9 +67,10 @@ export async function updateOrderStatusAction(orderId: string, status: Order["st
     targetType: "order",
     targetId: orderId,
     summary: `Set order status to ${status}`,
-    metadata: { status },
+    metadata: { status, previousStatus: order.status },
   });
   revalidatePath("/", "layout");
+  return {};
 }
 
 export async function updateOrderTrackingAction(orderId: string, input: OrderTrackingInput): Promise<void> {
@@ -58,6 +103,11 @@ export async function createAcsShipmentAction(orderId: string): Promise<CreateSh
     const order = await getOrderById(orderId);
     if (!order) return { error: "Order not found." };
 
+    if (!SHIPPABLE_ORDER_STATUSES.has(order.status)) {
+      return {
+        error: `This order is ${order.status} — a voucher would ship goods the customer is not getting. Move it back to confirmed first if that is wrong.`,
+      };
+    }
     if (order.trackingNumber) {
       return { error: `This order already has tracking number ${order.trackingNumber}. Cancel that voucher first if it is wrong.` };
     }
