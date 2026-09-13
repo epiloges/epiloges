@@ -223,6 +223,10 @@ export interface Order {
   trackingNumber?: string;
   carrier?: string;
   trackingUrl?: string;
+  /** ISO timestamp of the last label print — see the schema. */
+  voucherPrintedAt?: string;
+  /** The courier's pickup list the voucher is closed into, once the day is closed. */
+  pickupListNo?: string;
   createdAt: string;
 }
 

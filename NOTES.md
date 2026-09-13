@@ -169,10 +169,21 @@ issue the pickup list at `/admin/courier` → print the list for the driver. A v
 is never printed blocks the day's list; a voucher on a list can no longer be cancelled from
 the shop. The PDF routes are `/api/admin/courier/voucher` and `/api/admin/courier/pickup-list`.
 
-**Still unverified until the first live call:** the exact key ACS uses for the PDF bytes
-(handled by shape), and `Recipient_Region` — sent as the city, which matches the guide's
-"περιοχή ή τοπωνύμιο", but ACS may want the area (e.g. "ΤΑΥΡΟΣ") for Attica addresses.
-Watch the first real Athens voucher.
+**Verified live the same day** (credentials worked immediately): full cycle, PDFs correct,
+`Recipient_Region` = city routes fine for Heraklion. **One thing the guide gets wrong and the
+code now relies on:** `ACS_Print_Voucher` returns ONE single-page A4 PDF PER VOUCHER
+(`ACSValueOutput[0].ACSObjectOutput[{ Voucber_No (sic), PDFData (base64) }]`), every one
+with its label in the same `Start_Position` slot and the rest of the page painted white.
+"Three labels per sheet" is therefore assembled by us: one call per slot, then
+`lib/courier/label-sheets.ts` crops each page to its third and overlays them (pdf-lib).
+Overlaying uncropped pages leaves only the last label visible — that was the first attempt.
+
+**Batch printing is the daily workflow** (`/admin/courier`): vouchers accumulate under "To
+print", the admin prints three at a time to an A4 sheet (or fewer at day's end, with a
+start-slot picker to finish a half-used sheet), printed ones wait under "Printed, waiting
+for pickup", and issuing the list stamps `pickupListNo` on the orders ACS reports as
+closed (`ACS_Pickup_List_Display_Voucher`). `voucherPrintedAt` / `pickupListNo` are the
+two order columns behind this (migration 20260913120000, applied to production).
 
 **Go-live checklist:** ACS confirms the PDFs and activates → ACS may issue PRODUCTION
 credentials (ask; the email calls these the test server) → put them in Vercel, set

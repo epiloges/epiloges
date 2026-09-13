@@ -50,14 +50,20 @@ export interface PickupListSummary {
  */
 export interface CourierProvider {
   createShipment(input: CreateShipmentInput): Promise<CreateShipmentResult>;
-  /** The label(s) as a PDF. Up to ten tracking numbers at once. */
-  printLabels?(trackingNumbers: string[], format: LabelFormat): Promise<Uint8Array>;
+  /**
+   * The label(s) as a PDF. Up to ten tracking numbers at once; on A4 they flow three to
+   * a sheet, and `startPosition` (1–3) picks the first slot so a half-used sheet can be
+   * finished. Ignored for thermal.
+   */
+  printLabels?(trackingNumbers: string[], format: LabelFormat, startPosition?: 1 | 2 | 3): Promise<Uint8Array>;
   /** Cancels a voucher that has not yet been closed into a pickup list. */
   deleteShipment?(trackingNumber: string): Promise<void>;
   /** Closes the day: every printed voucher for `date` (YYYY-MM-DD) becomes a real shipment. */
   issuePickupList?(date: string): Promise<PickupListResult>;
   printPickupList?(pickupListNo: string, date: string): Promise<Uint8Array>;
   listPickupLists?(date: string): Promise<PickupListSummary[]>;
+  /** The tracking numbers a pickup list closed. */
+  listPickupListVouchers?(pickupListNo: string, date: string): Promise<string[]>;
 }
 
 export class CourierError extends Error {

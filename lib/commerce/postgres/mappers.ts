@@ -371,6 +371,8 @@ export function toOrder(row: OrderRow): Order {
     trackingNumber: row.trackingNumber ?? undefined,
     carrier: row.carrier ?? undefined,
     trackingUrl: row.trackingUrl ?? undefined,
+    voucherPrintedAt: row.voucherPrintedAt?.toISOString(),
+    pickupListNo: row.pickupListNo ?? undefined,
     createdAt: row.createdAt.toISOString(),
   };
 }

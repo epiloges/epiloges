@@ -187,7 +187,38 @@ export async function updateOrderTracking(id: string, input: OrderTrackingInput)
       carrier: input.carrier || null,
       trackingNumber: input.trackingNumber || null,
       trackingUrl: input.trackingUrl || null,
+      // A different (or no) voucher has not been printed or listed — the old state
+      // belonged to the old number.
+      voucherPrintedAt: null,
+      pickupListNo: null,
     },
   });
   return toOrder(row);
+}
+
+/**
+ * Orders holding a courier voucher that has not yet been closed into a pickup list —
+ * the day's work for the courier page, oldest first so the sheet prints in order.
+ */
+export async function getOrdersAwaitingPickup(carrier: string): Promise<Order[]> {
+  const rows = await prisma.order.findMany({
+    where: { carrier, trackingNumber: { not: null }, pickupListNo: null },
+    orderBy: { createdAt: "asc" },
+  });
+  return rows.map(toOrder);
+}
+
+export async function markVouchersPrinted(orderIds: string[]): Promise<void> {
+  if (orderIds.length === 0) return;
+  await prisma.order.updateMany({ where: { id: { in: orderIds } }, data: { voucherPrintedAt: new Date() } });
+}
+
+/** Stamps the pickup list onto every order whose voucher the courier reports as being on it. */
+export async function markVouchersListed(trackingNumbers: string[], pickupListNo: string): Promise<number> {
+  if (trackingNumbers.length === 0) return 0;
+  const { count } = await prisma.order.updateMany({
+    where: { trackingNumber: { in: trackingNumbers }, pickupListNo: null },
+    data: { pickupListNo },
+  });
+  return count;
 }

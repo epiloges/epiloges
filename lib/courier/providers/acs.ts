@@ -9,6 +9,7 @@ import {
   type PickupListSummary,
 } from "@/lib/courier/types";
 import { ACS_CARRIER_NAME, buildTrackingUrl } from "@/lib/courier/tracking-url";
+import { concatPdfs, overlaySheets, type SheetLayer } from "@/lib/courier/label-sheets";
 
 /**
  * One URL for test and production accounts alike: ACS hands out test credentials on the
@@ -115,6 +116,35 @@ export function createAcsCourierProvider(creds: AcsCredentials): CourierProvider
     return { alias, output, first: values[0] ?? {}, rows, raw: body };
   }
 
+  /** One PDF per voucher, in the order asked for. `printType` 2 = laser A4, 1 = thermal. */
+  async function printVoucherPdfs(trackingNumbers: string[], printType: 1 | 2, startPosition: 1 | 2 | 3): Promise<Uint8Array[]> {
+    const out = await call("ACS_Print_Voucher", {
+      Language: "GR",
+      Voucher_No: trackingNumbers.join(","),
+      Print_Type: printType,
+      Start_Position: startPosition,
+    });
+    const error = rowError(out);
+    if (error) throw new CourierError(`ACS could not print the voucher: ${error}`);
+
+    // Live shape: ACSValueOutput[0].ACSObjectOutput = [{ Voucber_No (sic), PDFData (base64), … }].
+    const objects = out.first.ACSObjectOutput;
+    const items = Array.isArray(objects) ? (objects as Record<string, unknown>[]) : [];
+    const byVoucher = new Map<string, Uint8Array>();
+    for (const item of items) {
+      const voucher = String(item.Voucber_No ?? item.Voucher_No ?? "").trim();
+      const data = item.PDFData;
+      if (voucher && typeof data === "string" && data.length > 0) byVoucher.set(voucher, Uint8Array.from(Buffer.from(data, "base64")));
+    }
+    const pdfs = trackingNumbers.map((voucher) => byVoucher.get(voucher));
+    if (pdfs.every((pdf) => pdf)) return pdfs as Uint8Array[];
+
+    // Shape drifted: fall back to anything PDF-like, which at least keeps single prints working.
+    const fallback = extractPdf(out.output);
+    if (fallback && trackingNumbers.length === 1) return [fallback];
+    throw new CourierError(`ACS_Print_Voucher returned no PDF for ${trackingNumbers.join(", ")}: ${JSON.stringify(out.raw).slice(0, 300)}`);
+  }
+
   /** Per-row errors ride inside a successful execution — a rejected voucher is one of these. */
   function rowError(out: AcsOutput): string | null {
     const message = out.first.Error_Message;
@@ -195,25 +225,42 @@ export function createAcsCourierProvider(creds: AcsCredentials): CourierProvider
       };
     },
 
-    async printLabels(trackingNumbers: string[], format: LabelFormat): Promise<Uint8Array> {
+    /**
+     * ACS answers `ACS_Print_Voucher` with ONE single-page PDF PER VOUCHER — verified
+     * against the live service, not the guide, which only says "a dictionary keyed by
+     * voucher". On A4 each page is blank except for the label in the requested slot, and
+     * every voucher in one call gets the same slot. So "three labels per sheet" is
+     * assembled here: ask for slot 1, 2 and 3 in separate calls and overlay the pages.
+     * Thermal is simpler — one label per page, so the pages are just concatenated.
+     */
+    async printLabels(trackingNumbers: string[], format: LabelFormat, startPosition: 1 | 2 | 3 = 1): Promise<Uint8Array> {
       if (trackingNumbers.length === 0 || trackingNumbers.length > 10) {
         throw new CourierError("ACS prints between 1 and 10 vouchers per call.");
       }
-      const out = await call("ACS_Print_Voucher", {
-        Language: "GR",
-        Voucher_No: trackingNumbers.join(","),
-        // 2 = laser (A4, three labels a sheet), 1 = thermal roll. Start_Position only
-        // matters for laser: which of the three label slots to begin on.
-        Print_Type: format === "thermal" ? 1 : 2,
-        Start_Position: 1,
-      });
-      const error = rowError(out);
-      if (error) throw new CourierError(`ACS could not print the voucher: ${error}`);
-      const pdf = extractPdf(out.output);
-      if (!pdf) {
-        throw new CourierError(`ACS_Print_Voucher returned no PDF: ${JSON.stringify(out.raw).slice(0, 500)}`);
+
+      if (format === "thermal") {
+        const pdfs = await printVoucherPdfs(trackingNumbers, 1, 1);
+        return trackingNumbers.length === 1 ? pdfs[0] : concatPdfs(pdfs);
       }
-      return pdf;
+
+      // Voucher i goes in slot ((start - 1 + i) mod 3) + 1 of sheet floor((start - 1 + i) / 3).
+      const bySlot = new Map<1 | 2 | 3, string[]>();
+      trackingNumbers.forEach((voucher, i) => {
+        const slot = (((startPosition - 1 + i) % 3) + 1) as 1 | 2 | 3;
+        bySlot.set(slot, [...(bySlot.get(slot) ?? []), voucher]);
+      });
+      const layerByVoucher = new Map<string, SheetLayer>();
+      for (const [slot, vouchers] of bySlot) {
+        const pdfs = await printVoucherPdfs(vouchers, 2, slot);
+        vouchers.forEach((voucher, i) => layerByVoucher.set(voucher, { pdf: pdfs[i], slot }));
+      }
+
+      const sheetCount = Math.ceil((startPosition - 1 + trackingNumbers.length) / 3);
+      const sheets: SheetLayer[][] = Array.from({ length: sheetCount }, () => []);
+      trackingNumbers.forEach((voucher, i) => {
+        sheets[Math.floor((startPosition - 1 + i) / 3)].push(layerByVoucher.get(voucher)!);
+      });
+      return trackingNumbers.length === 1 ? layerByVoucher.get(trackingNumbers[0])!.pdf : overlaySheets(sheets);
     },
 
     async deleteShipment(trackingNumber: string): Promise<void> {
@@ -253,6 +300,16 @@ export function createAcsCourierProvider(creds: AcsCredentials): CourierProvider
         throw new CourierError(`ACS_Print_Pickup_List returned no PDF: ${JSON.stringify(out.raw).slice(0, 500)}`);
       }
       return pdf;
+    },
+
+    async listPickupListVouchers(pickupListNo: string, date: string): Promise<string[]> {
+      const out = await call("ACS_Pickup_List_Display_Voucher", { Language: null, PickupList_No: pickupListNo, Pickup_Date: date });
+      const error = rowError(out);
+      if (error) throw new CourierError(`ACS could not show the pickup list: ${error}`);
+      return out.rows
+        .map((row) => row.Voucher_no ?? row.Voucher_No)
+        .filter((v): v is string | number => typeof v === "string" || typeof v === "number")
+        .map((v) => String(v).trim());
     },
 
     async listPickupLists(date: string): Promise<PickupListSummary[]> {

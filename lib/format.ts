@@ -54,3 +54,14 @@ export function formatDate(dateString: string, locale = LOCALE_TAG[DEFAULT_LOCAL
     day: "numeric",
   }).format(new Date(dateString));
 }
+
+/** Date and time, Athens — for "printed at" style stamps where the day alone is not enough. */
+export function formatDateTime(dateString: string, locale = LOCALE_TAG[DEFAULT_LOCALE]): string {
+  return new Intl.DateTimeFormat(locale, {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Europe/Athens",
+  }).format(new Date(dateString));
+}

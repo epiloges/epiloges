@@ -3,7 +3,7 @@ import { connection } from "next/server";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { OrderStatusSelect } from "@/components/admin/OrderStatusSelect";
 import { OrderTrackingForm } from "@/components/admin/OrderTrackingForm";
-import { formatDate, formatMoney } from "@/lib/format";
+import { formatDate, formatDateTime, formatMoney } from "@/lib/format";
 import Link from "next/link";
 import Image from "next/image";
 import { getOrderById } from "@/services/orders";
@@ -181,7 +181,13 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderDetailP
               onCreateAcsShipment={boundCreateAcsShipment}
             />
             {hasAcsVoucher && order.trackingNumber ? (
-              <AcsVoucherActions orderId={order.id} trackingNumber={order.trackingNumber} onCancel={boundCancelAcsShipment} />
+              <AcsVoucherActions
+                orderId={order.id}
+                trackingNumber={order.trackingNumber}
+                printedAt={order.voucherPrintedAt ? formatDateTime(order.voucherPrintedAt) : null}
+                pickupListNo={order.pickupListNo ?? null}
+                onCancel={boundCancelAcsShipment}
+              />
             ) : null}
           </div>
         </div>

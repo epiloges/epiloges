@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { PDFDocument } from "pdf-lib";
 import { createAcsCourierProvider, splitStreetNumber } from "@/lib/courier/providers/acs";
 import { CourierError } from "@/lib/courier/types";
 
@@ -136,38 +137,73 @@ describe("createShipment", () => {
 });
 
 describe("printLabels", () => {
-  const pdfBytes = Array.from(Buffer.from("%PDF-1.4 test"));
+  /** A one-page PDF with a marker string, so an overlaid sheet can be checked for which labels it carries. */
+  async function labelPdf(marker: string): Promise<string> {
+    const doc = await PDFDocument.create();
+    const page = doc.addPage([595, 842]);
+    page.drawText(marker, { x: 20, y: 800 });
+    return Buffer.from(await doc.save()).toString("base64");
+  }
 
-  it("finds the PDF whether ACS sends it as a byte array or base64, under whatever key", async () => {
-    stubFetch(
-      new Response(
-        JSON.stringify({
-          ACSExecution_HasError: false,
-          ACSExecutionErrorMessage: "",
-          ACSOutputResponce: { ACSValueOutput: [{ Error_Message: null }], ACSObjectOutput: [{ "7227889174": pdfBytes }] },
-        })
-      )
+  /** The live response shape: one entry per voucher, PDF as base64 under PDFData, voucher key misspelt. */
+  function printResponse(entries: { voucher: string; pdf: string }[]) {
+    return new Response(
+      JSON.stringify({
+        ACSExecution_HasError: false,
+        ACSExecutionErrorMessage: "",
+        ACSOutputResponce: {
+          ACSValueOutput: [{ ACSObjectOutput: entries.map((e) => ({ Voucber_No: e.voucher, PDFData: e.pdf, ACSExecution_HasError: false })) }],
+          ACSTableOutput: {},
+        },
+      })
     );
-    const asArray = await createAcsCourierProvider(creds).printLabels!(["7227889174"], "laser");
-    expect(Buffer.from(asArray).toString("latin1")).toBe("%PDF-1.4 test");
+  }
 
-    stubFetch(
-      new Response(
-        JSON.stringify({
-          ACSExecution_HasError: false,
-          ACSExecutionErrorMessage: "",
-          ACSOutputResponce: { ACSValueOutput: [{ Error_Message: null }], ACSObjectOutput: { "7227889174": Buffer.from("%PDF-1.4 test").toString("base64") } },
-        })
-      )
-    );
-    const asBase64 = await createAcsCourierProvider(creds).printLabels!(["7227889174"], "thermal");
-    expect(Buffer.from(asBase64).toString("latin1")).toBe("%PDF-1.4 test");
+  it("returns ACS's page as-is for a single voucher and asks for the requested slot", async () => {
+    const pdf = await labelPdf("ONE");
+    const spy = stubFetch(printResponse([{ voucher: "7401638565", pdf }]));
+    const bytes = await createAcsCourierProvider(creds).printLabels!(["7401638565"], "laser", 3);
+    expect(Buffer.from(bytes).toString("base64")).toBe(pdf);
+    expect(sentBody(spy).ACSInputParameters).toMatchObject({ Voucher_No: "7401638565", Print_Type: 2, Start_Position: 3 });
   });
 
-  it("asks for laser (2) or thermal (1) and joins several vouchers with commas", async () => {
-    const spy = stubFetch(new Response(JSON.stringify({ ACSExecution_HasError: false, ACSOutputResponce: { ACSValueOutput: [{}], x: pdfBytes } })));
-    await createAcsCourierProvider(creds).printLabels!(["1", "2"], "thermal");
-    expect(sentBody(spy).ACSInputParameters).toMatchObject({ Voucher_No: "1,2", Print_Type: 1, Start_Position: 1 });
+  it("lays three A4 vouchers onto one sheet by fetching each slot separately and overlaying", async () => {
+    const pdfs = { A: await labelPdf("A"), B: await labelPdf("B"), C: await labelPdf("C") };
+    const spy = vi.fn(async (_url: string, init: RequestInit) => {
+      const params = JSON.parse(init.body as string).ACSInputParameters as { Voucher_No: string };
+      const vouchers = params.Voucher_No.split(",");
+      return printResponse(vouchers.map((v) => ({ voucher: v, pdf: pdfs[v as keyof typeof pdfs] })));
+    });
+    vi.stubGlobal("fetch", spy);
+
+    const bytes = await createAcsCourierProvider(creds).printLabels!(["A", "B", "C"], "laser", 1);
+
+    const slots = spy.mock.calls.map((c) => JSON.parse((c[1] as RequestInit).body as string).ACSInputParameters).map((p) => [p.Voucher_No, p.Start_Position]);
+    expect(slots).toEqual([["A", 1], ["B", 2], ["C", 3]]);
+    const sheet = await PDFDocument.load(bytes);
+    expect(sheet.getPageCount()).toBe(1);
+  });
+
+  it("starts on the given slot and spills onto a second sheet — two vouchers from slot 3 is two sheets", async () => {
+    const pdfs = { A: await labelPdf("A"), B: await labelPdf("B") };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_url: string, init: RequestInit) => {
+        const v = (JSON.parse(init.body as string).ACSInputParameters as { Voucher_No: string }).Voucher_No;
+        return printResponse([{ voucher: v, pdf: pdfs[v as keyof typeof pdfs] }]);
+      })
+    );
+    const bytes = await createAcsCourierProvider(creds).printLabels!(["A", "B"], "laser", 3);
+    expect((await PDFDocument.load(bytes)).getPageCount()).toBe(2);
+  });
+
+  it("prints thermal labels one per page, in one call", async () => {
+    const pdfs = { A: await labelPdf("A"), B: await labelPdf("B") };
+    const spy = stubFetch(printResponse([{ voucher: "A", pdf: pdfs.A }, { voucher: "B", pdf: pdfs.B }]));
+    const bytes = await createAcsCourierProvider(creds).printLabels!(["A", "B"], "thermal");
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(sentBody(spy).ACSInputParameters).toMatchObject({ Voucher_No: "A,B", Print_Type: 1 });
+    expect((await PDFDocument.load(bytes)).getPageCount()).toBe(2);
   });
 });
 

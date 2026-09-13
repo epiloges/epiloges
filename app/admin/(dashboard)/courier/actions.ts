@@ -3,6 +3,8 @@
 import { requireCapability } from "@/lib/admin-session";
 import { recordAdminAction } from "@/services/audit-log";
 import { getCourierProvider, type PickupListResult } from "@/lib/courier";
+import { markVouchersListed } from "@/services/orders";
+import { revalidatePath } from "next/cache";
 
 export interface IssuePickupListState {
   result?: PickupListResult;
@@ -21,6 +23,15 @@ export async function issuePickupListAction(date: string): Promise<IssuePickupLi
     if (!provider.issuePickupList) return { error: "Pickup lists need COURIER_PROVIDER=acs." };
     const result = await provider.issuePickupList(date);
     if (result.pickupListNo) {
+      // Ask ACS which vouchers the list actually closed rather than assuming — a voucher
+      // printed from the ACS portal directly would be on it too, and one dated differently
+      // would not.
+      if (provider.listPickupListVouchers) {
+        const closed = await provider.listPickupListVouchers(result.pickupListNo, date);
+        await markVouchersListed(closed, result.pickupListNo);
+      }
+      revalidatePath("/admin/courier");
+      revalidatePath("/admin/orders", "layout");
       await recordAdminAction({
         action: "courier.pickup_list_issued",
         targetType: "pickupList",

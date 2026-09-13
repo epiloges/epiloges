@@ -6,6 +6,10 @@ import type { CreateShipmentActionState } from "@/app/admin/(dashboard)/orders/a
 interface AcsVoucherActionsProps {
   orderId: string;
   trackingNumber: string;
+  /** Formatted date-time of the last print, or null while unprinted. */
+  printedAt: string | null;
+  /** Set once the day was closed — the voucher is a shipment now and cannot be cancelled here. */
+  pickupListNo: string | null;
   onCancel: () => Promise<CreateShipmentActionState>;
 }
 
@@ -14,7 +18,7 @@ interface AcsVoucherActionsProps {
  * and, while it is still possible, cancelling. Printing matters more than it looks — ACS
  * will not close a day's pickup list while an unprinted voucher is on it.
  */
-export function AcsVoucherActions({ orderId, trackingNumber, onCancel }: AcsVoucherActionsProps) {
+export function AcsVoucherActions({ orderId, trackingNumber, printedAt, pickupListNo, onCancel }: AcsVoucherActionsProps) {
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -26,7 +30,17 @@ export function AcsVoucherActions({ orderId, trackingNumber, onCancel }: AcsVouc
     <div className="mt-5 border border-border bg-luxe-gray-light/40 p-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-xs text-luxe-gray-dark">
-          ACS voucher <span className="font-mono text-luxe-black">{trackingNumber}</span> — print it before issuing today&apos;s pickup list.
+          ACS voucher <span className="font-mono text-luxe-black">{trackingNumber}</span>
+          {pickupListNo ? (
+            <>
+              {" "}
+              — on pickup list <span className="font-mono">{pickupListNo}</span>, handed to the courier.
+            </>
+          ) : printedAt ? (
+            <> — printed {printedAt}. Waiting for the pickup list.</>
+          ) : (
+            <> — not printed yet. Print it here or in a batch from ACS Courier.</>
+          )}
         </p>
         <div className="flex flex-wrap items-center gap-2">
           <a href={pdf("laser")} target="_blank" rel="noopener" className={linkClass}>
@@ -35,7 +49,7 @@ export function AcsVoucherActions({ orderId, trackingNumber, onCancel }: AcsVouc
           <a href={pdf("thermal")} target="_blank" rel="noopener" className={linkClass}>
             Print thermal
           </a>
-          {confirming ? (
+          {pickupListNo ? null : confirming ? (
             <span className="inline-flex items-center gap-2 text-xs">
               <span className="text-luxe-gray-dark">Cancel voucher {trackingNumber}?</span>
               <button

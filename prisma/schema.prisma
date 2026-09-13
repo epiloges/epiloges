@@ -583,6 +583,13 @@ model Order {
   /// created the shipment — a manually-entered ACS tracking number still says "ACS Courier".
   carrier        String?
   trackingUrl    String?
+  /// When the courier label was last printed from the shop. ACS will not close a day's
+  /// pickup list while a voucher on it is unprinted, so this is what the courier page
+  /// uses to show "still to print" — reset whenever the voucher is cancelled.
+  voucherPrintedAt DateTime?
+  /// The ACS pickup list (Mass_Number) the voucher was closed into. Once set the voucher
+  /// is a real shipment and can no longer be cancelled from the shop.
+  pickupListNo     String?
 
   /// Set exactly once, the moment status transitions to "delivered" (services/orders.ts's
   /// updateOrderStatus) — used to schedule the post-delivery review-request follow-up.
