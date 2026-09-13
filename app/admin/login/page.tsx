@@ -28,6 +28,7 @@ export default function AdminLoginPage() {
               type="email"
               required
               autoComplete="username"
+              defaultValue={state.email ?? ""}
               className="h-11 w-full border border-border bg-transparent px-3 text-sm outline-none focus:border-luxe-black"
             />
           </div>

@@ -120,7 +120,7 @@ export function HomepageEditor({ initialSections, focusSectionId, onPublish }: H
             className="flex h-9 items-center gap-1.5 border border-border px-4 text-xs font-medium tracking-[0.05em] uppercase"
           >
             <Eye className="size-3.5" strokeWidth={1.5} />
-            Preview
+            View live homepage
           </Link>
           <button
             type="button"

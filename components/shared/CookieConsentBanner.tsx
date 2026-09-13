@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getConsentChoice, setConsentChoice } from "@/lib/consent";
+import { useIsAdminRoute } from "@/lib/use-is-admin-route";
 
 /**
  * Rendered server-side rather than only after mount, because this banner is fixed to the
@@ -21,6 +22,7 @@ export function CookieConsentBanner() {
   const tA11y = useTranslations("A11y");
   const t = useTranslations("Cookies");
   const [visible, setVisible] = useState(true);
+  const isAdmin = useIsAdminRoute();
 
   useEffect(() => {
     // localStorage-hydration-on-mount — the value genuinely doesn't exist until now (SSR has no localStorage).
@@ -28,7 +30,8 @@ export function CookieConsentBanner() {
     setVisible(getConsentChoice() === null);
   }, []);
 
-  if (!visible) return null;
+  // The shopper's notice has no business on the dashboard.
+  if (!visible || isAdmin) return null;
 
   const decide = (accept: boolean) => {
     setConsentChoice({ analytics: accept, marketing: accept });

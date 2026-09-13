@@ -9,6 +9,8 @@ import { verifyPassword } from "@/lib/password";
 
 export interface LoginState {
   error?: string;
+  /** Echoed back on failure so the form can keep it — React resets the fields after an action. */
+  email?: string;
 }
 
 export async function loginAction(_prevState: LoginState, formData: FormData): Promise<LoginState> {
@@ -19,7 +21,7 @@ export async function loginAction(_prevState: LoginState, formData: FormData): P
   const key = `admin-sign-in:ip:${ip}`;
   const limit = await isRateLimited({ key, limit: 10, windowMs: 15 * 60 * 1000 });
   if (limit.limited) {
-    return { error: `Too many attempts. Try again in ${Math.ceil(limit.retryAfterSeconds / 60)} minute(s).` };
+    return { error: `Too many attempts. Try again in ${Math.ceil(limit.retryAfterSeconds / 60)} minute(s).`, email };
   }
 
   const user = await prisma.adminUser.findUnique({ where: { email } });
@@ -28,7 +30,7 @@ export async function loginAction(_prevState: LoginState, formData: FormData): P
 
   if (!user || !passwordMatches) {
     await recordAttempt(key);
-    return { error: "Invalid email or password." };
+    return { error: "Invalid email or password.", email };
   }
 
   const token = await signAdminSession({ sub: user.id, email: user.email, name: user.name });

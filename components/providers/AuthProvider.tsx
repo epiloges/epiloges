@@ -5,6 +5,7 @@ import { getCommerceProvider } from "@/lib/commerce";
 import { CommerceError } from "@/lib/commerce/types";
 import type { AuthCredentials, AuthSignUpInput, ChangePasswordInput, Customer } from "@/lib/commerce/types";
 import { useToast } from "@/components/providers/ToastProvider";
+import { useIsAdminRoute } from "@/lib/use-is-admin-route";
 import { useCart } from "@/components/providers/CartProvider";
 import { useWishlist } from "@/components/providers/WishlistProvider";
 import { clearStoredReferralCode, getStoredReferralCode } from "@/lib/referral";
@@ -37,7 +38,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const isAdmin = useIsAdminRoute();
+
   useEffect(() => {
+    // The admin signs in with its own cookie; probing the customer session there only
+    // creates load. Resolve "not signed in" immediately instead of after a round trip.
+    if (isAdmin) {
+      // Same shape the wishlist provider uses for its own mount-time read.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIsLoading(false);
+      return;
+    }
     let cancelled = false;
     commerce.auth
       .getSession()
@@ -58,7 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [commerce]);
+  }, [commerce, isAdmin]);
 
   // Best-effort: a guest cart/wishlist failing to link shouldn't block a successful
   // sign-in/sign-up — the customer is still signed in either way, just possibly with a

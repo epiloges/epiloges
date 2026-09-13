@@ -13,6 +13,7 @@ import {
 import { getCommerceProvider } from "@/lib/commerce";
 import { CommerceError, type AddLineItemInput, type Cart } from "@/lib/commerce/types";
 import { readStorage, writeStorage } from "@/lib/client-storage";
+import { useIsAdminRoute } from "@/lib/use-is-admin-route";
 import { useToast } from "@/components/providers/ToastProvider";
 import { useTranslations } from "next-intl";
 
@@ -72,7 +73,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setCart(next);
   }, []);
 
+  const isAdmin = useIsAdminRoute();
+
   useEffect(() => {
+    if (isAdmin) return;
     let cancelled = false;
     // A `?cart=` link (e.g. an abandoned-cart recovery email) takes priority over
     // whatever's already in localStorage — the whole point is to resume THAT cart, on
@@ -110,7 +114,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [commerce, applyCart]);
+  }, [commerce, applyCart, isAdmin]);
 
   /**
    * The cart, waiting for the bootstrap if it has not landed yet.

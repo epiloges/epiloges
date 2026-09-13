@@ -69,11 +69,15 @@ export function SiteSettingsForm({ initialSettings, onSave }: SiteSettingsFormPr
           </div>
           <div>
             <label className="mb-1 block text-xs font-medium text-luxe-gray-dark uppercase">Currency</label>
+            {/* Shown, not editable: nothing reads this setting — every price is stored per product
+                in EUR and formatted from that. A free-text field here looked like a switch. */}
             <input
               value={settings.currency}
-              onChange={(e) => field("currency", e.target.value)}
-              className="h-10 w-full border border-border px-3 text-sm outline-none focus:border-luxe-black"
+              readOnly
+              aria-readonly
+              className="h-10 w-full border border-border bg-luxe-gray-light/60 px-3 text-sm text-luxe-gray-dark outline-none"
             />
+            <p className="mt-1 text-xs text-luxe-gray-dark">Prices are stored per product in EUR; this is informational.</p>
           </div>
         </div>
         <div>

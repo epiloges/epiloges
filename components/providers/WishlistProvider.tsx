@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { getCommerceProvider } from "@/lib/commerce";
 import type { Wishlist } from "@/lib/commerce/types";
 import { generateId, readStorage, writeStorage } from "@/lib/client-storage";
+import { useIsAdminRoute } from "@/lib/use-is-admin-route";
 import { useToast } from "@/components/providers/ToastProvider";
 import { useTranslations } from "next-intl";
 
@@ -41,7 +42,10 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
 
   // localStorage isn't available during SSR, so the anonymous id and the wishlist it
   // owns can only be resolved after mount.
+  const isAdmin = useIsAdminRoute();
+
   useEffect(() => {
+    if (isAdmin) return;
     const id = getAnonymousId();
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setOwnerId(id);
@@ -59,7 +63,7 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
       .finally(() => {
         setIsLoading(false);
       });
-  }, [commerce]);
+  }, [commerce, isAdmin]);
 
   const toggle = useCallback(
     async (productId: string) => {

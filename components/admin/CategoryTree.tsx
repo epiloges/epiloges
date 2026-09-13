@@ -1,6 +1,6 @@
 "use client";
 
-import { useOptimistic, useState, useTransition } from "react";
+import { useOptimistic, useState, useTransition, useId } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -54,6 +54,10 @@ function CategoryGroup({ parentId, nodes, depth }: { parentId: string | null; no
   // server actually persisted, so a rejected reorder self-corrects with no manual rollback.
   const [items, setOptimisticItems] = useOptimistic(nodes, (_, next: CategoryWithChildren[]) => next);
   const [error, setError] = useState<string | null>(null);
+  // dnd-kit numbers its aria-describedby ids with a global counter, which differs between
+  // the server render and the client with nested contexts — a hydration warning on every
+  // load of this page. A stable id per context is what the library provides for it.
+  const dndId = useId();
   const [, startTransition] = useTransition();
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -85,7 +89,7 @@ function CategoryGroup({ parentId, nodes, depth }: { parentId: string | null; no
       {error ? (
         <p className="border-b border-destructive/40 bg-destructive/5 px-4 py-2 text-xs text-destructive">{error}</p>
       ) : null}
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <DndContext id={dndId} sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={items.map((i) => i.id)} strategy={verticalListSortingStrategy}>
           {items.map((node) => (
             <CategoryRow key={node.id} node={node} depth={depth} />

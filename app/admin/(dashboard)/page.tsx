@@ -63,7 +63,7 @@ export default async function AdminDashboardPage() {
 
   return (
     <div>
-      <AdminPageHeader title="Dashboard" description={`What needs doing today, ${formatDate(new Date().toISOString())}.`} />
+      <AdminPageHeader title="Dashboard" description={`What needs doing today, ${formatDate(new Date().toISOString(), "en-GB")}.`} />
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         {stats.map((stat) => (
