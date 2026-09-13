@@ -114,9 +114,9 @@ describe("Bank Transfer provider", () => {
     const result = await bankTransferProvider.initializePayment(context(complete));
     const labels = result.customerAction?.instructions?.map((line) => line.label) ?? [];
     expect(labels).toContain("IBAN");
-    expect(labels).toContain("Account holder");
-    expect(labels).toContain("Payment reference");
-    const reference = result.customerAction?.instructions?.find((l) => l.label === "Payment reference");
+    expect(labels).toContain("Δικαιούχος");
+    expect(labels).toContain("Αιτιολογία κατάθεσης");
+    const reference = result.customerAction?.instructions?.find((l) => l.label === "Αιτιολογία κατάθεσης");
     // Matches the short order number shown throughout the admin, so a bank statement
     // can be matched to an order by eye.
     expect(reference?.value).toBe("ABCDEF1234".slice(-8));
@@ -125,7 +125,7 @@ describe("Bank Transfer provider", () => {
   it("omits the reference when the store has turned that option off", async () => {
     const withoutReference = config({ ...complete.values, useOrderNumberAsReference: "false" });
     const result = await bankTransferProvider.initializePayment(context(withoutReference));
-    expect(result.customerAction?.instructions?.some((l) => l.label === "Payment reference")).toBe(false);
+    expect(result.customerAction?.instructions?.some((l) => l.label === "Αιτιολογία κατάθεσης")).toBe(false);
   });
 
   it("refuses to start a payment when the bank details are incomplete", async () => {

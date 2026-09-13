@@ -80,10 +80,10 @@ export const cashOnDeliveryProvider: PaymentProvider = {
       status: "pending",
       customerAction: {
         type: "display_instructions",
-        message: "Please have the exact amount ready for the courier.",
+        message: "Παρακαλούμε έχετε έτοιμο το ακριβές ποσό για τον διανομέα.",
         instructions: [
-          { label: "Amount due on delivery", value: `${ctx.payment.amount.amount.toFixed(2)} ${ctx.payment.amount.currencyCode}` },
-          { label: "Order reference", value: orderReference(ctx.payment.orderId) },
+          { label: "Ποσό αντικαταβολής", value: `${ctx.payment.amount.amount.toFixed(2)} ${ctx.payment.amount.currencyCode}` },
+          { label: "Αριθμός παραγγελίας", value: orderReference(ctx.payment.orderId) },
         ],
       },
       metadata: { collectedInCash: false },

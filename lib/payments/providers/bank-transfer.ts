@@ -143,16 +143,16 @@ export const bankTransferProvider: PaymentProvider = {
     const reference = isTruthy(values.useOrderNumberAsReference) ? orderReference(ctx.payment.orderId) : null;
 
     const instructions = [
-      { label: "Bank", value: values.bankName ?? "" },
-      { label: "Account holder", value: values.accountHolder ?? "" },
+      { label: "Τράπεζα", value: values.bankName ?? "" },
+      { label: "Δικαιούχος", value: values.accountHolder ?? "" },
       { label: "IBAN", value: values.iban ?? "" },
       ...(values.swift ? [{ label: "SWIFT / BIC", value: values.swift }] : []),
-      ...(values.branch ? [{ label: "Branch", value: values.branch }] : []),
+      ...(values.branch ? [{ label: "Κατάστημα", value: values.branch }] : []),
       {
-        label: "Amount",
+        label: "Ποσό",
         value: `${ctx.payment.amount.amount.toFixed(2)} ${ctx.payment.amount.currencyCode}`,
       },
-      ...(reference ? [{ label: "Payment reference", value: reference }] : []),
+      ...(reference ? [{ label: "Αιτιολογία κατάθεσης", value: reference }] : []),
     ];
 
     return {
@@ -161,7 +161,7 @@ export const bankTransferProvider: PaymentProvider = {
         type: "display_instructions",
         message:
           values.instructions?.trim() ||
-          "Please include the payment reference so we can match your transfer to this order. We'll confirm by email once it clears.",
+          "Παρακαλούμε γράψτε την αιτιολογία στην κατάθεση, για να αντιστοιχίσουμε τη μεταφορά με την παραγγελία σας. Θα σας ενημερώσουμε με email μόλις εμφανιστεί η πληρωμή.",
         instructions,
       },
       metadata: { reference, iban: values.iban ?? null },
