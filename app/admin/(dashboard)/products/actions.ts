@@ -36,6 +36,17 @@ export async function createProduct(values: ProductFormValues): Promise<ProductA
     throw error;
   }
 
+  // "A product that exists is its own evidence" was the old argument for not logging
+  // creation — but the trail is also how one tells a product an import made from one a
+  // person made, and who priced it.
+  await recordAdminAction({
+    action: "product.created",
+    targetType: "product",
+    targetId: id,
+    summary: `Created product ${data.sku} (${data.name}) at ${data.price}, ${data.status}`,
+    metadata: { sku: data.sku, name: data.name, price: data.price, status: data.status },
+  });
+
   revalidateStorefront();
   // Outside the try: redirect() signals by throwing, and catching that would swallow the
   // navigation and report it as a save failure.
@@ -128,6 +139,9 @@ export async function archiveProduct(id: string): Promise<ProductActionState> {
   await prisma.product.update({
     where: { id },
     data: { status: "archived", archivedAt: new Date() },
+    select: { sku: true },
+  }).then(async (product) => {
+    await recordAdminAction({ action: "product.archived", targetType: "product", targetId: id, summary: `Archived ${product.sku}` });
   });
   revalidateStorefront();
   revalidatePath("/admin/products");
@@ -143,6 +157,9 @@ export async function restoreProduct(id: string): Promise<ProductActionState> {
   await prisma.product.update({
     where: { id },
     data: { status: "draft", archivedAt: null },
+    select: { sku: true },
+  }).then(async (product) => {
+    await recordAdminAction({ action: "product.restored", targetType: "product", targetId: id, summary: `Restored ${product.sku} to draft` });
   });
   revalidateStorefront();
   revalidatePath("/admin/products");
@@ -204,6 +221,14 @@ export async function duplicateProduct(id: string): Promise<ProductActionState> 
       },
     },
     select: { id: true },
+  });
+
+  await recordAdminAction({
+    action: "product.duplicated",
+    targetType: "product",
+    targetId: created.id,
+    summary: `Duplicated ${source.sku} as ${sku}`,
+    metadata: { sourceId: id, sourceSku: source.sku, sku, slug },
   });
 
   revalidatePath("/admin/products");

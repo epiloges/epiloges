@@ -5,6 +5,7 @@ import { z } from "zod";
 import { Prisma } from "@/lib/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { capabilityDenied } from "@/lib/admin-session";
+import { recordAdminAction } from "@/services/audit-log";
 import { productStatusSchema } from "@/lib/validation/product";
 import { productIdsMatching } from "@/services/products";
 import type { BulkProductScope, ProductActionState } from "@/app/admin/(dashboard)/products/actions";
@@ -103,6 +104,36 @@ export async function updateProductInline(id: string, edit: InlineProductEdit): 
     },
   });
 
+  /**
+   * OBS-003 applied to the path people actually use. The full form logged a price change
+   * and this — the one-click price edit on the list — logged nothing, so the most common
+   * way a price changes was the one the trail could not answer for.
+   */
+  const changes: string[] = [];
+  if (parsed.data.price !== undefined && parsed.data.price !== Number(current.priceAmount)) {
+    changes.push(`price ${current.priceAmount} → ${parsed.data.price}`);
+  }
+  if (parsed.data.salePrice !== undefined && parsed.data.salePrice !== (current.salePriceAmount === null ? null : Number(current.salePriceAmount))) {
+    changes.push(`sale price ${current.salePriceAmount ?? "none"} → ${parsed.data.salePrice ?? "none"}`);
+  }
+  if (parsed.data.status !== undefined && parsed.data.status !== current.status) {
+    changes.push(`status ${current.status} → ${parsed.data.status}`);
+  }
+  if (changes.length > 0) {
+    await recordAdminAction({
+      action: "product.updated",
+      targetType: "product",
+      targetId: id,
+      summary: `Inline edit: ${changes.join(", ")}`,
+      metadata: {
+        priceBefore: String(current.priceAmount),
+        salePriceBefore: current.salePriceAmount === null ? null : String(current.salePriceAmount),
+        statusBefore: current.status,
+        ...parsed.data,
+      },
+    });
+  }
+
   revalidatePath("/", "layout");
   revalidatePath("/admin/products");
   return {};
@@ -141,6 +172,15 @@ const bulkPriceSchema = z.object({
  * Every result is floored at 0.01. A price of zero is never what "reduce by 20%" was meant
  * to produce, and the storefront would sell at it.
  */
+/** "set sale price to 35", "adjusted price by -10%", "cleared the sale price" — for the audit line. */
+function describeBulkPrice(target: "price" | "salePrice", mode: BulkPriceMode, value: number): string {
+  const what = target === "price" ? "price" : "sale price";
+  if (mode === "clear") return "cleared the sale price";
+  if (mode === "set") return `set ${what} to ${value}`;
+  const signed = `${value > 0 ? "+" : ""}${value}${mode === "adjust-percent" ? "%" : ""}`;
+  return `adjusted ${what} by ${signed}`;
+}
+
 export async function bulkUpdatePrices(input: BulkPriceInput, scope: BulkProductScope): Promise<BulkPriceState> {
   const denied = await capabilityDenied("catalog:edit");
   if (denied) return { error: denied };
@@ -204,6 +244,13 @@ export async function bulkUpdatePrices(input: BulkPriceInput, scope: BulkProduct
 
   revalidatePath("/", "layout");
   revalidatePath("/admin/products");
+  await recordAdminAction({
+    action: "product.bulk_updated",
+    targetType: "product",
+    targetId: "bulk:price",
+    summary: `Bulk ${describeBulkPrice(target, mode, value)} across ${updated} product${updated === 1 ? "" : "s"}`,
+    metadata: { target, mode, value, requested: ids.length, updated, inverted, scope: scope.kind },
+  });
   return { updated, ...(inverted > 0 ? { inverted } : {}) };
 }
 
@@ -261,5 +308,12 @@ export async function bulkUpdateStock(input: BulkStockInput, scope: BulkProductS
   revalidatePath("/", "layout");
   revalidatePath("/admin/products");
   revalidatePath("/admin/inventory");
+  await recordAdminAction({
+    action: "product.bulk_updated",
+    targetType: "product",
+    targetId: "bulk:stock",
+    summary: `Bulk ${mode === "set" ? `set stock to ${value}` : `changed stock by ${value > 0 ? "+" : ""}${value}`} on ${updated} size${updated === 1 ? "" : "s"} across ${ids.length} product${ids.length === 1 ? "" : "s"}`,
+    metadata: { mode, value, requested: ids.length, updated, scope: scope.kind },
+  });
   return { updated };
 }

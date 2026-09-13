@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { Prisma } from "@/lib/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { capabilityDenied } from "@/lib/admin-session";
+import { recordAdminAction } from "@/services/audit-log";
 import { CATEGORIES_CACHE_TAG, isSameOrDescendant } from "@/services/categories";
 import { categoryFormSchema, type CategoryFormValues } from "@/lib/validation/category";
 import { normalizeSeoOverride } from "@/lib/validation/product";
@@ -90,6 +91,7 @@ export async function createCategory(values: CategoryFormValues): Promise<Catego
     data: { ...toCategoryWriteData(data, parentId), position },
   });
 
+  await recordAdminAction({ action: "category.created", targetType: "category", targetId: category.id, summary: `Created category ${data.name} (${data.slug})${parentId ? " under a parent" : ""}`, metadata: { slug: data.slug, parentId, isVisible: data.isVisible } });
   revalidateStorefront();
   redirect(`/admin/categories/${category.id}`);
 }
@@ -148,6 +150,7 @@ export async function updateCategory(id: string, values: CategoryFormValues): Pr
     ...(slugChanged ? [prisma.categorySlugHistory.deleteMany({ where: { slug: data.slug } })] : []),
   ]);
 
+  await recordAdminAction({ action: "category.updated", targetType: "category", targetId: id, summary: `Edited category ${data.name} (${data.slug})${current.slug !== data.slug ? `, renamed from ${current.slug}` : ""}${parentChanged ? ", moved to a different parent" : ""}`, metadata: { slug: data.slug, previousSlug: current.slug, parentId, isVisible: data.isVisible } });
   revalidateStorefront();
   redirect(`/admin/categories/${id}`);
 }
@@ -167,7 +170,9 @@ export async function deleteCategory(id: string): Promise<CategoryActionState> {
     return { error: `${productCount} product${productCount === 1 ? "" : "s"} still ${productCount === 1 ? "uses" : "use"} this category — reassign ${productCount === 1 ? "it" : "them"} first.` };
   }
 
+  const category = await prisma.category.findUnique({ where: { id }, select: { name: true, slug: true } });
   await prisma.category.delete({ where: { id } });
+  await recordAdminAction({ action: "category.deleted", targetType: "category", targetId: id, summary: `Deleted category ${category?.name ?? id}`, metadata: { slug: category?.slug } });
   revalidateStorefront();
   redirect("/admin/categories");
 }

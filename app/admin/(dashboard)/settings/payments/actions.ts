@@ -2,7 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { capabilityDenied } from "@/lib/admin-session";
+import { recordAdminAction } from "@/services/audit-log";
 import {
+  getAllMethodSettings,
+  isProviderEnabled,
   saveMethodSettings,
   saveProviderConfig,
   setMethodEnabled,
@@ -77,6 +80,21 @@ export async function saveProviderConfigAction(
     return { error: error instanceof Error ? error.message : "Could not save the configuration." };
   }
 
+  // The credentials themselves never go in the trail — which fields changed does. This is
+  // the write that decides where card payments are routed.
+  await recordAdminAction({
+    action: "paymentProvider.updated",
+    targetType: "paymentProvider",
+    targetId: providerId,
+    summary: `Updated ${provider.name} configuration (${environment ?? "current"} environment${clearedSecretKeys.length ? `, cleared ${clearedSecretKeys.join(", ")}` : ""})`,
+    metadata: {
+      environment: environment ?? null,
+      enabled: formData.get("enabled") === "on",
+      fieldsSet: Object.keys(values).filter((key) => values[key] !== ""),
+      clearedSecretKeys,
+    },
+  });
+
   revalidatePayments();
   return { success: "Settings saved." };
 }
@@ -88,6 +106,13 @@ export async function setProviderEnabledAction(
   const denied = await capabilityDenied("payments:configure");
   if (denied) return { error: denied };
   await setProviderEnabled(providerId, enabled);
+  await recordAdminAction({
+    action: "paymentProvider.updated",
+    targetType: "paymentProvider",
+    targetId: providerId,
+    summary: `${enabled ? "Enabled" : "Disabled"} the ${paymentProviderRegistry.get(providerId)?.name ?? providerId} provider`,
+    metadata: { enabled },
+  });
   revalidatePayments();
   return { success: enabled ? "Provider enabled." : "Provider disabled." };
 }
@@ -98,7 +123,33 @@ export async function setMethodEnabledAction(
 ): Promise<PaymentSettingsActionState> {
   const denied = await capabilityDenied("payments:configure");
   if (denied) return { error: denied };
+
+  /**
+   * Refuse to switch off the last way to pay. Four toggles could quietly close the shop:
+   * checkout kept rendering, offered nothing, and the admin saw four green "disabled" toasts.
+   * A method counts as a way to pay only if its provider is enabled too.
+   */
+  if (!enabled) {
+    const all = await getAllMethodSettings();
+    const stillOpen = [];
+    for (const setting of all) {
+      if (setting.methodId === methodId || !setting.enabled) continue;
+      const definition = paymentProviderRegistry.getMethod(setting.methodId);
+      if (definition && (await isProviderEnabled(definition.providerId))) stillOpen.push(setting.methodId);
+    }
+    if (stillOpen.length === 0) {
+      return { error: "This is the only way customers can pay. Enable another payment method before disabling it — with none, checkout shows no options at all." };
+    }
+  }
+
   await setMethodEnabled(methodId, enabled);
+  await recordAdminAction({
+    action: "paymentMethod.updated",
+    targetType: "paymentMethod",
+    targetId: methodId,
+    summary: `${enabled ? "Enabled" : "Disabled"} the ${paymentProviderRegistry.getMethod(methodId)?.name ?? methodId} payment method`,
+    metadata: { enabled },
+  });
   // Availability is read live on every checkout request, so this takes effect on the
   // shopper's next page view with no deploy — §20's "changing this should immediately
   // affect checkout availability".
@@ -158,6 +209,14 @@ export async function saveMethodSettingsAction(formData: FormData): Promise<Paym
     maximumAmount,
     countries: splitList("countries"),
     shippingRateIds: formData.getAll("shippingRateIds").map(String).filter(Boolean),
+  });
+
+  await recordAdminAction({
+    action: "paymentMethod.updated",
+    targetType: "paymentMethod",
+    targetId: methodId,
+    summary: `Updated ${paymentProviderRegistry.getMethod(methodId)?.name ?? methodId}: ${feeType === "none" ? "no fee" : `fee ${feeType} ${feeValue}`}, ${formData.get("enabled") === "on" ? "enabled" : "disabled"}`,
+    metadata: { feeType, feeValue, minimumAmount, maximumAmount, enabled: formData.get("enabled") === "on" },
   });
 
   revalidatePayments();

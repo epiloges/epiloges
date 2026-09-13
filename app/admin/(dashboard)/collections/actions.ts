@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { Prisma } from "@/lib/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { capabilityDenied, requireCapability } from "@/lib/admin-session";
+import { recordAdminAction } from "@/services/audit-log";
 import { collectionFormSchema, type CollectionFormValues } from "@/lib/validation/collection";
 import { normalizeSeoOverride } from "@/lib/validation/product";
 
@@ -51,6 +52,7 @@ export async function createCollection(values: CollectionFormValues): Promise<Co
     },
   });
 
+  await recordAdminAction({ action: "collection.created", targetType: "collection", targetId: collection.id, summary: `Created collection ${data.title} (${data.slug})` });
   revalidateStorefront();
   redirect(`/admin/collections/${collection.id}`);
 }
@@ -76,6 +78,7 @@ export async function updateCollection(id: string, values: CollectionFormValues)
     }),
   ]);
 
+  await recordAdminAction({ action: "collection.updated", targetType: "collection", targetId: id, summary: `Edited collection ${data.title} (${data.productIds.length} products)` });
   revalidateStorefront();
   redirect(`/admin/collections/${id}`);
 }

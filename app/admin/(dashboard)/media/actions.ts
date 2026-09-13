@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { capabilityDenied } from "@/lib/admin-session";
+import { recordAdminAction } from "@/services/audit-log";
 import { deleteImageFromBlob } from "@/lib/blob";
 import { deleteMediaAssetRow, getMediaAssetById, getMediaUsage, updateMediaAsset } from "@/services/media";
 
@@ -104,6 +105,9 @@ export async function deleteMediaAssets(ids: string[]): Promise<MediaActionState
     await deleteMediaAssetRow(id);
     await deleteImageFromBlob(asset.url);
     deleted++;
+    // Per file, because the blob is gone for good and the row with it: the only record of
+    // what was deleted is this line.
+    await recordAdminAction({ action: "media.deleted", targetType: "media", targetId: id, summary: `Deleted image ${asset.filename}`, metadata: { url: asset.url, folder: asset.folder } });
   }
 
   revalidatePath("/admin/media");

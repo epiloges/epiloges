@@ -50,6 +50,22 @@ export type AuditAction =
   | "product.updated"
   | "product.deleted"
   | "product.bulk_updated"
+  | "product.created"
+  | "product.archived"
+  | "product.restored"
+  | "product.duplicated"
+  | "category.created"
+  | "category.updated"
+  | "category.deleted"
+  | "collection.created"
+  | "collection.updated"
+  | "collection.deleted"
+  | "media.deleted"
+  | "blogPost.created"
+  | "blogPost.updated"
+  | "blogPost.deleted"
+  | "paymentMethod.updated"
+  | "paymentProvider.updated"
   | "dataSubject.exported"
   | "dataSubject.erased";
 
@@ -66,7 +82,13 @@ export interface AuditEntryInput {
     | "settings"
     | "product"
     | "customer"
-    | "pickupList";
+    | "pickupList"
+    | "category"
+    | "collection"
+    | "media"
+    | "blogPost"
+    | "paymentMethod"
+    | "paymentProvider";
   targetId: string;
   summary: string;
   metadata?: Record<string, unknown>;
