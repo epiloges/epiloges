@@ -15,6 +15,8 @@
     "wishlist": "Λίστα επιθυμιών"
   },
   "Search": {
+    "seeAllResults": "Δείτε όλα τα αποτελέσματα ({count})",
+    "seeAllResultsShort": "Δείτε όλα τα αποτελέσματα",
     "title": "Αναζήτηση",
     "closeSearch": "Κλείσιμο αναζήτησης",
     "placeholder": "Αναζητήστε προϊόντα, συλλογές, SKU...",
@@ -277,6 +279,10 @@
     "discount": "Μεγαλύτερη έκπτωση"
   },
   "Pages": {
+    "searchTitle": "Αναζήτηση",
+    "searchTitleFor": "Αποτελέσματα για «{query}»",
+    "searchDescription": "Αναζήτηση στον κατάλογο.",
+    "searchEmptyPrompt": "Πληκτρολογήστε κάτι στην αναζήτηση για να δείτε αποτελέσματα.",
     "womenTitle": "Γυναικεία",
     "womenDescription": "Γυναικεία παπούτσια — τακούνια, μπότες, πέδιλα και μπαλαρίνες.",
     "menTitle": "Ανδρικά",

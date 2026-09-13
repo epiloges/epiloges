@@ -52,6 +52,7 @@ export function SearchOverlay({ open, onOpenChange }: SearchOverlayProps) {
   const trending = getTrendingSearches();
   const [allCollections, setAllCollections] = useState<Collection[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [total, setTotal] = useState(0);
   const [collections, setCollections] = useState<Collection[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -91,6 +92,7 @@ export function SearchOverlay({ open, onOpenChange }: SearchOverlayProps) {
           .filter((c) => c.title.toLowerCase().includes(normalized.toLowerCase()))
           .slice(0, 4);
         setProducts(result.products);
+        setTotal(result.total);
         setCollections(matchingCollections);
         setIsSearching(false);
       })
@@ -126,6 +128,14 @@ export function SearchOverlay({ open, onOpenChange }: SearchOverlayProps) {
 
   const close = () => onOpenChange(false);
 
+  /** The full results page — where Enter and "see all" go. The overlay only previews six. */
+  const goToResults = () => {
+    if (trimmedQuery.length < MIN_QUERY_LENGTH) return;
+    addTerm(trimmedQuery);
+    close();
+    router.push(`/search?q=${encodeURIComponent(trimmedQuery)}`);
+  };
+
   const goToEntry = (entry: SearchEntry) => {
     if (entry.type === "term") {
       setQuery(entry.term);
@@ -141,6 +151,13 @@ export function SearchOverlay({ open, onOpenChange }: SearchOverlayProps) {
       close();
       return;
     }
+    // Enter with nothing highlighted goes to the full results page — even before the
+    // preview has come back, which is when an impatient shopper presses it.
+    if (event.key === "Enter" && activeIndex < 0 && trimmedQuery.length >= MIN_QUERY_LENGTH) {
+      event.preventDefault();
+      goToResults();
+      return;
+    }
     if (entries.length === 0) return;
     if (event.key === "ArrowDown") {
       event.preventDefault();
@@ -151,8 +168,6 @@ export function SearchOverlay({ open, onOpenChange }: SearchOverlayProps) {
     } else if (event.key === "Enter" && activeIndex >= 0) {
       event.preventDefault();
       goToEntry(entries[activeIndex]);
-    } else if (event.key === "Enter" && trimmedQuery.length >= MIN_QUERY_LENGTH) {
-      addTerm(trimmedQuery);
     }
   };
 
@@ -289,6 +304,13 @@ export function SearchOverlay({ open, onOpenChange }: SearchOverlayProps) {
                           );
                         })}
                       </div>
+                      <button
+                        type="button"
+                        onClick={goToResults}
+                        className="mt-3 text-sm underline underline-offset-4 hover:text-luxe-gray-dark"
+                      >
+                        {total > products.length ? t("seeAllResults", { count: total }) : t("seeAllResultsShort")}
+                      </button>
                     </div>
                   ) : null}
 

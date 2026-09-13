@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { X } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 import { useCart } from "@/components/providers/CartProvider";
+import { cn } from "@/lib/utils";
 
 /**
  * ONE box for both a discount code and a gift card.
@@ -24,6 +25,7 @@ export function CartPromoForm() {
   const t = useTranslations("Cart");
   const { cart, applyCode, removeDiscountCode, removeGiftCard, isMutating } = useCart();
   const [code, setCode] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   if (!cart) return null;
 
@@ -54,17 +56,26 @@ export function CartPromoForm() {
         onSubmit={async (event) => {
           event.preventDefault();
           if (!code.trim()) return;
-          await applyCode(code);
-          setCode("");
+          const failure = await applyCode(code);
+          setError(failure);
+          if (!failure) setCode("");
         }}
         className="flex gap-2"
       >
         <input
           id="cart-code"
           value={code}
-          onChange={(event) => setCode(event.target.value)}
+          onChange={(event) => {
+            setCode(event.target.value);
+            if (error) setError(null);
+          }}
           placeholder={t("codePlaceholder")}
-          className="h-10 w-full border border-border px-3 text-sm outline-none focus:border-luxe-black"
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? "cart-code-error" : undefined}
+          className={cn(
+            "h-10 w-full min-w-0 border px-3 text-sm outline-none focus:border-luxe-black",
+            error ? "border-destructive" : "border-border"
+          )}
         />
         <button
           type="submit"
@@ -74,6 +85,11 @@ export function CartPromoForm() {
           {t("apply")}
         </button>
       </form>
+      {error ? (
+        <p id="cart-code-error" role="alert" className="mt-1.5 text-xs text-destructive">
+          {error}
+        </p>
+      ) : null}
 
       {applied.length > 0 ? (
         <ul className="mt-2 space-y-1">

@@ -44,6 +44,8 @@ interface ProductListingPageProps {
   showHeader?: boolean;
   /** Sort applied when the shopper has not chosen one. /new-in uses "newest" so the page means something. */
   defaultSort?: PlpSort;
+  /** Free-text search, for the /search results page. Empty everywhere else. */
+  searchQuery?: string;
   initialListing?: InitialListing;
 }
 
@@ -61,6 +63,7 @@ export function ProductListingPage({
    * merchant described it. `/new-in` and `/sale` still pass their own.
    */
   defaultSort = "newest",
+  searchQuery = "",
   initialListing,
 }: ProductListingPageProps) {
   const t = useTranslations("Plp");
@@ -76,7 +79,7 @@ export function ProductListingPage({
   // to the search by listingSearchOptions, and this component renders no control for it.
   const { colors, sizes, brands, availability, sort, page: urlPage } = query;
   const genderParam = query.gender;
-  const signature = listingSignature(baseFilters, query);
+  const signature = listingSignature(baseFilters, query, searchQuery);
 
   /**
    * The server's work is reused only when the URL still describes the same result set.
@@ -181,7 +184,7 @@ export function ProductListingPage({
     (async () => {
       for (let page = 1; page <= urlPage; page += 1) {
         if (cacheEntry.pages.has(page)) continue;
-        const result = await commerce.search.search("", listingSearchOptions(baseFilters, query, page));
+        const result = await commerce.search.search(searchQuery, listingSearchOptions(baseFilters, query, page));
         if (cancelled) return;
         const withBounds = result as typeof result & { priceBounds?: [number, number] };
         cacheEntry.pages.set(page, result.products);

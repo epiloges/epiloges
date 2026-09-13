@@ -32,7 +32,8 @@ interface CartContextValue {
   saveForLater: (lineItemId: string) => Promise<void>;
   moveToCart: (lineItemId: string) => Promise<void>;
   /** One box for both kinds of code — see the implementation for why the UI cannot do this itself. */
-  applyCode: (code: string) => Promise<void>;
+  /** Resolves to the failure message to show next to the field, or null when the code applied. */
+  applyCode: (code: string) => Promise<string | null>;
   applyDiscountCode: (code: string) => Promise<void>;
   removeDiscountCode: (code: string) => Promise<void>;
   applyGiftCard: (code: string) => Promise<void>;
@@ -310,30 +311,35 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const applyCode = useCallback(
     async (rawCode: string) => {
       const code = rawCode.trim();
-      if (!code) return;
+      if (!code) return null;
 
       try {
         await withMutation((cartId) => commerce.cart.applyDiscountCode(cartId, code));
         toast({ title: t("promoApplied"), tone: "success" });
-        return;
+        return null;
       } catch (error) {
         const noSuchDiscount = error instanceof CommerceError && error.code === "INVALID_DISCOUNT_CODE";
         if (!noSuchDiscount) {
-          reportError(error, t("invalidCode"));
-          return;
+          // The code IS a discount and something specific is wrong with it (already
+          // applied, expired) — say that, it is the useful message.
+          return error instanceof CommerceError && tError.has(error.code) ? tError(error.code) : t("invalidCode");
         }
       }
 
       try {
         await withMutation((cartId) => commerce.cart.applyGiftCard(cartId, code));
         toast({ title: t("giftCardApplied"), tone: "success" });
-      } catch (error) {
-        // Neither kind matched. One message for both, which also avoids telling a stranger
-        // which of the two code namespaces a guess landed in.
-        reportError(error, t("invalidCode"));
+        return null;
+      } catch {
+        // Neither kind matched. One message for both — the shopper typed "a code", not a
+        // gift card, so "the gift card is invalid" (the last attempt's error) would mislead,
+        // and it also avoids telling a stranger which namespace a guess landed in. Returned
+        // for the field to show, not toasted: a toast in the corner is gone in seconds and
+        // is exactly what made an invalid code look like a dead button.
+        return t("invalidCode");
       }
     },
-    [commerce, withMutation, reportError, toast, t]
+    [commerce, withMutation, toast, t, tError]
   );
 
   const applyDiscountCode = useCallback(

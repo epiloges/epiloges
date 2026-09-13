@@ -121,8 +121,9 @@ export function listingSearchOptions(
  */
 export function listingSignature(
   baseFilters: Pick<SearchOptions, "gender" | "category" | "collectionId" | "isNew" | "isSale">,
-  query: ListingQuery
+  query: ListingQuery,
+  searchQuery = ""
 ): string {
   const { page: _page, ...rest } = query;
-  return JSON.stringify({ baseFilters, ...rest });
+  return JSON.stringify({ baseFilters, searchQuery, ...rest });
 }

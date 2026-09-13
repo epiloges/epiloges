@@ -221,10 +221,14 @@ export function PaymentStep() {
         </p>
       ) : null}
 
-      <p className="flex items-center gap-1.5 text-xs text-luxe-gray-dark">
-        <ShieldCheck className="size-3.5 shrink-0" strokeWidth={1.5} />
-        {t("cardsHandledByProvider")}
-      </p>
+      {/* Only when a card can actually be used — reassuring a shopper about card data on a
+          page with no card option reads as a missing feature, not as reassurance. */}
+      {visibleMethods.some((method) => method.requiresRedirect || method.icon === "card" || method.icon === "wallet") ? (
+        <p className="flex items-center gap-1.5 text-xs text-luxe-gray-dark">
+          <ShieldCheck className="size-3.5 shrink-0" strokeWidth={1.5} />
+          {t("cardsHandledByProvider")}
+        </p>
+      ) : null}
 
       <button
         type="submit"

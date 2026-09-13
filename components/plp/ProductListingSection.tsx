@@ -42,6 +42,8 @@ interface ProductListingSectionProps {
   showHeader?: boolean;
   /** Sort applied when the shopper has not chosen one. /new-in uses "newest" so the page means something. */
   defaultSort?: PlpSort;
+  /** Free-text search, for the /search results page. Empty everywhere else. */
+  searchQuery?: string;
   searchParams: Record<string, string | string[] | undefined>;
 }
 
@@ -63,6 +65,7 @@ export async function ProductListingSection({
   /** Newest first — see the note on `ProductListingPage`, which this must agree with or the
    *  server's first page and the client's first re-fetch would be sorted differently. */
   defaultSort = "newest",
+  searchQuery = "",
   searchParams,
 }: ProductListingSectionProps) {
   const query = parseListingQuery(searchParamReader(searchParams), defaultSort);
@@ -85,7 +88,7 @@ export async function ProductListingSection({
   let fetchedPages = 0;
 
   for (let page = 1; page <= pages; page += 1) {
-    const result = await searchProducts("", listingSearchOptions(baseFilters, query, page));
+    const result = await searchProducts(searchQuery, listingSearchOptions(baseFilters, query, page));
     collected.push(...result.products);
     facets = result.facets;
     total = result.total;
@@ -100,7 +103,7 @@ export async function ProductListingSection({
     facets,
     total,
     priceBounds,
-    signature: listingSignature(baseFilters, query),
+    signature: listingSignature(baseFilters, query, searchQuery),
     // What was actually fetched, not what was asked for. The client re-splits `products`
     // along this count, so overstating it would hand it empty pages it thinks are real.
     pages: fetchedPages,
@@ -135,6 +138,7 @@ export async function ProductListingSection({
         baseFilters={baseFilters}
         showHeader={showHeader}
         defaultSort={defaultSort}
+        searchQuery={searchQuery}
         initialListing={initialListing}
       />
     </>
