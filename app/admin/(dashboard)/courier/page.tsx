@@ -3,7 +3,7 @@ import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { PickupListPanel } from "@/components/admin/PickupListPanel";
 import { requireCapabilityOrRedirect } from "@/lib/admin-session";
 import { getCourierProvider, isAcsCourierConfigured, type PickupListSummary } from "@/lib/courier";
-import { todayInAthens } from "@/lib/courier/providers/acs";
+import { nextPickupDateInAthens } from "@/lib/courier/providers/acs";
 import { issuePickupListAction } from "@/app/admin/(dashboard)/courier/actions";
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
@@ -31,7 +31,9 @@ export default async function AdminCourierPage() {
     );
   }
 
-  const today = todayInAthens();
+  // Sunday shows Monday: ACS refuses a Sunday pickup, and the vouchers created on a Sunday
+  // are dated Monday too, so that is the list to close.
+  const today = nextPickupDateInAthens();
   const provider = getCourierProvider();
   let existing: PickupListSummary[] = [];
   let existingError: string | null = null;

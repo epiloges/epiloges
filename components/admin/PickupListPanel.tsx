@@ -5,7 +5,7 @@ import type { IssuePickupListState } from "@/app/admin/(dashboard)/courier/actio
 import type { PickupListSummary } from "@/lib/courier/types";
 
 interface PickupListPanelProps {
-  /** YYYY-MM-DD, Athens. */
+  /** YYYY-MM-DD, Athens — the next day ACS will collect, so Monday when opened on a Sunday. */
   today: string;
   existing: PickupListSummary[];
   existingError: string | null;
@@ -90,12 +90,12 @@ export function PickupListPanel({ today, existing, existingError, onIssue }: Pic
       </div>
 
       <div className="border border-border bg-luxe-white p-6">
-        <h3 className="mb-1 text-sm font-medium tracking-[0.05em] uppercase">Today&apos;s lists</h3>
-        <p className="mb-4 text-xs text-luxe-gray-dark">Lists already issued for {today}. Reprint one if the driver needs another copy.</p>
+        <h3 className="mb-1 text-sm font-medium tracking-[0.05em] uppercase">Lists for {today}</h3>
+        <p className="mb-4 text-xs text-luxe-gray-dark">Already issued for this pickup date. Reprint one if the driver needs another copy.</p>
         {existingError ? (
           <p className="text-sm text-destructive">{existingError}</p>
         ) : existing.length === 0 ? (
-          <p className="text-sm text-luxe-gray-dark">No pickup list has been issued today.</p>
+          <p className="text-sm text-luxe-gray-dark">No pickup list has been issued for this date yet.</p>
         ) : (
           <ul className="divide-y divide-border">
             {existing.map((list) => (
