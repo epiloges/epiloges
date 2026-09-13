@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { createAcsCourierProvider, todayInAthens } from "@/lib/courier/providers/acs";
+import { createAcsCourierProvider, nextPickupDateInAthens } from "@/lib/courier/providers/acs";
 
 /**
  * The test cycle ACS asks for before activating an account: one voucher, printed both
@@ -16,7 +16,7 @@ import { createAcsCourierProvider, todayInAthens } from "@/lib/courier/providers
  * goes to the shop's own address with a made-up reference. Output lands in `./acs-test/`.
  *
  * ACS's pickup date must be a working day (not Sunday or a public holiday) and not in the
- * past; the default is today in Athens. The pickup list closes EVERY printed voucher on the
+ * past; the default is today in Athens, or Monday on a Sunday. The pickup list closes EVERY printed voucher on the
  * account for that date, which on a test account is exactly the point.
  *
  * Needs `--conditions=react-server` (see package.json) because the provider imports
@@ -52,7 +52,7 @@ async function main() {
     return;
   }
 
-  const date = flag("--date") ?? todayInAthens();
+  const date = flag("--date") ?? nextPickupDateInAthens();
   const outDir = join(process.cwd(), "acs-test");
   mkdirSync(outDir, { recursive: true });
   const save = (name: string, bytes: Uint8Array) => {
@@ -81,6 +81,7 @@ async function main() {
     codAmount: 83.05,
     deliveryNotes: "ΔΟΚΙΜΗ WEB SERVICES — ΜΗΝ ΑΠΟΣΤΑΛΕΙ",
     senderName: "ALEXANDRIS",
+    pickupDate: date,
   });
   console.log(`  voucher ${shipment.trackingNumber}`);
 

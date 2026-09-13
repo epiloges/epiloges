@@ -126,7 +126,7 @@ export function createAcsCourierProvider(creds: AcsCredentials): CourierProvider
       const { address, recipientName, weightGrams, itemQuantity, codAmount } = input;
       const { street, number } = splitStreetNumber(address.address1);
       const out = await call("ACS_Create_Voucher", {
-        Pickup_Date: todayInAthens(),
+        Pickup_Date: input.pickupDate ?? nextPickupDateInAthens(),
         Sender: input.senderName ?? null,
         Recipient_Name: recipientName,
         Recipient_Address: [street, address.address2].filter(Boolean).join(", "),
@@ -280,9 +280,23 @@ interface AcsOutput {
 
 /** YYYY-MM-DD in the shop's own timezone — ACS refuses a pickup date in the past. */
 export function todayInAthens(): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Athens", year: "numeric", month: "2-digit", day: "2-digit" }).format(
-    new Date()
-  );
+  return athensDate(new Date());
+}
+
+/**
+ * Today, or Monday when today is a Sunday — ACS rejects a Sunday pickup outright. Public
+ * holidays are rejected too, but there is no list to check against here; the error comes
+ * back in ACS's words and the admin retries the next day.
+ */
+export function nextPickupDateInAthens(): string {
+  const now = new Date();
+  const weekday = new Intl.DateTimeFormat("en-US", { timeZone: "Europe/Athens", weekday: "short" }).format(now);
+  if (weekday !== "Sun") return athensDate(now);
+  return athensDate(new Date(now.getTime() + 24 * 60 * 60 * 1000));
+}
+
+function athensDate(at: Date): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Athens", year: "numeric", month: "2-digit", day: "2-digit" }).format(at);
 }
 
 /**

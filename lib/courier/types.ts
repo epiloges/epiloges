@@ -12,6 +12,8 @@ export interface CreateShipmentInput {
   deliveryNotes?: string;
   /** Shop name as it should appear on the label. */
   senderName?: string;
+  /** YYYY-MM-DD the courier should collect; defaults to the next working day. */
+  pickupDate?: string;
 }
 
 export interface CreateShipmentResult {
