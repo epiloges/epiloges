@@ -241,6 +241,40 @@ the store code, and was fully reverted from a Neon point-in-time branch. 26 prod
 supplier codes in their names (Guess/Valentino bags, U.S. Polo); renaming them is the owner's
 job, by hand, in the admin.
 
+## Email audit (2026-09-13/14)
+
+**Why customers were not getting email:** `EMAIL_FROM` is `onboarding@resend.dev`, Resend's
+test sender, which delivers only to the Resend account owner — every other recipient is
+rejected — and the transport logged successes only. A rejected send threw, the caller wrote a
+console line, and Vercel Hobby keeps runtime logs for an hour. Nobody could have known. The
+fix is the owner's: verify a sending domain in Resend and set `EMAIL_FROM` to an address on
+it (see `.env.example`). Until then, the admin dashboard and Emails page carry a red banner —
+`getEmailHealth()` in `lib/email/index.ts` — and every failed send is a row on
+`/admin/emails?status=failed` with the provider's reason and a Retry button.
+
+**What changed underneath:** `lib/email/pipeline.ts` wraps the transport — marketing
+templates are dropped for opted-out addresses and get an unsubscribe footer + RFC 8058
+`List-Unsubscribe` headers; transient provider errors retry three times; every outcome
+(sent / failed / skipped, attempts, provider message id) is an `email_log` row. Opt-out is
+`email_unsubscribes` + `Customer.acceptsMarketing`, via `/api/email/unsubscribe` (GET page,
+POST one-click). The Resend key is send-only, so nothing can be verified through their API.
+
+**The big gap:** a card payment settling through the Piraeus webhook sent *nothing* — the
+confirmation only went out when the shopper revisited the confirmation page.
+`services/order-notifications.ts` now owns every email an order sends as payment moves
+(confirmation once via claim-then-release, payment received for a hand-confirmed transfer,
+payment failed/expired with a retry link, partial refund with the amount, the shop's own copy
+of every sale) and `applyStatus` in `services/payments.ts` calls it. Order links in emails
+carry a signed 180-day token so a guest can open the order from their phone. Forms now answer
+the sender (contact, concierge, returns, newsletter welcome once) with Reply-To on the shop
+copy; OAuth first sign-in gets the welcome; all links come from `getSiteUrl()`, never the
+request host.
+
+**Not built, on purpose:** email verification at sign-up (Google/Apple/Facebook verify for
+us; the password form does not — a design gap, not a bug), invoices, SMS. **Untested live:**
+payment-received/failed/refund flows need Piraeus credentials that do not exist yet; they are
+exercised only through `applyStatus` in the sandbox.
+
 ## Piraeus Bank replaces Stripe as the card rail (2026-09-13)
 
 **What changed.** Stripe and Apple Pay are gone (files, tests, env vars). `lib/payments/providers/piraeus.ts`
