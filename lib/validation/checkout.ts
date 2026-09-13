@@ -185,7 +185,7 @@ export type ContactAndAddressFormValues = z.infer<typeof contactAndAddressSchema
  * misplaced: this application must never accept a card number or a CVV, because
  * doing so pulls it into PCI scope and makes its own logs and error reports a
  * liability. Card data is collected on the payment processor's own page — see
- * lib/payments/providers/stripe.ts — and the only thing that comes back is a token
- * and a status. If a future integration appears to need a card field here, that is
+ * lib/payments/providers/piraeus.ts — and the only thing that comes back is a signed
+ * result and a status. If a future integration appears to need a card field here, that is
  * a sign the integration is being wired up wrongly.
  */

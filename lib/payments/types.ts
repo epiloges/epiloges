@@ -289,6 +289,16 @@ export interface CustomerAction {
   /** For `redirect`: where to send the shopper. Always provider-issued, never client-supplied. */
   redirectUrl?: string;
   /**
+   * For `redirect` when the provider's page can only be entered by a browser POST —
+   * Piraeus epay and the other Greek bank gateways all work this way. The provider
+   * returns the form here and leaves `redirectUrl` unset; services/payments.ts
+   * points `redirectUrl` at this app's own bridge page
+   * (`/api/payments/redirect/:paymentId`), which submits the form. The checkout
+   * still sees nothing but a URL to go to, and nothing in `fields` may be secret —
+   * it is rendered into HTML in the shopper's browser.
+   */
+  redirectForm?: { action: string; fields: Record<string, string> };
+  /**
    * For `client_confirmation`: opaque, PUBLISHABLE handle the browser SDK needs
    * (e.g. a Stripe PaymentIntent client secret). Only ever a value the provider
    * explicitly designates as browser-safe — never an API secret.
@@ -347,6 +357,14 @@ export interface WebhookRequest {
   /** Raw, unparsed body — signature verification must run against the exact bytes received. */
   rawBody: string;
   headers: Headers;
+  /**
+   * Read-only lookup of our own payment rows, for providers whose signature key is
+   * per-payment rather than per-account: Piraeus signs its result with the one-time
+   * ticket issued for that payment, so the verifier has to find the payment first.
+   * Provided by services/payments.ts; a parser that verifies against a static
+   * secret never needs it.
+   */
+  findPayment: (query: { paymentId?: string | null; externalPaymentId?: string | null }) => Promise<PaymentRecord | null>;
 }
 
 /**
@@ -381,9 +399,18 @@ export interface NormalizedWebhookEvent {
 }
 
 export class PaymentWebhookVerificationError extends Error {
-  constructor(message: string) {
+  /**
+   * Our payment id, when the parser identified it before the signature failed.
+   * Lets the rejected delivery be filed against that payment — and, for a
+   * browser-delivered notification, lets the shopper still be sent to their own
+   * order rather than to a dead end.
+   */
+  paymentId?: string;
+
+  constructor(message: string, options: { paymentId?: string } = {}) {
     super(message);
     this.name = "PaymentWebhookVerificationError";
+    this.paymentId = options.paymentId;
   }
 }
 
@@ -422,8 +449,17 @@ export interface PaymentProvider {
   readonly supportsConnectionTest: boolean;
   readonly webhookSupported: boolean;
   /**
+   * How the provider's notifications arrive. `server` (the default) is a
+   * server-to-server call answered with JSON. `browser` means the provider sends
+   * the notification THROUGH THE SHOPPER'S BROWSER — a form POST to our endpoint
+   * as the last step of the redirect flow, which is how Piraeus epay reports a
+   * result. The verification pipeline is identical; only the response differs:
+   * a browser has to be sent on to the confirmation page, not handed JSON.
+   */
+  readonly webhookDelivery?: "server" | "browser";
+  /**
    * True for a provider whose boundary exists but whose real API isn't connected
-   * (IRIS, Piraeus). The admin renders "Integration pending" rather than "Not
+   * (IRIS). The admin renders "Integration pending" rather than "Not
    * configured" for these, because the two are genuinely different problems: one is
    * solved by entering credentials, the other by supplying the bank's specification.
    * Collapsing them would let a fully filled-in form read as ready to take money.

@@ -100,10 +100,13 @@ export default async function ProviderSettingsPage({ params }: ProviderSettingsP
 
       {provider.webhookSupported ? (
         <div className="mt-6 border border-border bg-luxe-white p-5">
-          <h3 className="text-sm font-medium tracking-[0.05em] uppercase">Webhook endpoint</h3>
+          <h3 className="text-sm font-medium tracking-[0.05em] uppercase">
+            {provider.webhookDelivery === "browser" ? "Result URL" : "Webhook endpoint"}
+          </h3>
           <p className="mt-1 text-sm text-luxe-gray-dark">
-            Register this URL with {provider.name}. Every delivery is signature-verified, deduplicated and logged before
-            it can change a payment&apos;s status.
+            {provider.webhookDelivery === "browser"
+              ? `Register this URL on your ${provider.name} merchant account as BOTH the success and the failure URL. The bank posts each result here through the shopper's browser; it is signature-verified, deduplicated and logged before it can change a payment's status, and the shopper is then sent on to their order.`
+              : `Register this URL with ${provider.name}. Every delivery is signature-verified, deduplicated and logged before it can change a payment's status.`}
           </p>
           <code className="mt-3 block border border-border bg-luxe-gray-light px-3 py-2 text-xs break-all">
             {webhookUrl}

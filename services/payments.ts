@@ -11,6 +11,7 @@ import { evaluateMethodAvailability } from "@/lib/payments/availability";
 import { computePaymentFee, describePaymentFee } from "@/lib/payments/fees";
 import { assertTransition, eventTypeForStatus, isSettled } from "@/lib/payments/status";
 import { derivePaymentIdempotencyKey } from "@/lib/payments/idempotency";
+import { getSiteUrl } from "@/lib/site-url";
 import { toPaymentRecord, toTimelineEntry, toWebhookRecord, type PaymentTimelineEntry, type PaymentWebhookRecord } from "@/lib/payments/mappers";
 import {
   PaymentError,
@@ -344,6 +345,14 @@ export async function initiatePayment(input: InitiatePaymentInput): Promise<Init
     throw error;
   }
 
+  // A provider whose page can only be entered by a browser POST hands back the form
+  // rather than a URL. The shopper is sent to our own bridge page, which submits it —
+  // so the checkout keeps its single "go to this URL" branch and never learns that
+  // one gateway wants a POST and another a GET.
+  if (result.customerAction?.type === "redirect" && result.customerAction.redirectForm && !result.customerAction.redirectUrl) {
+    result.customerAction.redirectUrl = `${getSiteUrl().replace(/\/$/, "")}/api/payments/redirect/${record.id}`;
+  }
+
   record = await applyStatus(record, result, { actorType: "provider" });
   return { payment: record, customerAction: result.customerAction ?? null };
 }
@@ -400,6 +409,9 @@ async function applyStatus(
   // deliberately NOT stored, since it would then sit in the database far longer
   // than the few minutes it is useful for.
   if (result.customerAction?.redirectUrl) metadata.customerRedirectUrl = result.customerAction.redirectUrl;
+  // The bridge page (app/api/payments/redirect) reads this back to build the POST.
+  // Only non-secret fields belong here — they end up in the shopper's HTML.
+  if (result.customerAction?.redirectForm) metadata.customerRedirectForm = result.customerAction.redirectForm;
   if (result.customerAction?.instructions) metadata.customerInstructions = result.customerAction.instructions;
   if (result.customerAction?.message) metadata.customerMessage = result.customerAction.message;
   if (result.customerAction?.qrPayload) metadata.customerQrPayload = result.customerAction.qrPayload;
@@ -809,6 +821,13 @@ export async function testProviderConnection(providerId: PaymentProviderId): Pro
 export interface WebhookProcessingResult {
   status: "processed" | "duplicate" | "ignored" | "unverified" | "failed";
   message: string;
+  /**
+   * The payment the event concerned, when one could be resolved — set even for
+   * duplicates and ignored events. A browser-delivered notification (see
+   * `PaymentProvider.webhookDelivery`) needs it to send the shopper on to the right
+   * confirmation page whatever the outcome was.
+   */
+  paymentId?: string;
 }
 
 /**
@@ -842,11 +861,16 @@ export async function handleProviderWebhook(
 
   let event: NormalizedWebhookEvent | null = null;
   let verificationError: string | null = null;
+  let unverifiedPaymentId: string | null = null;
   try {
-    event = await provider.parseWebhook({ rawBody, headers }, config);
+    event = await provider.parseWebhook({ rawBody, headers, findPayment: findPaymentForEvent }, config);
   } catch (error) {
     if (error instanceof PaymentWebhookVerificationError) {
       verificationError = error.message;
+      // A parser that got as far as identifying the payment before the signature
+      // failed says which one, so the rejected delivery is filed against it rather
+      // than floating unattached where nobody reviewing that payment would see it.
+      unverifiedPaymentId = error.paymentId ?? null;
     } else {
       verificationError = error instanceof Error ? error.message : String(error);
     }
@@ -857,7 +881,11 @@ export async function handleProviderWebhook(
 
   // Resolve our payment before writing, so the stored row is already linked and an
   // operator looking at a failed delivery can see which payment it concerned.
-  const payment = event ? await findPaymentForEvent(event) : null;
+  const payment = event
+    ? await findPaymentForEvent(event)
+    : unverifiedPaymentId
+      ? await findPaymentForEvent({ paymentId: unverifiedPaymentId })
+      : null;
 
   let stored;
   try {
@@ -877,7 +905,11 @@ export async function handleProviderWebhook(
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
       // Already seen. Acknowledged with a 200 by the caller so the provider stops
       // retrying — §15's "receives the same webhook twice" case.
-      return { status: "duplicate", message: "This event has already been received." };
+      const seen = await prisma.paymentWebhookEvent.findUnique({
+        where: { provider_eventId: { provider: providerId, eventId } },
+        select: { paymentId: true },
+      });
+      return { status: "duplicate", message: "This event has already been received.", paymentId: seen?.paymentId ?? payment?.id };
     }
     throw error;
   }
@@ -887,7 +919,7 @@ export async function handleProviderWebhook(
       where: { id: stored.id },
       data: { processingStatus: "failed", processedAt: new Date() },
     });
-    return { status: "unverified", message: verificationError ?? "Could not parse the webhook payload." };
+    return { status: "unverified", message: verificationError ?? "Could not parse the webhook payload.", paymentId: payment?.id };
   }
 
   if (event.ignored || !event.status || !payment) {
@@ -898,6 +930,7 @@ export async function handleProviderWebhook(
     return {
       status: "ignored",
       message: payment ? `No action for event type "${event.eventType}".` : "No matching payment for this event.",
+      paymentId: payment?.id,
     };
   }
 
@@ -943,7 +976,7 @@ export async function handleProviderWebhook(
         reportedAmount: event.amount,
         expectedAmount: expected,
       });
-      return { status: "failed", message };
+      return { status: "failed", message, paymentId: payment.id };
     }
   } else {
     logger.warn("Webhook carried no amount to verify against the payment", {
@@ -982,14 +1015,14 @@ export async function handleProviderWebhook(
     // legitimate provider behaviour, and the state machine correctly refuses it.
     // Recording and acknowledging beats a 500 that makes the provider retry
     // forever and eventually disable the endpoint.
-    return { status: "failed", message };
+    return { status: "failed", message, paymentId: payment.id };
   }
 
   await prisma.paymentWebhookEvent.update({
     where: { id: stored.id },
     data: { processingStatus: "processed", processedAt: new Date() },
   });
-  return { status: "processed", message: `Applied ${event.eventType}.` };
+  return { status: "processed", message: `Applied ${event.eventType}.`, paymentId: payment.id };
 }
 
 /**
@@ -998,7 +1031,7 @@ export async function handleProviderWebhook(
  * Session becoming a PaymentIntent, for instance). The external id is the fallback
  * for providers that can't echo custom metadata.
  */
-async function findPaymentForEvent(event: NormalizedWebhookEvent): Promise<PaymentRecord | null> {
+async function findPaymentForEvent(event: Pick<NormalizedWebhookEvent, "paymentId" | "externalPaymentId"> | { paymentId?: string | null; externalPaymentId?: string | null }): Promise<PaymentRecord | null> {
   if (event.paymentId) {
     const byId = await prisma.payment.findUnique({ where: { id: event.paymentId } });
     if (byId) return toPaymentRecord(byId);

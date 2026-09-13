@@ -20,8 +20,8 @@ Checkout UI  ──►  GET /api/payment-methods        ──►  services/paym
                                                               │
                                                               └─► lib/payments/registry.ts
                                                                         │
-                                          ┌───────────────┬─────────────┼─────────────┬──────────────┐
-                                   CashOnDelivery   BankTransfer     Stripe       ApplePay     Iris / Piraeus
+                                          ┌───────────────┬─────────────┼─────────────────┐
+                                   CashOnDelivery   BankTransfer   Piraeus (epay)      Iris
 ```
 
 The checkout never imports a provider. It knows four things and nothing else:
@@ -35,7 +35,11 @@ The checkout never imports a provider. It knows four things and nothing else:
 
 The **one** branch the storefront takes on payment behaviour is
 `customerAction.type === "redirect"`. That is about the *action*, not the vendor —
-Stripe, Piraeus, IRIS and a provider nobody has written yet all travel the same path.
+Piraeus, IRIS and a provider nobody has written yet all travel the same path. A
+provider whose page can only be entered by a browser POST (every Greek bank gateway)
+returns `redirectForm` instead of `redirectUrl`; the service points the checkout at
+`/api/payments/redirect/:paymentId`, a bridge page that submits that form, and the
+checkout still sees nothing but a URL.
 
 ### File map
 
@@ -51,7 +55,8 @@ Stripe, Piraeus, IRIS and a provider nobody has written yet all travel the same 
 | `lib/payments/idempotency.ts` | Pure: the key that stops double-charging. |
 | `lib/payments/providers/*` | One file per provider. |
 | `services/payments.ts` | The only seam the rest of the app uses. |
-| `app/api/payments/webhooks/[provider]/route.ts` | One endpoint, every provider, zero provider-specific code. |
+| `app/api/payments/webhooks/[provider]/route.ts` | One endpoint, every provider, zero provider-specific code. Answers a server with JSON and a browser (`webhookDelivery: "browser"`) with a redirect to the order. |
+| `app/api/payments/redirect/[paymentId]/route.ts` | The bridge page for gateways that must be entered by a browser POST. Provider-agnostic. |
 | `app/admin/(dashboard)/settings/payments/*` | Control panel, rendered from the registry. |
 | `app/admin/(dashboard)/payments/*` | Transaction list, detail, timeline, refunds. |
 
@@ -232,8 +237,10 @@ it. Set `secret: true` for anything that must be encrypted, masked and never
 returned to the browser — that is enforced centrally in `lib/payments/config.ts`, not
 by each provider remembering to do it.
 
-Scope a field to one environment with `environment: "sandbox" | "production"`, as
-Stripe does for its test/live key pairs.
+Scope a field to one environment with `environment: "sandbox" | "production"` when
+a provider issues separate test and live key pairs. Piraeus does not — the bank runs
+test and live merchants on the same endpoints — so its fields are unscoped and the
+environment switch only labels the payments.
 
 ## 7. Adding a webhook
 
@@ -287,8 +294,10 @@ constraint — not an in-memory set, because serverless instances don't share me
 Providers that don't issue an event id get a SHA-256 of the payload, which achieves
 the same at-most-once effect for identical bodies.
 
-Outbound writes to providers that support it (Stripe) carry an `Idempotency-Key`
-header derived from the same value.
+Outbound writes to providers that support an idempotency header carry one derived
+from the same value. Piraeus has no such header; its equivalent is the
+MerchantReference (our payment id), which the bank refuses to charge twice
+(ResponseCode 11).
 
 ## 11. Security
 
@@ -317,44 +326,77 @@ header derived from the same value.
 - **Secrets never reach logs.** `PaymentError` carries a separate `publicMessage`;
   the developer-facing text is logged server-side and never returned to a shopper.
 
-## 12. What is deliberately not connected
+## 12. Piraeus Bank — epay eCommerce (Redirection)
 
-`IRIS` and `Piraeus Bank` are **integration boundaries**, built with
-`createPendingIntegrationProvider`. Everything structural is real — registration,
-configuration UI, encrypted credential storage, a routable webhook endpoint, a place
-in the status machine and the admin — but the three operations that would require
-guessing an endpoint, a request body or an authentication scheme refuse loudly:
+The card rail. Acquiring is the shop's Euronet Merchant Services contract; the
+gateway is the bank's **epay eCommerce** platform (historically "ePOS Paycenter"),
+used through its **Redirection** integration — the only tier that keeps card data
+off this application. Implemented in `lib/payments/providers/piraeus.ts` from the
+bank's Redirection manual as reproduced in the public reference implementations;
+the HMAC test vector in `piraeus.test.ts` is the bank's own.
 
-- `validateConfiguration` returns `not_implemented`, **never** `connected`. Filling
-  in every credential does not turn the badge green.
-- `isConfigured` returns `false` unconditionally, which keeps the method out of
-  `getAvailablePaymentMethods` and therefore off the checkout entirely.
-- `initializePayment` / `refundPayment` throw `PROVIDER_NOT_IMPLEMENTED`.
+The flow, and where each step lives:
 
-To complete one: replace the `createPendingIntegrationProvider(...)` call in that
-file with a full `PaymentProvider` implementation, using the official specification.
+1. **Ticket** — `initializePayment` calls the bank's SOAP ticket service with the
+   five credentials, the server-computed amount and our payment id as
+   `MerchantReference`, and receives a one-time `TranTicket`. The ticket binds the
+   amount. It is stored on the payment **encrypted** (`piraeusTicketEncrypted`),
+   because it is the key that verifies the result.
+2. **Redirect** — the provider returns a `redirectForm` for the bank's `pay.aspx`;
+   the bridge page POSTs it from the shopper's browser. Every field in that form is
+   one the bank's specification has the browser send in the clear.
+3. **Result** — the bank POSTs the outcome to `/api/payments/webhooks/piraeus`
+   **through the shopper's browser** (register that URL as both success and failure
+   URL on the merchant account). `parseWebhook` looks up the payment named by
+   `MerchantReference`, decrypts its ticket, recomputes `HashKey` (HMAC-SHA256 over
+   the documented field list, keyed with the ticket) and compares in constant time.
+   A match is proof the bank produced this result for this payment. The route then
+   303s the shopper to their confirmation page.
+
+Three consequences of the bank's design, all deliberate here:
+
+- **Only successes are signed.** A decline or error arrives with an empty
+  `HashKey`, so it is stored against the payment and shown to the admin but **never
+  applied** — an unsigned message must not be able to mark a payment `failed` and
+  thereby block a later genuine success. The shopper sees "you came back without
+  completing payment" and the payment stays `awaiting_customer_action` until an
+  admin cancels it.
+- **There is no status-query API in this tier.** `confirmPayment` returns the stored
+  status — which only a verified result can have set — rather than asking anyone.
+- **There is no refund API in this tier.** `refundPayment` records the refund; the
+  admin executes it in the epay ePOS merchant portal. Same pattern as Cash on
+  Delivery, for the same reason.
+
+**Before it takes a real card:** the bank's test merchant account has to be
+exercised end to end (ticket → bank page with a test card → result verified → order
+paid), the result URL registered on the merchant account, and one live transaction
+reconciled against the ePOS portal before `PIRAEUS_ENVIRONMENT` is flipped to
+`production`. Until the epay activation exists the provider is simply unconfigured
+and never reaches checkout.
+
+**IRIS** remains an **integration boundary**, built with
+`createPendingIntegrationProvider`: registered, configurable, routable, but
+`validateConfiguration` returns `not_implemented`, `isConfigured` is always false
+and `initializePayment` throws `PROVIDER_NOT_IMPLEMENTED`. To complete it, replace
+that factory call with a full `PaymentProvider` from the acquirer's specification.
 Nothing else changes.
 
-**Apple Pay** is a capability, not an acquirer. It owns the Apple-specific
-configuration and the availability rules, and delegates every money operation to the
-processor named in `processingProviderIdFor` (Stripe today). The checkout sees only
-"Apple Pay". Its availability additionally requires the processor to be enabled and
-configured, and — checked in the browser on top of everything the server decided — a
-device that actually supports it.
-
-**Stripe** uses hosted Checkout Sessions rather than Elements, so no card data
-reaches this application and Apple Pay / Google Pay appear on Stripe's own verified
-domain automatically. Moving to an on-site Elements integration later replaces
-`lib/payments/providers/stripe.ts` only.
+**Stripe and Apple Pay were removed on 2026-09-13** in favour of the bank the shop
+already has its acquiring contract with. The architecture is unchanged; a wallet or
+a second processor is still one file plus one registry line.
 
 ## 13. Local development
 
 1. Set `PAYMENTS_CONFIG_SECRET` (see `.env.example`).
 2. Cash on Delivery and Bank Transfer are enabled by default and need nothing else —
    a fresh install has a working checkout immediately.
-3. For Stripe, use test keys and `stripe listen --forward-to
-   localhost:3000/api/payments/webhooks/stripe` to receive webhooks locally.
+3. Piraeus needs the bank's test credentials and a publicly reachable result URL
+   (the bank's page posts back through the browser, so a tunnel such as
+   `cloudflared` or `ngrok` in front of localhost works). Set
+   `NEXT_PUBLIC_SITE_URL` to the tunnel origin so the bridge and result redirects
+   resolve there.
 4. `npm test` covers the state machine, availability, fees, idempotency, secret
-   storage, the registry's structural guarantees, both internal providers, both
-   pending boundaries, and Stripe's status mapping, webhook signature verification
-   and event normalisation — all without a database or a network.
+   storage, the registry's structural guarantees, both internal providers, the
+   IRIS boundary, and Piraeus's SOAP envelope, ticket parsing, HashKey signing
+   (against the bank's vector), result verification and the unsigned-decline rule —
+   all without a database or a network.

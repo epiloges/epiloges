@@ -11,25 +11,25 @@ describe("derivePaymentIdempotencyKey", () => {
   });
 
   it("differs per order", () => {
-    expect(derivePaymentIdempotencyKey("order_1", "stripe-card")).not.toBe(
-      derivePaymentIdempotencyKey("order_2", "stripe-card")
+    expect(derivePaymentIdempotencyKey("order_1", "piraeus-card")).not.toBe(
+      derivePaymentIdempotencyKey("order_2", "piraeus-card")
     );
   });
 
   it("differs per method — switching after a decline genuinely is a new attempt", () => {
-    expect(derivePaymentIdempotencyKey("order_1", "stripe-card")).not.toBe(
+    expect(derivePaymentIdempotencyKey("order_1", "piraeus-card")).not.toBe(
       derivePaymentIdempotencyKey("order_1", "cash-on-delivery")
     );
   });
 
   it("differs per attempt, so a deliberate retry of the same method starts fresh", () => {
-    expect(derivePaymentIdempotencyKey("order_1", "stripe-card", 0)).not.toBe(
-      derivePaymentIdempotencyKey("order_1", "stripe-card", 1)
+    expect(derivePaymentIdempotencyKey("order_1", "piraeus-card", 0)).not.toBe(
+      derivePaymentIdempotencyKey("order_1", "piraeus-card", 1)
     );
   });
 
   it("is fixed-length and reveals nothing about the order id", () => {
-    const key = derivePaymentIdempotencyKey("order_abc123", "stripe-card");
+    const key = derivePaymentIdempotencyKey("order_abc123", "piraeus-card");
     expect(key).toMatch(/^pay_[0-9a-f]{32}$/);
     expect(key).not.toContain("order_abc123");
   });

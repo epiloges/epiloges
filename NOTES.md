@@ -165,6 +165,47 @@ the store code, and was fully reverted from a Neon point-in-time branch. 26 prod
 supplier codes in their names (Guess/Valentino bags, U.S. Polo); renaming them is the owner's
 job, by hand, in the admin.
 
+## Piraeus Bank replaces Stripe as the card rail (2026-09-13)
+
+**What changed.** Stripe and Apple Pay are gone (files, tests, env vars). `lib/payments/providers/piraeus.ts`
+is no longer a boundary: it is the real **epay eCommerce "Redirection"** integration — ticket issued
+server-side over SOAP, shopper POSTed to `paycenter.piraeusbank.gr/redirection/pay.aspx` through the
+new bridge page `/api/payments/redirect/:paymentId`, result posted back through the browser to
+`/api/payments/webhooks/piraeus` and verified with HMAC-SHA256 keyed on the one-time ticket. Everything
+else in the architecture is untouched; `PAYMENTS.md` §12 documents it. 93 payment tests green, the
+HashKey test is the bank's own published vector.
+
+**Where the spec came from, honestly.** The bank hands its Redirection manual to merchants on
+activation; it is not on a public developer portal. This build used the manual as reproduced,
+field-for-field, in two public reference implementations (thanpa/PaycenterBundle, which carries the
+parameter table and test vector verbatim, and ouranosv/piraeus-bank-redirection). Endpoints, SOAP
+namespace, field order, the MD5 password digest, the result fields and the HashKey recipe all agree
+across both. **When the bank's own PDF arrives, diff it against `piraeus.ts` before the first live
+transaction** — the most likely divergences are a ticket-expiry value and any field added since.
+
+**The owner has the acquiring contract, not the gateway.** What exists is a Euronet EMS contract
+(TID / MID / settlement IBAN — the physical-POS kind). The gateway needs a separate **epay eCommerce
+activation** on that contract, which yields the five credentials the admin page asks for: Acquirer ID
+(14), e-commerce Merchant ID, POS ID (vPOS), username, password — plus a TEST merchant and test cards.
+Nothing here can be exercised end to end until those arrive. Ask Euronet Merchant Services / the
+Piraeus business banker for "ενεργοποίηση epay eCommerce (Redirection) στη σύμβαση acquiring".
+
+**Three generic additions, not Piraeus special cases**, because every Greek bank gateway works this way:
+`CustomerAction.redirectForm` (a redirect that must be a POST — the service routes it through the bridge
+page), `WebhookRequest.findPayment` (a parser whose signing key is per-payment can look the payment up),
+and `PaymentProvider.webhookDelivery: "browser"` (the webhook route 303s a person to their order instead
+of answering JSON). `next.config.ts` excludes only the bridge path from the site-wide CSP, because the
+bridge must `form-action` to the bank; the bridge sets its own equally strict policy.
+
+**The one rule that will look like a bug and is not:** a declined card never marks the payment
+`failed`. The bank signs successes only — `HashKey` is blank on failure — so a decline is stored,
+attributed and shown in the admin, but the payment stays `awaiting_customer_action` until an admin
+cancels it. Applying an unsigned "failed" would let anyone who knew the reference block a later genuine
+success (`failed → paid` is not a legal transition). The shopper still sees the honest outcome.
+
+**Do not put the contract numbers in the repo.** The MID/TID/IBAN the owner pasted in chat belong in
+Vercel env / the admin form, never in code or docs.
+
 ## ACS courier — test credentials arrived, activation pending (2026-09-13)
 
 **Superseded the entry below.** ACS sent TEST web-services credentials on 13 September with

@@ -2,8 +2,6 @@ import { describe, expect, it } from "vitest";
 import { cashOnDeliveryProvider } from "./cash-on-delivery";
 import { bankTransferProvider } from "./bank-transfer";
 import { irisProvider } from "./iris";
-import { piraeusProvider } from "./piraeus";
-import { applePayProvider } from "./apple-pay";
 import type { PaymentContext, PaymentRecord, ResolvedProviderConfig } from "@/lib/payments/types";
 
 function config(values: Record<string, string> = {}, secrets: Record<string, string> = {}): ResolvedProviderConfig {
@@ -141,7 +139,7 @@ describe("Bank Transfer provider", () => {
 });
 
 describe("unconnected integration boundaries", () => {
-  for (const provider of [irisProvider, piraeusProvider]) {
+  for (const provider of [irisProvider]) {
     describe(provider.name, () => {
       it("never reports itself connected, however much configuration exists", async () => {
         const result = await provider.validateConfiguration(
@@ -168,36 +166,9 @@ describe("unconnected integration boundaries", () => {
 
       it("rejects webhooks it cannot verify", async () => {
         await expect(
-          provider.parseWebhook!({ rawBody: "{}", headers: new Headers() }, config())
+          provider.parseWebhook!({ rawBody: "{}", headers: new Headers(), findPayment: async () => null }, config())
         ).rejects.toThrow(/cannot be verified/i);
       });
     });
   }
-});
-
-describe("Apple Pay provider", () => {
-  it("declares Stripe as its processor by default", () => {
-    expect(applePayProvider.processingProviderIdFor?.(config())).toBe("stripe");
-    expect(applePayProvider.processingProviderIdFor?.(config({ processingProvider: "stripe" }))).toBe("stripe");
-  });
-
-  it("rejects a processor that isn't registered", () => {
-    expect(applePayProvider.processingProviderIdFor?.(config({ processingProvider: "nonsense" }))).toBeNull();
-    expect(applePayProvider.isConfigured(config({ processingProvider: "nonsense" }))).toBe(false);
-  });
-
-  it("refuses to operate without its processor's configuration resolved", async () => {
-    // Running against Apple Pay's own config would find no API key and blame the
-    // wrong provider.
-    await expect(applePayProvider.initializePayment(context(config()))).rejects.toThrow(/processing provider/i);
-  });
-
-  it("requires an extra device check on top of whatever the server decided", () => {
-    expect(applePayProvider.methods[0].clientCapability).toBe("apple-pay");
-  });
-
-  it("has no webhook endpoint of its own — its events belong to the processor", () => {
-    expect(applePayProvider.webhookSupported).toBe(false);
-    expect(applePayProvider.parseWebhook).toBeUndefined();
-  });
 });

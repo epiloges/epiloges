@@ -9,10 +9,8 @@ import { PaymentError } from "@/lib/payments/types";
 
 import { cashOnDeliveryProvider } from "@/lib/payments/providers/cash-on-delivery";
 import { bankTransferProvider } from "@/lib/payments/providers/bank-transfer";
-import { stripeProvider } from "@/lib/payments/providers/stripe";
 import { irisProvider } from "@/lib/payments/providers/iris";
 import { piraeusProvider } from "@/lib/payments/providers/piraeus";
-import { applePayProvider } from "@/lib/payments/providers/apple-pay";
 
 /**
  * The central provider registry (§28).
@@ -89,7 +87,8 @@ export const paymentProviderRegistry = new PaymentProviderRegistry();
 
 paymentProviderRegistry.register(cashOnDeliveryProvider);
 paymentProviderRegistry.register(bankTransferProvider);
-paymentProviderRegistry.register(stripeProvider);
-paymentProviderRegistry.register(applePayProvider);
-paymentProviderRegistry.register(irisProvider);
+// Cards. Stripe was the card rail until 2026-09-13; it was removed in favour of the
+// bank the shop already has its acquiring contract with (Euronet / Piraeus epay), so
+// card settlements land in the same account as the POS terminal's.
 paymentProviderRegistry.register(piraeusProvider);
+paymentProviderRegistry.register(irisProvider);

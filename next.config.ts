@@ -127,7 +127,15 @@ const nextConfig: NextConfig = {
     unoptimized: process.env.NEXT_PUBLIC_OPTIMIZE_IMAGES !== "true",
   },
   async headers() {
-    return [{ source: "/:path*", headers: SECURITY_HEADERS }];
+    /**
+     * Everything except the payment bridge page. That page exists to submit a form to a
+     * bank's own domain (Piraeus epay accepts only a browser POST), which `form-action
+     * 'self'` above forbids — so app/api/payments/redirect sets its own, equally strict
+     * policy that permits exactly that one destination, and inherits nothing from here.
+     * Excluding it by matcher rather than relying on the route to overwrite the header
+     * keeps the outcome independent of which side Next applies last.
+     */
+    return [{ source: "/((?!api/payments/redirect/).*)", headers: SECURITY_HEADERS }];
   },
 };
 

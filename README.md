@@ -4,7 +4,7 @@ A luxury footwear ecommerce shop — Zara/COS-inspired minimal editorial design 
 
 Storefront, checkout, payments, transactional email, courier integration and a full admin dashboard are all real and Postgres-backed. It is built on a vendor-neutral commerce abstraction, so a different backend (Shopify, WooCommerce, Medusa, Commerce Layer) could be swapped in by writing adapters rather than rewriting the app.
 
-Two things are deliberately not connected yet, and the shop is honest about both rather than faking them: **card payments** (Stripe is code-complete and unit-tested but has no keys, so checkout offers Cash on Delivery only) and **outbound email** (no `EMAIL_PROVIDER` is set, so mail is written to the `EmailLog` table and never delivered).
+Two things are deliberately not connected yet, and the shop is honest about both rather than faking them: **card payments** (the Piraeus Bank / Euronet epay integration is built and unit-tested against the bank's specification, but the e-commerce activation on the acquiring contract has not been issued yet, so checkout offers Cash on Delivery and Bank Transfer only) and **outbound email** (no `EMAIL_PROVIDER` is set, so mail is written to the `EmailLog` table and never delivered).
 
 ## Stack
 
@@ -81,8 +81,8 @@ Dependency injection throughout: `SearchService` takes `ProductService` as a con
 See **`PAYMENTS.md`** for the full guide. Checkout → payment abstraction → selected provider. The checkout knows only `PaymentMethod` / `PaymentIntent` / `PaymentStatus` / `PaymentResult` and takes exactly one behavioural branch (`customerAction.type === "redirect"`), which is about the action, not the vendor. Adding a provider is a new file plus one registry line.
 
 - **Cash on Delivery** and **Direct Bank Transfer** — real and complete, no external account needed. Bank transfer deliberately has no `awaiting_bank_transfer → processing` edge in its state machine: creating the order does not mark it paid, because there is no automatic path to settlement.
-- **Stripe** — code-complete and unit-tested against its hosted checkout. Needs keys.
-- **IRIS** and **Piraeus Bank** — deliberate integration *boundaries*. The provider, config screen, webhook endpoint and registry entry all exist, but payment creation refuses rather than guessing an undocumented bank API. They cannot reach checkout in this state.
+- **Piraeus Bank (epay eCommerce)** — the card rail, through the bank's hosted "Redirection" page. Ticket issued server-side, shopper POSTed to the bank via a bridge page, result posted back through the browser and verified with an HMAC keyed on the one-time ticket. Built from the bank's specification and unit-tested against its published HMAC vector; needs the epay activation credentials (Merchant ID, POS ID, username, password) to go live. Refunds are recorded here and executed in the bank's portal.
+- **IRIS** — a deliberate integration *boundary*. The provider, config screen, webhook endpoint and registry entry all exist, but payment creation refuses rather than guessing an undocumented API. It cannot reach checkout in this state.
 
 Provider credentials are AES-256-GCM encrypted at rest with a key derived from `PAYMENTS_CONFIG_SECRET`; a missing key is a hard error at the point of use rather than a silent fallback to a hardcoded default. Every provider can also be configured entirely through environment variables (`<PROVIDER_ID>_<FIELD_KEY>`, upper-snake-cased), which is the right choice in production — an env var always wins over an admin-saved value, and the admin shows such a field as read-only rather than pretending a write took effect.
 
@@ -177,6 +177,6 @@ npx eslint
 
 ## Not Yet Built
 
-By design: **card payments** (Stripe needs keys, not code), **outbound email** (Resend needs a key), real multi-currency conversion (totals are currency-aware but only ever computed in EUR), restocking on returns, and full Greek localisation — `messages/el.json` covers the UI strings but there are no locale URLs or `hreflang`, so only one language is indexable.
+By design: **card payments** (Piraeus epay needs the bank's credentials, not code), **outbound email** (Resend needs a key), real multi-currency conversion (totals are currency-aware but only ever computed in EUR), restocking on returns, and full Greek localisation — `messages/el.json` covers the UI strings but there are no locale URLs or `hreflang`, so only one language is indexable.
 
 See `PROGRESS.md` for the full build log and `NOTES.md` for the current session's state.

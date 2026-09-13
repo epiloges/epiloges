@@ -7,14 +7,12 @@ import { paymentProviderRegistry } from "./registry";
  * — which is exactly when they earn their keep.
  */
 describe("payment provider registry", () => {
-  it("registers the six providers the shop supports", () => {
+  it("registers the four providers the shop supports", () => {
     expect(paymentProviderRegistry.list().map((p) => p.id).sort()).toEqual([
-      "apple-pay",
       "bank-transfer",
       "cash-on-delivery",
       "iris",
       "piraeus",
-      "stripe",
     ]);
   });
 
@@ -36,7 +34,7 @@ describe("payment provider registry", () => {
   });
 
   it("refuses to register the same provider twice", () => {
-    const existing = paymentProviderRegistry.require("stripe");
+    const existing = paymentProviderRegistry.require("piraeus");
     expect(() => paymentProviderRegistry.register(existing)).toThrow(/already registered/);
   });
 
@@ -62,7 +60,7 @@ describe("payment provider registry", () => {
   });
 
   it("marks unconnected integrations as pending and never as configured", () => {
-    for (const id of ["iris", "piraeus"] as const) {
+    for (const id of ["iris"] as const) {
       const provider = paymentProviderRegistry.require(id);
       expect(provider.integrationPending).toBe(true);
       // Whatever configuration is present, it reports itself unconfigured — which is
@@ -77,6 +75,14 @@ describe("payment provider registry", () => {
         })
       ).toBe(false);
     }
+  });
+
+  it("keeps Piraeus a real, connectable provider rather than a boundary", () => {
+    const piraeus = paymentProviderRegistry.require("piraeus");
+    expect(piraeus.integrationPending).toBeFalsy();
+    // Its result arrives through the shopper's browser, and the webhook route has to
+    // know that to send a person on rather than answer them with JSON.
+    expect(piraeus.webhookDelivery).toBe("browser");
   });
 
   it("declares a webhook parser for exactly the providers that claim webhook support", () => {
