@@ -39,7 +39,7 @@ export async function createGiftCard(values: GiftCardFormValues): Promise<GiftCa
   });
 
   revalidateStorefront();
-  redirect("/admin/gift-cards");
+  redirect("/admin/discounts#gift-cards");
 }
 
 /** No redirect — called from the list page itself, not a detail page (gift cards have no detail page). */

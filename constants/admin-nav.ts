@@ -21,7 +21,6 @@ import {
   UserCog,
   Boxes,
   PackageOpen,
-  Gift,
   BarChart3,
   ShieldCheck,
   ClipboardCheck,
@@ -63,8 +62,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { label: "Inventory", href: "/admin/inventory", icon: Boxes },
       { label: "Collections", href: "/admin/collections", icon: Layers },
       { label: "Categories", href: "/admin/categories", icon: Tags },
-      { label: "Discounts", href: "/admin/discounts", icon: Percent, capability: "catalog:discounts" },
-      { label: "Gift Cards", href: "/admin/gift-cards", icon: Gift, capability: "catalog:discounts" },
+      { label: "Discounts & Gift Cards", href: "/admin/discounts", icon: Percent, capability: "catalog:discounts" },
     ],
   },
   {
