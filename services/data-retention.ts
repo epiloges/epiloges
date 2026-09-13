@@ -34,9 +34,19 @@ export const WEBHOOK_PAYLOAD_RETENTION_DAYS = 90;
  */
 export const RATE_LIMIT_RETENTION_DAYS = 2;
 
+/**
+ * How long a sent email keeps its BODY. The row stays (to, subject, template, when — the
+ * "was it sent" answer the Emails page exists for); the HTML and text are blanked. Every
+ * order confirmation carries the customer's name, street and phone, and the table had no
+ * retention at all — an address a customer asked the shop to forget survived in here
+ * indefinitely. Six months covers "did you send my confirmation?" comfortably.
+ */
+export const EMAIL_BODY_RETENTION_DAYS = 180;
+
 export interface RetentionSummary {
   webhookPayloadsCleared: number;
   rateLimitRowsDeleted: number;
+  emailBodiesCleared?: number;
 }
 
 function daysAgo(days: number): Date {
@@ -62,12 +72,18 @@ export async function runDataRetention(): Promise<RetentionSummary> {
     where: { createdAt: { lt: daysAgo(RATE_LIMIT_RETENTION_DAYS) } },
   });
 
+  const emails = await prisma.emailLog.updateMany({
+    where: { sentAt: { lt: daysAgo(EMAIL_BODY_RETENTION_DAYS) }, html: { not: "" } },
+    data: { html: "", text: "" },
+  });
+
   const summary = {
     webhookPayloadsCleared: cleared.count,
     rateLimitRowsDeleted: rateLimits.count,
+    emailBodiesCleared: emails.count,
   };
 
-  if (summary.webhookPayloadsCleared > 0 || summary.rateLimitRowsDeleted > 0) {
+  if (summary.webhookPayloadsCleared > 0 || summary.rateLimitRowsDeleted > 0 || summary.emailBodiesCleared > 0) {
     logger.info("Data retention pass completed", summary);
   }
   return summary;

@@ -189,6 +189,9 @@ export async function eraseDataSubject(subject: DataSubject): Promise<ErasureSum
     deleted.contactMessages = (await tx.contactMessage.deleteMany({ where: { email } })).count;
     deleted.conciergeRequests = (await tx.conciergeRequest.deleteMany({ where: { email } })).count;
     deleted.backInStockRequests = (await tx.backInStockRequest.deleteMany({ where: { email } })).count;
+    // Every email the shop sent them — the order confirmation carries the full address in
+    // its HTML. Deleted rather than blanked: nothing obliges the shop to keep its outbox.
+    deleted.emails = (await tx.emailLog.deleteMany({ where: { to: { equals: email, mode: "insensitive" } } })).count;
 
     // ---- Kept, but stripped of identity: the tax record survives, the person does not. ----
     const orderWhere = customerId
@@ -212,10 +215,16 @@ export async function eraseDataSubject(subject: DataSubject): Promise<ErasureSum
     }
     anonymised.orders = orders.length;
 
+    // Returns hang off the orders above and are kept for the same reason; matched by
+    // email as well as id so a guest's returns are stripped too, not only an account's.
+    anonymised.returns = (
+      await tx.return.updateMany({
+        where: customerId ? { OR: [{ customerId }, { customerEmail: email }] } : { customerEmail: email },
+        data: { customerId: null, customerEmail: ERASED.email },
+      })
+    ).count;
+
     if (byCustomer) {
-      anonymised.returns = (
-        await tx.return.updateMany({ where: byCustomer, data: { customerId: null, customerEmail: ERASED.email } })
-      ).count;
       // Last, because everything above keys off it.
       deleted.customer = (await tx.customer.deleteMany({ where: { id: customerId! } })).count;
     }

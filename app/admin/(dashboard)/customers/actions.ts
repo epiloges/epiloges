@@ -37,7 +37,7 @@ export async function exportCustomerDataAction(email: string): Promise<DataSubje
   await recordAdminAction({
     action: "dataSubject.exported",
     targetType: "customer",
-    targetId: subject.customerId ?? subject.email,
+    targetId: subject.customerId ?? `guest:${maskEmail(subject.email)}`,
     summary: `Exported all data held for ${maskEmail(subject.email)} (GDPR Art. 15)`,
     // The email is masked in the trail too: a log that records the address in full is a second
     // copy of the thing the person may be about to ask you to delete.
@@ -71,7 +71,7 @@ export async function eraseCustomerDataAction(email: string, confirmation: strin
   await recordAdminAction({
     action: "dataSubject.erased",
     targetType: "customer",
-    targetId: subject.customerId ?? subject.email,
+    targetId: subject.customerId ?? `guest:${maskEmail(subject.email)}`,
     summary: `Erased personal data for ${maskEmail(subject.email)} (GDPR Art. 17); ${summary.anonymised.orders ?? 0} order(s) anonymised and kept`,
     metadata: { deleted: summary.deleted, anonymised: summary.anonymised },
   });
