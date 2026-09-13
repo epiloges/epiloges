@@ -1,3 +1,79 @@
+# Session Summary — 2026-09-13 (evening): admin audit, and the fixes for it
+
+Quick-reference recap of the LATEST session only. See `PROGRESS.md` for the build log and
+`AUDIT.md` for the customer-facing audit. The previous session's notes follow below,
+unchanged, because the Piraeus and courier material in them is still current.
+
+## Read this first
+
+**Seventeen commits on `main`, `b17f9ea`…`b3c6fa8`, NOT pushed.** `tsc`, `eslint` (0 errors),
+`next build` and all **576 unit tests** are green. One of them adds a column:
+
+```bash
+npx prisma migrate deploy
+```
+
+runs `20260913200000_order_internal_note` (additive, nullable — apply it BEFORE the push
+lands, the old code ignores the column). Then `git push origin main`.
+
+**Local dev was pointed at the LIVE database.** `.env`'s `DATABASE_URL` is production. The
+audit and every fix were exercised on the Neon test branch through
+`scripts/_audit/dev-sandbox.mjs` (launch config `alexandris-audit-sandbox`, port 3010, email in
+no-send mode). Keep using that for anything destructive; `scripts/_audit/q.mjs '<sql>'` runs
+ad-hoc SQL against the branch. The two throwaway admin accounts it seeds were removed.
+
+## What the audit found, in one paragraph
+
+Orders had no state machine — Delivered → Confirmed → Refunded → Shipped all worked, each step
+emailing the customer, the cancel/refund steps restocking units that never came back, and
+"Refunded" never touching the payment. Shipping, navigation, homepage, site settings and SEO
+saved whatever the browser sent (a delivery rate of −5 € subtracted from every order; the hero
+published with no image). The product form accepted a sale price ABOVE the price and the cart
+charged it. The CSV import published rows by default and invented visible categories from typos.
+Gift-card codes were typed ("GIFT50") and redemption had no rate limit. Most admin writes were
+missing from the activity log, which showed no times. GDPR erasure left every email the shop had
+sent the person, address and all. And a long tail: editors saw a Delete button that crashed the
+page, revenue counted refunded orders, Inventory could not edit inventory, customers had no page.
+
+## What changed, by commit
+
+| | |
+| --- | --- |
+| `b17f9ea` | **Order + return state machine** (`lib/order-transitions.ts`). Paid orders cannot be cancelled/refunded until the payment is refunded; uncollected ones cannot be "refunded" at all. Un-cancelling re-takes stock or refuses. Full payment refund → order refunded. Selects confirm with the consequence and revert on refusal. No vouchers for cancelled/delivered orders. |
+| `ed52334` | **Zod on every `setSiteContent` write** (`lib/validation/site-content.ts`); forms show the message; remote-area surcharge now editable. |
+| `3138020` | Product form: sale < price, compare-at ≥ price, trimmed names/SKUs, unique sizes, real image URLs, two decimals. **"In stock" is now "Sellable" and checkout honours it.** Duplicate no longer copies stock. |
+| `4e6c817` | CSV import: draft by default, typo status = error, auto-categories hidden and inside the row transaction, preview warnings, friendly errors, downloadable template + column reference. |
+| `c15a82e` | Generated gift-card codes; 20/10 min limit on code redemption; discount expiry = end of day Athens; discounts editable at `/admin/discounts/[id]`. |
+| `94e5453` | Audit log covers inline/bulk edits, payment settings, categories, collections, media, blog; Activity shows time + linked target. **Cannot disable the last payment method.** |
+| `d692122` | GDPR erasure deletes `email_log` rows; 180-day email-body retention; guest returns anonymised. |
+| `5d03987` | Editors: no Delete button, gated new/edit pages, actions return errors. |
+| `afe8566` | Sales figures exclude cancelled/refunded (`lib/order-revenue.ts`), Greek money format. |
+| `fd9e045` | Inventory page edits stock and sellable per size. |
+| `7520644` | Collection delete blocked while homepage/nav reference it; bulk delete ≥10 needs the count typed. |
+| `7f206cf` | Blog scheduling; newsletter export (was a dead button) + removal; Emails paged/searchable; admins can reset another admin's password. |
+| `c1f21fa` | Customers aggregated in SQL, searchable, paged; `/admin/customers/[key]` detail page; order → customer link. |
+| `c24e15c` | Order internal note (**migration**), history from the audit trail, printable packing slip. |
+| `08579f8` | No cart/wishlist/session calls or cookie banner on /admin; dnd-kit hydration warning; dead Currency field read-only; login keeps the email. |
+| `7faeadb` | `{freeShippingThreshold}` in announcements is filled from Shipping settings. **Edit the live announcement once to use it** — it still says "100 €" by hand while the threshold is 150. |
+| `b3c6fa8` | Published-post reads are `"use cache"` (hourly, tagged) so the journal prerenders. |
+
+## Left deliberately undone
+
+- **2FA on the admin.** Real work (TOTP enrolment, recovery codes); not a one-evening add-on.
+- **Invoices / αποδείξεις.** The packing slip is explicitly not a tax document; that belongs to the
+  accounting software, or to a later integration with it.
+- **Discount usage limits / minimum order / product scope.** Schema work; the code now at least
+  supports editing and correct expiry.
+- **The 928 KB PNG in Media** (`black-suede-loafer-…-mayro-5.png`): PERF-003 converted JPEGs only.
+  Re-encode it by hand or extend the migration script to PNGs.
+- **Production newsletter list**: the test branch is full of `gdpr-*@example.test` rows from test
+  runs that once targeted production. Check the live list and remove them if they are there.
+- **The Playwright suite was not run** this session — it needs a server on the test branch and the
+  `alexandris-prod` launch config points at `.env` (production). The checkout integration tests
+  against the branch passed.
+
+---
+
 # Session Summary — 2026-09-06 → 09-07 (performance, real 404s, and an audit that kept correcting itself)
 
 Quick-reference recap of the LATEST session only — this file gets replaced each session, it's the fast catch-up, not the archive. See `PROGRESS.md` for the detailed build log and **`AUDIT.md` for everything below in full**.
