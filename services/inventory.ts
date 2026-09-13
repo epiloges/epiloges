@@ -80,7 +80,9 @@ export async function listInventory(query: InventoryQuery = {}): Promise<Paged<I
   const rows = await prisma.productSize.findMany({
     where,
     // Lowest stock first: the rows that need attention are the reason to open this page.
-    orderBy: [{ quantity: "asc" }, { product: { name: "asc" } }, { position: "asc" }],
+    // Product, then the sizes in their own order (36, 37, 38…). Quantity-first made every
+    // product's sizes appear shuffled; the stock filter above is how one finds the empties.
+    orderBy: [{ product: { name: "asc" } }, { position: "asc" }],
     skip,
     take,
     select: {

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { InventoryStockCell } from "@/components/admin/InventoryStockCell";
 import { DataTable } from "@/components/admin/DataTable";
 import { ListFilterBar } from "@/components/admin/ListFilterBar";
 import { Pagination } from "@/components/admin/Pagination";
@@ -74,7 +75,10 @@ export default async function AdminInventoryPage({ searchParams }: AdminInventor
               },
               { header: "Size", cell: (row) => row.sizeName },
               { header: "SKU", cell: (row) => <span className="font-mono text-xs">{row.sku}</span> },
-              { header: "Quantity", cell: (row) => <span className="tabular-nums">{row.quantity}</span> },
+              {
+                header: "Stock",
+                cell: (row) => <InventoryStockCell sizeId={row.key} quantity={row.quantity} inStock={row.inStock} />,
+              },
               {
                 header: "Status",
                 cell: (row) => {
