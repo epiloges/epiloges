@@ -195,7 +195,9 @@ export async function duplicateProduct(id: string): Promise<ProductActionState> 
         create: colors.map((c) => ({ position: c.position, name: c.name, hex: c.hex, imageSrc: c.imageSrc, imageAlt: c.imageAlt })),
       },
       sizes: {
-        create: sizes.map((s) => ({ position: s.position, name: s.name, inStock: s.inStock, quantity: s.quantity, sku: s.sku ? `${s.sku}-copy` : null, barcode: s.barcode })),
+        // Sizes are copied, stock is not: the copy is a new product with nothing on the shelf
+        // yet, and inheriting the source's counts invented units that did not exist.
+        create: sizes.map((s) => ({ position: s.position, name: s.name, inStock: s.inStock, quantity: 0, sku: s.sku ? `${s.sku}-copy` : null, barcode: s.barcode })),
       },
       collections: {
         create: collections.map((c) => ({ collectionId: c.collectionId, position: c.position })),

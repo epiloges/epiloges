@@ -398,6 +398,9 @@ export async function completeCheckout(checkoutId: string): Promise<CompleteChec
           if (!canOversell) throw new CommerceError("OUT_OF_STOCK", `${label} is no longer available in that quantity.`);
           continue;
         }
+        // The admin's "sellable" switch (lib/product.ts isSizePurchasable). Overselling does
+        // not override it: "continue" means "sell past zero", not "sell what was withdrawn".
+        if (!sizeRow.inStock) throw new CommerceError("OUT_OF_STOCK", `${label} is no longer available.`);
         const existing = demandBySize.get(sizeRow.id);
         if (existing) existing.needed += item.quantity;
         else demandBySize.set(sizeRow.id, { sizeId: sizeRow.id, needed: item.quantity, canOversell, label });

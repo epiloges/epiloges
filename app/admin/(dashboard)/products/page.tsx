@@ -3,7 +3,7 @@ import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { ProductsTable } from "@/components/admin/ProductsTable";
 import { DEFAULT_PAGE_SIZE, parsePage, parseSearch } from "@/lib/pagination";
 import { listProductsForAdmin, PRODUCT_SORT_KEYS, type ProductSortKey } from "@/services/products";
-import { getAllCategories } from "@/services/categories";
+import { getCategoryOptions } from "@/services/categories";
 import type { ProductStatus } from "@/types";
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
@@ -29,7 +29,9 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
   const [paged, categories] = await Promise.all([
     // No publication filter: admin sees every lifecycle state — this is the one surface that must.
     listProductsForAdmin({ search, status, category, sort, page: parsePage(params.page), pageSize: DEFAULT_PAGE_SIZE }),
-    getAllCategories(),
+    // Tree order (parent, then its children) rather than the flat table order, so the
+    // filter reads like the category page instead of a shuffled list.
+    getCategoryOptions(),
   ]);
 
   const isFiltered = Boolean(search || status || category);
@@ -59,7 +61,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
         page={paged.page}
         pageCount={paged.pageCount}
         filter={{ q: search, status, category, sort }}
-        categories={categories.map((c) => ({ slug: c.slug, name: c.name }))}
+        categories={categories.map((c) => ({ slug: c.slug, name: c.depth > 0 ? `${"— ".repeat(c.depth)}${c.name}` : c.name }))}
       />
     </div>
   );

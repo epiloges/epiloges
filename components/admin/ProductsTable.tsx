@@ -175,6 +175,9 @@ export function ProductsTable({ products, total, page, pageCount, filter, catego
     });
   }
 
+  // The row used to print the slug with CSS `capitalize` ("Gynaikeia-Loafers") while the
+  // filter above it printed the name — the same category, spelled two ways on one screen.
+  const categoryNameBySlug = new Map(categories.map((category) => [category.slug, category.name]));
   const isFiltered = Boolean(filter.q || filter.status || filter.category);
   const pageParams = { q: filter.q, status: filter.status, category: filter.category, sort: filter.sort };
 
@@ -285,6 +288,7 @@ export function ProductsTable({ products, total, page, pageCount, filter, catego
                 <ProductRow
                   key={product.id}
                   product={product}
+                  categoryName={categoryNameBySlug.get(product.category) ?? product.category}
                   selected={allMatching || selected.has(product.id)}
                   onToggle={() => toggleOne(product.id)}
                 />
@@ -463,7 +467,17 @@ function BulkStockPanel({ disabled, onApply }: { disabled: boolean; onApply: (mo
   );
 }
 
-function ProductRow({ product, selected, onToggle }: { product: Product; selected: boolean; onToggle: () => void }) {
+function ProductRow({
+  product,
+  categoryName,
+  selected,
+  onToggle,
+}: {
+  product: Product;
+  categoryName: string;
+  selected: boolean;
+  onToggle: () => void;
+}) {
   const [isPending, startTransition] = useTransition();
   const margin = getProductMargin(product);
 
@@ -488,7 +502,7 @@ function ProductRow({ product, selected, onToggle }: { product: Product; selecte
           </div>
         </Link>
       </td>
-      <td className="p-3 capitalize">{product.category}</td>
+      <td className="p-3">{categoryName}</td>
       {/* The effective price — what the product actually sells for. This column showed
           `product.price` (the pre-discount figure), and 172 of 175 products carry a sale
           price, so the owner was reading EUR 79 for something the storefront was selling

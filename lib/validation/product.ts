@@ -8,12 +8,34 @@ import type { Product } from "@/types/product";
  * zodResolver so client validation and server validation can't drift apart.
  */
 
+/**
+ * Somewhere the storefront's <Image> can actually load from: an absolute http(s) URL
+ * (Blob, or an allowlisted remote host) or a site-relative path under /. Anything else —
+ * "not-a-url", a bare filename — was accepted before and rendered as a broken image on
+ * the product page, with nothing in the admin to say so.
+ */
+const imageSrcSchema = z
+  .string()
+  .trim()
+  .min(1, "Image URL is required")
+  .refine((src) => /^(https?:\/\/\S+|\/(?!\/)\S*)$/.test(src), "Image URL must start with https:// or /");
+
 export const imageSchema = z.object({
   src: z.string().min(1, "Image URL is required"),
   alt: z.string().min(1, "Alt text is required"),
   width: z.number().int().positive().optional(),
   height: z.number().int().positive().optional(),
   blurDataURL: z.string().optional(),
+});
+
+/**
+ * The stricter shape the product FORM accepts. `imageSchema` above also validates rows on
+ * READ (categories, collections, blog covers), and tightening a read-side schema would make
+ * an existing row unrenderable — so the URL rule applies only to what is being written.
+ */
+export const productImageInputSchema = imageSchema.extend({
+  src: imageSrcSchema,
+  alt: z.string().trim().min(1, "Alt text is required"),
 });
 
 export const productVideoSchema = z.object({
@@ -123,9 +145,9 @@ export const colorVariantSchema = z.object({
 });
 
 export const sizeVariantSchema = z.object({
-  name: z.string().min(1, "Size is required"),
+  name: z.string().trim().min(1, "Size is required"),
   inStock: z.boolean(),
-  quantity: z.number().int().min(0),
+  quantity: z.number({ error: "Stock must be a number" }).int("Stock must be a whole number").min(0, "Stock can't be negative"),
   /**
    * The stock this size held when the form was LOADED — not a value anyone types.
    *
@@ -159,43 +181,90 @@ const slugSchema = z
   .min(1, "URL slug is required")
   .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Lowercase letters, numbers, and hyphens only");
 
-export const productFormSchema = z.object({
-  slug: slugSchema,
-  name: z.string().min(1, "Name is required"),
-  description: z.string().min(1, "Description is required"),
-  price: z.number().positive("Price must be greater than 0"),
-  compareAtPrice: z.number().positive().optional(),
-  salePrice: z.number().positive().optional(),
-  /** Allows 0 (genuinely free stock — samples, gifts) where price/salePrice require positive. */
-  costPrice: z.number().min(0).optional(),
-  currencyCode: z.string().length(3),
-  images: z.array(imageSchema).min(1, "At least one image is required"),
-  videos: z.array(productVideoSchema).optional(),
-  colors: z.array(colorVariantSchema),
-  sizes: z.array(sizeVariantSchema).min(1, "At least one size is required"),
-  category: z.string().min(1, "Category is required"),
-  collectionIds: z.array(z.string()),
-  tags: z.array(z.string()),
-  gender: productGenderSchema,
-  season: productSeasonSchema.optional(),
-  materials: z.array(z.string()),
-  careInstructions: z.array(z.string()),
-  relatedProductIds: z.array(z.string()),
-  isNew: z.boolean(),
-  isSale: z.boolean(),
-  isPreorder: z.boolean(),
-  isBackorder: z.boolean(),
-  fulfillmentNote: z.string().optional(),
-  sku: z.string().min(1, "SKU is required"),
-  barcode: z.string().optional(),
-  inventoryPolicy: inventoryPolicySchema,
-  shippingWeightGrams: z.number().int().positive().optional(),
-  availableForSale: z.boolean(),
-  status: productStatusSchema,
-  brand: z.string().optional(),
-  vendor: z.string().optional(),
-  seo: productSeoOverrideSchema.optional(),
-});
+/**
+ * Prices are stored as Decimal(10,2). A third decimal used to round silently in Postgres —
+ * an admin typed 50.999, the storefront charged 51.00, and the form never said so.
+ */
+const twoDecimals = (n: number) => Math.abs(n * 100 - Math.round(n * 100)) < 1e-6;
+const price = (label: string) =>
+  z
+    .number({ error: `${label} must be a number` })
+    .positive(`${label} must be greater than 0`)
+    .refine(twoDecimals, `${label} can have at most two decimal places`);
+
+/** Trimmed, then required — "   " used to pass `min(1)` and be stored, spaces and all. */
+const trimmedRequired = (message: string) => z.string().trim().min(1, message);
+const trimmedList = z.array(z.string().trim()).transform((values) => values.filter(Boolean));
+
+export const productFormSchema = z
+  .object({
+    slug: slugSchema,
+    name: trimmedRequired("Name is required"),
+    description: trimmedRequired("Description is required"),
+    price: price("Price"),
+    compareAtPrice: price("Compare-at price").optional(),
+    salePrice: price("Sale price").optional(),
+    /** Allows 0 (genuinely free stock — samples, gifts) where price/salePrice require positive. */
+    costPrice: z.number().min(0, "Cost can't be negative").refine(twoDecimals, "Cost can have at most two decimal places").optional(),
+    currencyCode: z.string().length(3),
+    images: z.array(productImageInputSchema).min(1, "At least one image is required"),
+    videos: z.array(productVideoSchema).optional(),
+    colors: z.array(colorVariantSchema),
+    sizes: z.array(sizeVariantSchema).min(1, "At least one size is required"),
+    category: z.string().min(1, "Category is required"),
+    collectionIds: z.array(z.string()),
+    tags: trimmedList,
+    gender: productGenderSchema,
+    season: productSeasonSchema.optional(),
+    materials: trimmedList,
+    careInstructions: trimmedList,
+    relatedProductIds: trimmedList,
+    isNew: z.boolean(),
+    isSale: z.boolean(),
+    isPreorder: z.boolean(),
+    isBackorder: z.boolean(),
+    fulfillmentNote: z.string().trim().optional(),
+    // A SKU is what the import matches on and what the unique index protects; " ABC " and
+    // "ABC" must be the same product, not two.
+    sku: trimmedRequired("SKU is required"),
+    barcode: z.string().trim().optional(),
+    inventoryPolicy: inventoryPolicySchema,
+    shippingWeightGrams: z.number().int().positive().optional(),
+    availableForSale: z.boolean(),
+    status: productStatusSchema,
+    brand: z.string().trim().optional(),
+    vendor: z.string().trim().optional(),
+    seo: productSeoOverrideSchema.optional(),
+  })
+  .superRefine((product, ctx) => {
+    /**
+     * The storefront charges `salePrice ?? price` and strikes through `compareAtPrice ??
+     * price`. A sale price at or above the price is therefore not a sale — it is a silent
+     * price RISE the listing still dresses as a discount. The inline editor and the bulk
+     * reprice already refused this; the full form and the CSV import did not.
+     */
+    if (product.salePrice !== undefined && product.salePrice >= product.price) {
+      ctx.addIssue({ code: "custom", path: ["salePrice"], message: "The sale price has to be lower than the price." });
+    }
+    if (product.compareAtPrice !== undefined && product.compareAtPrice < product.price) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["compareAtPrice"],
+        message: "The compare-at price is the higher 'was' price — it can't be below the price.",
+      });
+    }
+    /**
+     * Sizes are reconciled by name on update (lib/products-import/write.ts), so two rows
+     * named "38" would fight over one stock record and leave the other with stale stock.
+     */
+    const seen = new Set<string>();
+    product.sizes.forEach((size, index) => {
+      if (seen.has(size.name)) {
+        ctx.addIssue({ code: "custom", path: ["sizes", index, "name"], message: `Size "${size.name}" is listed twice.` });
+      }
+      seen.add(size.name);
+    });
+  });
 
 export type ProductFormValues = z.infer<typeof productFormSchema>;
 

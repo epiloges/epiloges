@@ -586,8 +586,11 @@ export function ProductForm({ defaultValues, collections, categories, seoDefault
                   <input
                     type="number"
                     min={0}
+                    step={1}
                     className={inputClass}
                     placeholder="Quantity"
+                    aria-invalid={Boolean(errors.sizes?.[index]?.quantity)}
+                    title={errors.sizes?.[index]?.quantity?.message}
                     value={field.value}
                     onChange={(e) => field.onChange(e.target.value === "" ? 0 : Number(e.target.value))}
                   />
@@ -599,8 +602,11 @@ export function ProductForm({ defaultValues, collections, categories, seoDefault
                 control={control}
                 render={({ field }) => (
                   <div className="flex shrink-0 items-center gap-2">
-                    <Switch checked={field.value} onCheckedChange={field.onChange} />
-                    <span className="w-14 text-xs text-luxe-gray-dark">{field.value ? "In stock" : "Out"}</span>
+                    {/* "Sellable", not "in stock": stock is the number to the left. Off means the
+                        storefront will not sell this size whatever the count says — a damaged
+                        pair, a size pulled from sale. Honoured by checkout (services/checkout.ts). */}
+                    <Switch checked={field.value} onCheckedChange={field.onChange} aria-label="Sellable" />
+                    <span className="w-16 text-xs text-luxe-gray-dark">{field.value ? "Sellable" : "Withdrawn"}</span>
                   </div>
                 )}
               />
