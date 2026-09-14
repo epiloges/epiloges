@@ -241,6 +241,48 @@ the store code, and was fully reverted from a Neon point-in-time branch. 26 prod
 supplier codes in their names (Guess/Valentino bags, U.S. Polo); renaming them is the owner's
 job, by hand, in the admin.
 
+## Launch week status (2026-09-14, late evening) — supersedes the entry below
+
+**The domain is live.** `alexandrisstores.gr` points at Vercel (A `216.198.79.1`, www → apex 308,
+TLS issued), `NEXT_PUBLIC_SITE_URL` is set and now *owns* the SEO site URL (`services/seo.ts`;
+the /admin/seo field is read-only). The `shopalexandris.vercel.app` alias no longer reaches the
+project (404) — the redirect rule in next.config only fires if the hostname is re-added under
+Vercel → Domains. The domain has no MX; the shop's mailbox is alexandrisstores@gmail.com.
+
+**Maintenance mode is ON** (`f327c3a`, `06adf48`): the dashboard switch rewrites every storefront
+page to `/maintenance` with a 503 + Retry-After and refuses `/api/checkout`; legacy 301s still
+fire (`a06ac9f`); admins bypass; a four-digit tester PIN on the page (default 1984 in
+`services/maintenance.ts`, change it on the dashboard) sets a 14-day HMAC cookie. Vercel's
+anomaly alerts and the Sentry/UptimeRobot *homepage* monitors read the 503s as an outage — both
+homepage monitors are paused until launch (Sentry 2192093, UptimeRobot 803921152); the
+`/api/health` monitors are green. Never accept Vercel's "Attack Challenge Mode" suggestion: it
+403s the health checks, the feeds and the bank's callback.
+
+**Email works.** The shop has its own Resend account (alexandrisstores@gmail.com), domain
+verified, first real delivery from `orders@alexandrisstores.gr` at 15:09 UTC. Two gotchas
+found on the way, both now handled in code: Vercel env values pasted with quotes
+(`EMAIL_PROVIDER="resend"` → dev provider; `8461bb0` strips them) and a Resend key scoped to
+another domain ("domain is not verified"). Local `.env` runs `EMAIL_PROVIDER=dev`.
+
+**Naming rule** (`0b8c2e5`): ALEXANDRIS in capitals is the wordmark and stays wherever it is
+set like a logo; in a sentence, a title, an email subject or the legal pages the business is
+Καταστήματα Αλεξανδρής / Alexandris Stores (`storeName(locale)`).
+
+**SEO relaunch** (`5ee0d72`): buying-guide copy + FAQ (FAQPage schema) on every category,
+collection and brand page; every title/description rewritten (SEO-KEYWORDS.md is the map and
+the rules); static pages on `buildMetadata`; Organization/ShoeStore schema with founding year,
+hours, payment; `/llms.txt` + `/llms-full.txt`. Copy source: `data/seo-content/*.json`,
+applied to the live rows. Submit the sitemap in Search Console only after maintenance is off.
+
+**Piraeus — the one blocker.** Whitelist done, Test Connection green, tickets issue through
+the droplet, result URL confirmed registered by the bank. epay's `pay.aspx` refuses the
+hand-off before the card form (support ref 665783659). Our side audited end to end — nothing
+points at the old host or the wrong IP. Waiting on the bank/epay. Keep Piraeus disabled in
+/admin/settings/payments until then. Repo made private the same evening.
+
+**Launch day:** enable Piraeus → card test → refund → maintenance off → resume the two
+homepage monitors → retire the PIN → rotate the epay password → submit sitemap.
+
 ## Launch week status (2026-09-14, end of day)
 
 Where everything stands, so the next session does not re-derive it.
