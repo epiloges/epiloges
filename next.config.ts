@@ -137,6 +137,28 @@ const nextConfig: NextConfig = {
      */
     return [{ source: "/((?!api/payments/redirect/).*)", headers: SECURITY_HEADERS }];
   },
+  async redirects() {
+    /**
+     * One host. The day a real domain is set as NEXT_PUBLIC_SITE_URL, every *.vercel.app
+     * alias 308s to it, path and query intact — otherwise the old host keeps serving the
+     * same pages and search engines see two copies of the shop, with the authority already
+     * earned on vercel.app never consolidating onto the domain that should carry it.
+     *
+     * Production only: preview deployments are *.vercel.app too, and a preview that bounced
+     * to the live shop would be useless. A no-op while the site URL is itself on vercel.app.
+     */
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+    const isRealDomain = /^https?:\/\//.test(siteUrl) && !/\.vercel\.app$/.test(new URL(siteUrl).host);
+    if (process.env.VERCEL_ENV !== "production" || !isRealDomain) return [];
+    return [
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "(?<vercelHost>.*)\\.vercel\\.app" }],
+        destination: `${siteUrl.replace(/\/$/, "")}/:path*`,
+        permanent: true,
+      },
+    ];
+  },
 };
 
 const withNextIntl = createNextIntlPlugin("./i18n/request.ts");

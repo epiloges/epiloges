@@ -58,6 +58,13 @@ export const COMPANY = {
   /** Heraklion landline, displayed nationally and dialled internationally. */
   phone: "2814 001 031",
   phoneE164: "+302814001031",
+
+  /**
+   * Labels the shop manufactures or has made for itself. They have no supplier GTIN/MPN,
+   * which the product feeds must declare explicitly (Google's `identifier_exists=no`)
+   * rather than leave blank.
+   */
+  ownBrands: ["Alexandris Shoes", "ALEXANDRIS"],
 } as const;
 
 /** "Arthur Evans 9, 71201 Heraklion, Crete, Greece" — the one-line form for prose and footers. */
