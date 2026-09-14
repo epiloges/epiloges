@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSession } from "@/lib/auth";
 import { CUSTOMER_SESSION_COOKIE, verifyCustomerSession } from "@/lib/customer-auth";
 import { prisma } from "@/lib/prisma";
+import { isMaintenanceModeOn } from "@/services/maintenance";
 import legacyRedirects from "@/data/legacy-redirects.json";
 
 /**
@@ -168,8 +169,46 @@ function legacyRedirect(request: NextRequest): NextResponse | null {
   return NextResponse.redirect(url, 301);
 }
 
+/**
+ * Maintenance mode (services/maintenance.ts) — the dashboard switch that closes the shop.
+ *
+ * Every storefront page is rewritten to `/maintenance` with a **503** and a `Retry-After`,
+ * which is what tells Google "temporarily down, keep the index" — the reason this lives in the
+ * proxy, where a status can still be set, rather than in a layout. Starting a checkout is
+ * refused the same way, so a tab that was already open before the switch was thrown cannot
+ * finish an order. Everything else is left alone on purpose: the admin (the switch itself lives
+ * there), the payment/courier/cron callbacks under `/api`, static files, and the cart API, which
+ * the page providers call on load and which has nothing to sell on its own.
+ *
+ * A signed-in admin passes through, so the shop can be inspected from outside while it is
+ * closed. `/maintenance` itself is only reachable while the switch is on; the rest of the time
+ * it goes home, so the URL cannot be bookmarked into existence.
+ */
+async function maintenanceResponse(request: NextRequest, pathname: string): Promise<NextResponse | null> {
+  const isMaintenancePage = pathname === "/maintenance";
+  const closed = await isMaintenanceModeOn();
+  if (!closed) return isMaintenancePage ? NextResponse.redirect(new URL("/", request.url)) : null;
+
+  const token = request.cookies.get(ADMIN_SESSION_COOKIE)?.value;
+  if (token && (await verifyAdminSession(token))) {
+    return isMaintenancePage ? NextResponse.redirect(new URL("/", request.url)) : null;
+  }
+
+  const headers = { "Retry-After": "3600", "Cache-Control": "no-store" };
+  if (pathname.startsWith("/api/")) {
+    return NextResponse.json({ error: "The shop is temporarily closed for maintenance." }, { status: 503, headers });
+  }
+  if (isMaintenancePage) return NextResponse.next();
+  return NextResponse.rewrite(new URL("/maintenance", request.url), { status: 503, headers });
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  if (!pathname.startsWith("/admin")) {
+    const closed = await maintenanceResponse(request, pathname);
+    if (closed) return closed;
+  }
 
   if (LEGACY_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(prefix)) || /%[0-9A-Fa-f]{2}/.test(pathname)) {
     const redirect = legacyRedirect(request);
@@ -264,6 +303,12 @@ export const config = {
   // `/collections/:path*` joined this list for SEO-002 — the proxy is now the only place these
   // routes can answer 404 with a status, so it has to see them.
   matcher: [
+    // Maintenance mode has to see every storefront page, so the proxy now runs on everything
+    // except `/api` (the two checkout entries below are the exception), Next's own assets, the
+    // admin (listed separately) and anything with a file extension. Also the only reason
+    // `/maintenance` is matched at all.
+    "/((?!api/|_next/|admin(?:/|$)|.*\\..*).*)",
+    "/api/checkout/:path*",
     "/admin/:path*",
     "/account/:path*",
     "/category/:path*",

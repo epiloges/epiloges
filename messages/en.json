@@ -578,6 +578,12 @@
     "notFoundTitle": "Page not found",
     "notFoundBody": "The page you're looking for doesn't exist or may have moved."
   },
+  "Maintenance": {
+    "eyebrow": "Temporarily closed",
+    "title": "We'll be back soon",
+    "body": "Our online store is down for maintenance. Please try again shortly — our shop in Heraklion is open as always.",
+    "contact": "Contact"
+  },
   "ApiErrors": {
     "currentPasswordIncorrect": "Current password is incorrect.",
     "noPasswordYet": "This account signed in via Google, Apple, or Facebook and doesn't have a password yet. Use 'Forgot password' to set one.",

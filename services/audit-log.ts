@@ -49,6 +49,7 @@ export type AuditAction =
   | "discount.deleted"
   | "return.status_changed"
   | "settings.updated"
+  | "settings.maintenance_toggled"
   | "product.updated"
   | "product.deleted"
   | "product.bulk_updated"

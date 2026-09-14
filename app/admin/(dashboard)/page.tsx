@@ -9,6 +9,10 @@ import { DEFAULT_LOCALE, LOCALE_TAG } from "@/i18n/config";
 import { getDashboardSummary } from "@/services";
 import { countRecentEmailFailures } from "@/services/emails";
 import { getEmailHealth } from "@/lib/email";
+import { getMaintenanceMode } from "@/services/maintenance";
+import { currentRoleHasCapability } from "@/lib/admin-session";
+import { MaintenanceModeToggle } from "@/components/admin/MaintenanceModeToggle";
+import { setMaintenanceModeAction } from "@/app/admin/(dashboard)/settings/actions";
 import type { Order } from "@/lib/commerce/types";
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
@@ -61,12 +65,43 @@ export default async function AdminDashboardPage() {
   // under `instant = false` — same as the blog editor's date field. A cached dashboard
   // would show yesterday's morning all day, so it is made per-request instead.
   await connection();
-  const [{ stats, todayOrders, awaitingShipment }, recentEmailFailures] = await Promise.all([getDashboardSummary(), countRecentEmailFailures()]);
+  const [{ stats, todayOrders, awaitingShipment }, recentEmailFailures, maintenance, canToggleMaintenance] = await Promise.all([
+    getDashboardSummary(),
+    countRecentEmailFailures(),
+    getMaintenanceMode(),
+    currentRoleHasCapability("admin:settings"),
+  ]);
   const emailHealth = getEmailHealth();
 
   return (
     <div>
       <AdminPageHeader title="Dashboard" description={`What needs doing today, ${formatDate(new Date().toISOString(), "en-GB")}.`} />
+
+      {/*
+        The shop-open switch. Loud when it is on — a closed shop that nobody remembers closing
+        is the failure mode — and quiet when it is off. Editors see the state; only a role with
+        `admin:settings` gets the switch, the same gate as every other setting.
+      */}
+      <div
+        className={`mb-6 flex flex-col gap-3 border p-4 text-sm sm:flex-row sm:items-center sm:justify-between ${
+          maintenance.enabled ? "border-amber-500/60 bg-amber-50" : "border-border bg-luxe-white"
+        }`}
+        role={maintenance.enabled ? "alert" : undefined}
+      >
+        <div>
+          <p className={`font-medium ${maintenance.enabled ? "text-amber-800" : ""}`}>
+            {maintenance.enabled ? "The shop is closed for maintenance." : "The shop is open."}
+          </p>
+          <p className="mt-1 text-luxe-gray-dark">
+            {maintenance.enabled
+              ? `Customers see a "back soon" page and cannot order. You can still browse the store while signed in here. Closed${
+                  maintenance.changedBy ? ` by ${maintenance.changedBy}` : ""
+                }${maintenance.changedAt ? ` on ${formatDate(maintenance.changedAt, "en-GB")}` : ""}.`
+              : "Switch on maintenance mode to take the storefront offline; the admin, payments and courier callbacks stay up."}
+          </p>
+        </div>
+        {canToggleMaintenance ? <MaintenanceModeToggle defaultEnabled={maintenance.enabled} onToggle={setMaintenanceModeAction} /> : null}
+      </div>
 
       {/*
         The two ways email fails without anyone noticing: nothing is configured to send, or
