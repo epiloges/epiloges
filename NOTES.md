@@ -241,6 +241,50 @@ the store code, and was fully reverted from a Neon point-in-time branch. 26 prod
 supplier codes in their names (Guess/Valentino bags, U.S. Polo); renaming them is the owner's
 job, by hand, in the admin.
 
+## Launch week status (2026-09-14, end of day)
+
+Where everything stands, so the next session does not re-derive it.
+
+**Hosting.** The project was TRANSFERRED to a new Vercel Pro team `alexandris-new-era`
+(project `my-eshop`, alias still `shopalexandris.vercel.app`; env vars, Blob store and domain
+alias moved with it; the old `ALEXANDRIS` hobby team is empty). Functions are pinned to
+**Frankfurt** (`vercel.json` → `regions: ["fra1"]`) — they ran in Washington while the
+database is in Frankfurt, which is why a `SELECT 1` took 500 ms; warm health is ~30 ms now.
+Fluid Compute is on. The dashboard's Function Region shows "Overridden" — the file wins.
+Unused env vars were deleted (the two `ALEXANDRIS_*` leftovers, all `DATABASE_URL_UNPOOLED`,
+two branch-scoped Preview `DATABASE_URL`s). The team is on a **Pro Trial** — a card must be
+on file before it lapses or the project falls back to Hobby (non-commercial terms).
+
+**Database.** Neon free tier auto-suspends after 5 idle minutes; two UptimeRobot monitors
+("alexandris health" + "alexandris db keep-warm") hit `/api/health` every 5 minutes on
+offset schedules, which keeps it awake at no cost. The Neon **test branch** (the port-3010
+sandbox) stays until launch is done, then delete it.
+
+**Cards (Piraeus epay, Redirection).** Credentials are in the live admin. The first Test
+Connection returned **1041 "Invalid IP address"** — epay whitelists caller IPs per merchant,
+checked before the credentials; Vercel has no fixed IP (its own Static IPs are $100/month).
+Fix in place: a $4 DigitalOcean droplet `bank-proxy` in Frankfurt at **207.154.238.10** runs
+`tinyproxy` on 3128 with BasicAuth; `PAYMENTS_EGRESS_PROXY_URL` in Vercel routes only the
+ticket call through it (`lib/payments/egress.ts`). Verified from outside: auth enforced, the
+bank's WSDL answers through it, egress IP is the droplet's. The owner emailed the bank the
+range `207.154.238.10 – 207.154.238.10` and asked for Apple Pay / Google Pay on the hosted
+page — **waiting for the bank**. The bank registered the result URL on
+**alexandrisstores.gr only**, so the first real card test also needs the domain live. Then:
+€1 order → refund from the ePOS portal → enable Piraeus → rotate the epay password (it was
+pasted into chat once).
+
+**Domain.** `alexandrisstores.gr` is at Papaki; the owner is waiting for access. When it
+arrives: add the domain in Vercel, A/CNAME records only (keep MX — the old host may run
+mailboxes), Resend's SPF/DKIM records in the same sitting, set `NEXT_PUBLIC_SITE_URL` and
+`EMAIL_FROM`, redeploy. The 744 legacy 301s and the vercel.app → domain redirect are
+already in the code.
+
+**Content.** All 191 thin product descriptions rewritten in production (backup +
+`--restore` in `scripts/_audit/apply-descriptions.mjs`); ten journal articles written and
+**published** 2026-09-14 (journal renders Markdown now). Three data errors for the owner to
+fix in the admin: Verde 4195 μπεζ (source said black), the «μαύρο» πέδιλο 1200 that is blue,
+Verde καφέ slingback (source said «σε μαύρο»).
+
 ## SEO for the Greek shoe market (2026-09-14)
 
 **The domain is the whole game, and it already exists.** `alexandrisstores.gr` is the
