@@ -1,6 +1,7 @@
 import "server-only";
 import { createHash, createHmac } from "node:crypto";
 import { decryptSecret, encryptSecret, safeCompare } from "@/lib/payments/crypto";
+import { egressConfigured, egressFetch } from "@/lib/payments/egress";
 import type {
   ConfigurationTestResult,
   NormalizedWebhookEvent,
@@ -277,11 +278,12 @@ async function issueTicket(credentials: PiraeusCredentials, input: IssueTicketIn
 
   let response: Response;
   try {
-    response = await fetch(PIRAEUS_TICKET_ENDPOINT, {
+    // Through the static-IP egress proxy when one is configured — the bank whitelists
+    // the caller's address (result 1041 otherwise), and this host has no fixed one.
+    response = await egressFetch(PIRAEUS_TICKET_ENDPOINT, {
       method: "POST",
       headers: { "Content-Type": "application/soap+xml; charset=utf-8" },
       body: xml,
-      cache: "no-store",
       signal: AbortSignal.timeout(PIRAEUS_TIMEOUT_MS),
     });
   } catch (error) {
@@ -475,11 +477,23 @@ export const piraeusProvider: PaymentProvider = {
         currencyCode: "EUR",
       });
       if (ticket.resultCode !== "0") {
+        // 1041 is not about the credentials at all: the bank only accepts the ticket call
+        // from IP addresses registered on the merchant account, and it checks that before
+        // the username and password. Say so, and say what to do about it.
+        const ipRejected = ticket.resultCode === "1041";
+        const route = egressConfigured() ? "static-IP proxy" : "direct (no fixed IP)";
         return {
           status: "auth_failed",
-          message: `The bank rejected these credentials (result ${ticket.resultCode}): ${ticket.resultDescription || "no description"}.`,
+          message: ipRejected
+            ? `The bank refused the call because it came from an unregistered IP address (result 1041). Piraeus epay only accepts ticket requests from server addresses registered on the merchant account. ${egressConfigured() ? "A static-IP proxy is configured (PAYMENTS_EGRESS_PROXY_URL): register that proxy's IP address with the bank." : "This host has no fixed address: route the call through a static-IP proxy (PAYMENTS_EGRESS_PROXY_URL) and register the proxy's IP with the bank."}`
+            : `The bank rejected these credentials (result ${ticket.resultCode}): ${ticket.resultDescription || "no description"}.`,
           checkedLive: true,
-          details: { Environment: config.environment, "Acquirer / Merchant / POS": `${credentials.acquirerId} / ${credentials.merchantId} / ${credentials.posId}` },
+          details: {
+            Environment: config.environment,
+            "Acquirer / Merchant / POS": `${credentials.acquirerId} / ${credentials.merchantId} / ${credentials.posId}`,
+            "Bank response": `${ticket.resultCode}: ${ticket.resultDescription || "no description"}`,
+            "Outbound route": route,
+          },
         };
       }
       return {
