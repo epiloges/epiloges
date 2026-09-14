@@ -16,7 +16,8 @@ export type HomepageSectionType =
   | "brandStory"
   | "socialGrid"
   | "brandStrip"
-  | "newsletter";
+  | "newsletter"
+  | "categorySpotlight";
 
 interface SectionBase {
   id: string;
@@ -183,6 +184,25 @@ export interface NewsletterSection extends SectionBase {
   };
 }
 
+/**
+ * One category as a runway: a single edge-to-edge row of its newest pieces at near
+ * screen height. Products come from the category itself (newest first), so the merchant
+ * maintains stock, not a pinned list; only the words are theirs.
+ */
+export interface CategorySpotlightSection extends SectionBase {
+  type: "categorySpotlight";
+  data: {
+    categorySlug: string;
+    /** Small caps after the heading, e.g. "Φθινόπωρο / Χειμώνας 2026". */
+    eyebrow?: string;
+    /** Falls back to the category name. */
+    headline?: string;
+    ctaLabel: string;
+    /** How many pieces on the runway. Default 8. */
+    limit?: number;
+  };
+}
+
 export type HomepageSection =
   | HeroSection
   | FeaturedCollectionsSection
@@ -192,7 +212,8 @@ export type HomepageSection =
   | BrandStorySection
   | SocialGridSection
   | BrandStripSection
-  | NewsletterSection;
+  | NewsletterSection
+  | CategorySpotlightSection;
 
 export interface HomepageConfig {
   sections: HomepageSection[];

@@ -231,6 +231,21 @@ export function SectionEditForm({ section, onChange }: SectionEditFormProps) {
         </div>
       );
 
+    case "categorySpotlight":
+      return (
+        <div className="space-y-4">
+          <Field label="Category slug" value={section.data.categorySlug} onChange={(v) => onChange({ ...section, data: { ...section.data, categorySlug: v.trim() } })} />
+          <Field label="Headline" value={section.data.headline ?? ""} onChange={(v) => onChange({ ...section, data: { ...section.data, headline: v || undefined } })} />
+          <Field label="Line under the headline" value={section.data.eyebrow ?? ""} onChange={(v) => onChange({ ...section, data: { ...section.data, eyebrow: v || undefined } })} />
+          <Field label="Link label" value={section.data.ctaLabel} onChange={(v) => onChange({ ...section, data: { ...section.data, ctaLabel: v } })} />
+          <Field
+            label="How many pieces (newest first, flagged New ahead)"
+            value={String(section.data.limit ?? 8)}
+            onChange={(v) => onChange({ ...section, data: { ...section.data, limit: Math.max(1, Math.min(24, Number(v) || 8)) } })}
+          />
+        </div>
+      );
+
     default:
       return null;
   }

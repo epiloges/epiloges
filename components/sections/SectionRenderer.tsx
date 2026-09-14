@@ -8,6 +8,7 @@ import { BrandStory } from "@/components/sections/BrandStory";
 import { SocialGrid } from "@/components/sections/SocialGrid";
 import { BrandStrip } from "@/components/sections/BrandStrip";
 import { Newsletter } from "@/components/sections/Newsletter";
+import { CategorySpotlight } from "@/components/sections/CategorySpotlight";
 import { getCollectionsByIds, getInstagramPosts, getNewArrivals, getPublishedProductsByIds, getSiteSettings } from "@/services";
 import { getCategoryBySlug } from "@/services/categories";
 import { getAllBrands } from "@/services/brands";
@@ -95,7 +96,6 @@ export async function SectionRenderer({ section }: SectionRendererProps) {
       return (
         <BestSellers
           title={section.data.title}
-          subtitle={section.data.subtitle}
           products={products}
           viewAllCta={section.data.viewAllCta}
         />
@@ -127,6 +127,29 @@ export async function SectionRenderer({ section }: SectionRendererProps) {
 
     case "brandStory":
       return <BrandStory data={section.data} />;
+
+    case "categorySpotlight": {
+      const { categorySlug, limit = 8 } = section.data;
+      const [category, products] = await Promise.all([
+        getCategoryBySlug(categorySlug),
+        // Products flagged "new" first, then newest by date — the same order as the arrivals
+        // row above, scoped to this category, so it is the shelf as it stands today rather
+        // than a pinned list that goes stale.
+        getNewArrivals({ categorySlug, limit }),
+      ]);
+      // A category that no longer exists leaves a gap, not a black band with a dead link.
+      if (!category) return null;
+      const localized = localizeCategory(category, locale);
+      return (
+        <CategorySpotlight
+          eyebrow={section.data.eyebrow}
+          headline={section.data.headline ?? localized.name}
+          ctaLabel={section.data.ctaLabel}
+          href={ROUTES.category(category.slug)}
+          products={localizeProducts(products, locale)}
+        />
+      );
+    }
 
     case "socialGrid": {
       // The tiles used to be `<a href="#">`, so clicking one jumped to the top of the

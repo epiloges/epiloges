@@ -26,6 +26,7 @@ const SECTION_LABELS: Record<HomepageSection["type"], string> = {
   socialGrid: "Social Grid",
   brandStrip: "Brands",
   newsletter: "Newsletter",
+  categorySpotlight: "Category Spotlight",
 };
 
 function summarize(section: HomepageSection): string {
@@ -44,6 +45,8 @@ function summarize(section: HomepageSection): string {
       return section.data.headline;
     case "newsletter":
       return section.data.headline;
+    case "categorySpotlight":
+      return section.data.headline ?? section.data.categorySlug;
     default:
       return "";
   }

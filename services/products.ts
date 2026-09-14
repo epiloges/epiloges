@@ -91,13 +91,16 @@ export async function getAllProducts(filter?: ProductListFilter): Promise<Produc
  * Unisex products appear in every gendered row, matching how the rest of the storefront
  * treats them.
  */
-export async function getNewArrivals(options: { gender?: string; limit?: number } = {}): Promise<Product[]> {
-  const { gender, limit = 8 } = options;
+export async function getNewArrivals(options: { gender?: string; categorySlug?: string; limit?: number } = {}): Promise<Product[]> {
+  const { gender, categorySlug, limit = 8 } = options;
   if (limit <= 0) return [];
 
   const scope: Prisma.ProductWhereInput = {
     ...PUBLISHED,
     ...(gender ? { gender: { in: [gender, "unisex"] } } : {}),
+    // The category spotlight: the same "flagged first, then newest" order as the arrivals
+    // row, scoped to one category, so the two sections never disagree about what is new.
+    ...(categorySlug ? { category: { slug: categorySlug } } : {}),
   };
 
   const flagged = await prisma.product.findMany({
