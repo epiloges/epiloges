@@ -8,6 +8,7 @@ import { Footer } from "@/components/layout/Footer";
 import { formatDate } from "@/lib/format";
 import { getPublishedPosts, getNavigation, getPublishedPostBySlug, getSeoDefaults, getSiteSettings } from "@/services";
 import { JsonLd } from "@/components/shared/JsonLd";
+import { Markdown } from "@/components/shared/Markdown";
 import { blogPostingSchema, buildMetadata } from "@/lib/seo";
 import { getLocale } from "next-intl/server";
 import type { Locale } from "@/i18n/config";
@@ -64,7 +65,7 @@ export default async function JournalPostPage({ params }: JournalPostPageProps) 
           </div>
 
           <p className="mt-8 text-lg text-luxe-gray-dark">{post.excerpt}</p>
-          {post.content ? <p className="mt-6 whitespace-pre-line">{post.content}</p> : null}
+          {post.content ? <Markdown source={post.content} className="mt-2" /> : null}
 
           {post.tags.length > 0 ? (
             <div className="mt-8 flex flex-wrap gap-2 border-t border-border pt-6">
