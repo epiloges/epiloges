@@ -24,6 +24,8 @@ export const COMPANY = {
   /** As registered in ΓΕΜΗ. Greek convention is surname first. */
   legalName: "Alexandris Michail",
   brandName: "ALEXANDRIS",
+  /** The shop opened in Heraklion in 1984 — the "© 1984" the old site carried, now a fact the structured data states. */
+  foundingYear: 1984,
   storeName: { el: "Καταστήματα Αλεξανδρής", en: "Alexandris Stores" } satisfies Record<Locale, string>,
 
   address: {
@@ -78,12 +80,20 @@ export const COMPANY = {
    * The physical shop, for the ShoeStore structured data (lib/seo.ts) and for local
    * search: "παπούτσια Ηράκλειο" is answered by the store, not the website.
    *
-   * OWNER: fill in the opening hours and the map coordinates. Empty means the markup says
-   * nothing about them, which is honest but forfeits the hours shown under the result.
-   * dayOfWeek values are schema.org's English day names; times are 24h "HH:MM".
+   * Hours as given by the owner on 2026-09-14 — the classic Greek split week: Tue/Thu/Fri
+   * in two shifts, Mon/Wed/Sat straight through, Sunday closed. dayOfWeek values are
+   * schema.org's English day names; times are 24h "HH:MM". Sunday is simply absent: an
+   * absent day is "closed" in schema.org, so nothing needs to say so.
+   *
+   * OWNER: the map coordinates are still missing; Google Maps → right-click the shop pin →
+   * copy the two numbers into `geo`.
    */
   store: {
-    openingHours: [] as { days: string[]; opens: string; closes: string }[],
+    openingHours: [
+      { days: ["Tuesday", "Thursday", "Friday"], opens: "09:00", closes: "14:00" },
+      { days: ["Tuesday", "Thursday", "Friday"], opens: "17:00", closes: "21:00" },
+      { days: ["Monday", "Wednesday", "Saturday"], opens: "09:00", closes: "16:00" },
+    ] as { days: string[]; opens: string; closes: string }[],
     geo: undefined as { latitude: number; longitude: number } | undefined,
   },
 } as const;

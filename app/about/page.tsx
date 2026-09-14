@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
+import type { Locale } from "@/i18n/config";
+import { buildMetadata } from "@/lib/seo";
+import { getSeoDefaults } from "@/services/seo";
 import Image from "next/image";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -10,10 +13,8 @@ import { getAboutPage, getNavigation, getSiteSettings } from "@/services";
 export const instant = false;
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("Pages");
-  return {
-  title: t("aboutTitle"),
-  };
+  const [seo, t, locale] = await Promise.all([getSeoDefaults(), getTranslations("Pages"), getLocale()]);
+  return buildMetadata({ seo, title: t("aboutTitle"), description: t("aboutDescription"), path: "/about", locale: locale as Locale });
 }
 
 export default async function AboutPage() {

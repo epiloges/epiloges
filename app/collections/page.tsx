@@ -4,6 +4,8 @@ import { Footer } from "@/components/layout/Footer";
 import { FeaturedCollections } from "@/components/sections/FeaturedCollections";
 import { getAllCollections, getNavigation, getSiteSettings } from "@/services";
 import { getLocale, getTranslations } from "next-intl/server";
+import { buildMetadata } from "@/lib/seo";
+import { getSeoDefaults } from "@/services/seo";
 import { localizeCollections } from "@/lib/localize";
 import type { Locale } from "@/i18n/config";
 
@@ -15,7 +17,8 @@ export const instant = false;
 // locale, and a module-level constant is evaluated once with no locale in scope.
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("Pages");
-  return { title: t("collectionsTitle"), description: t("collectionsSubtitle") };
+  const [seo, locale] = await Promise.all([getSeoDefaults(), getLocale()]);
+  return buildMetadata({ seo, title: t("collectionsMetaTitle"), description: t("collectionsSubtitle"), path: "/collections", locale: locale as Locale });
 }
 
 export default async function CollectionsPage() {

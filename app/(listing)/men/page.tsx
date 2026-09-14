@@ -18,7 +18,7 @@ export async function generateMetadata({ searchParams }: ListingPageProps): Prom
   const [seo, t, locale, page] = await Promise.all([getSeoDefaults(), getTranslations("Pages"), getLocale(), listingPageNumber(searchParams)]);
   return buildMetadata({
     seo,
-    title: t("menTitle"),
+    title: t("menMetaTitle"),
     description: t("menDescription"),
     locale: locale as Locale,
     page,
@@ -41,6 +41,7 @@ export default async function MenPage({ searchParams }: ListingPageProps) {
         <Suspense fallback={<ListingSkeleton withHeader />}>
           <ProductListingSection
             title={t("menTitle")}
+            description={t("menIntro")}
             baseFilters={{ gender: "men" }}
             searchParams={resolvedSearchParams}
           />

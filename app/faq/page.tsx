@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
+import type { Locale } from "@/i18n/config";
+import { buildMetadata, faqSchema } from "@/lib/seo";
+import { getSeoDefaults } from "@/services/seo";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { JsonLd } from "@/components/shared/JsonLd";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { faqSchema } from "@/lib/seo";
 import { getFaqPage, getNavigation, getSiteSettings } from "@/services";
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
@@ -12,10 +14,8 @@ import { getFaqPage, getNavigation, getSiteSettings } from "@/services";
 export const instant = false;
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("Pages");
-  return {
-  title: t("faqMetaTitle"),
-  };
+  const [seo, t, locale] = await Promise.all([getSeoDefaults(), getTranslations("Pages"), getLocale()]);
+  return buildMetadata({ seo, title: t("faqMetaTitle"), description: t("faqDescription"), path: "/faq", locale: locale as Locale });
 }
 
 export default async function FaqPage() {

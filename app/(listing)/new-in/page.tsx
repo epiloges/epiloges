@@ -19,7 +19,7 @@ export async function generateMetadata({ searchParams }: ListingPageProps): Prom
   return buildMetadata({
     seo,
     page,
-    title: t("newInTitle"),
+    title: t("newInMetaTitle"),
     description: t("newInDescription"),
     locale: locale as Locale,
     path: "/new-in",

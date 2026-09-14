@@ -5,7 +5,10 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { formatDate } from "@/lib/format";
 import { getPublishedPosts, getNavigation, getSiteSettings } from "@/services";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
+import type { Locale } from "@/i18n/config";
+import { buildMetadata } from "@/lib/seo";
+import { getSeoDefaults } from "@/services/seo";
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
@@ -13,7 +16,8 @@ export const instant = false;
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("Pages");
-  return { title: t("journalTitle"), description: t("journalSubtitle") };
+  const [seo, locale] = await Promise.all([getSeoDefaults(), getLocale()]);
+  return buildMetadata({ seo, title: t("journalMetaTitle"), description: t("journalSubtitle"), path: "/journal", locale: locale as Locale });
 }
 
 export default async function JournalPage() {

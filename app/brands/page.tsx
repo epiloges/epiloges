@@ -20,7 +20,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const [seo, locale, t] = await Promise.all([getSeoDefaults(), getLocale(), getTranslations("Pages")]);
   return buildMetadata({
     seo,
-    title: t("brandsTitle"),
+    title: t("brandsMetaTitle"),
     description: t("brandsDescription"),
     path: ROUTES.brands,
     locale: locale as Locale,

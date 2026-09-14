@@ -8,9 +8,15 @@ import { getShippingReturnsPage, getNavigation, getSiteSettings } from "@/servic
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
 export const instant = false;
 
-export const metadata: Metadata = {
-  title: "Αποστολές & Επιστροφές",
-};
+import { getLocale, getTranslations } from "next-intl/server";
+import type { Locale } from "@/i18n/config";
+import { buildMetadata } from "@/lib/seo";
+import { getSeoDefaults } from "@/services/seo";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const [seo, t, locale] = await Promise.all([getSeoDefaults(), getTranslations("Pages"), getLocale()]);
+  return buildMetadata({ seo, title: t("shippingReturnsTitle"), description: t("shippingReturnsDescription"), path: "/shipping-returns", locale: locale as Locale });
+}
 
 export default async function ShippingReturnsPage() {
   const [navigation, settings, page] = await Promise.all([

@@ -116,8 +116,15 @@ export function organizationSchema(seo: SiteSeoDefaults) {
     // The Greek trading name and the wordmark, so a search for either resolves to this entity.
     alternateName: [COMPANY.storeName.el, COMPANY.brandName],
     legalName: COMPANY.legalName,
+    description: seo.defaultDescription,
     url: seo.siteUrl,
     logo: seo.organization.logo,
+    // What an assistant answering "who is Alexandris Stores" needs and a listing cannot say:
+    // how long the shop has existed, where it sells, and in which languages it can be dealt with.
+    foundingDate: String(COMPANY.foundingYear),
+    foundingLocation: { "@type": "Place", name: `${COMPANY.address.city}, ${COMPANY.address.region}, Greece` },
+    areaServed: { "@type": "Country", name: "Greece" },
+    knowsLanguage: ["el", "en"],
     // Omitted rather than emitted empty. `sameAs` is a claim that these profiles ARE this
     // business, so an empty array is the honest state until real ones exist — and shipping
     // `sameAs: []` invites someone to "fix" it by putting the seeded handles back.
@@ -154,8 +161,11 @@ export function storeSchema(seo: SiteSeoDefaults) {
     url: seo.siteUrl,
     telephone: COMPANY.phoneE164,
     email: COMPANY.email,
+    description: seo.defaultDescription,
     priceRange: "€€",
     currenciesAccepted: "EUR",
+    paymentAccepted: "Cash, Credit Card, Debit Card, Bank Transfer",
+    areaServed: { "@type": "Country", name: "Greece" },
     address: {
       "@type": "PostalAddress",
       streetAddress: COMPANY.address.street,

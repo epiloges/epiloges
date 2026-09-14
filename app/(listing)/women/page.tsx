@@ -19,7 +19,7 @@ export async function generateMetadata({ searchParams }: ListingPageProps): Prom
   return buildMetadata({
     seo,
     page,
-    title: t("womenTitle"),
+    title: t("womenMetaTitle"),
     description: t("womenDescription"),
     path: "/women",
     // Threaded through so og:locale matches the language the title is actually in.
@@ -42,6 +42,7 @@ export default async function WomenPage({ searchParams }: ListingPageProps) {
         <Suspense fallback={<ListingSkeleton withHeader />}>
           <ProductListingSection
             title={t("womenTitle")}
+            description={t("womenIntro")}
             baseFilters={{ gender: "women" }}
             searchParams={resolvedSearchParams}
           />
