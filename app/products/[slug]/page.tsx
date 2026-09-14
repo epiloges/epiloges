@@ -152,7 +152,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
         <div className="container-luxe">
           <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-16">
             <div />
-            <ProductAccordion product={product} rates={shippingRates} />
+            <ProductAccordion
+              product={product}
+              rates={shippingRates}
+              categoryName={category ? localizeCategory(category, locale as Locale).name : undefined}
+            />
           </div>
 
           <ReviewsSection summary={reviewSummary} reviews={reviews} productId={product.id} />

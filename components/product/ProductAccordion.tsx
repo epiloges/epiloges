@@ -14,7 +14,23 @@ interface ProductAccordionProps {
   product: Product;
   /** Only the rates a shopper can actually pick — see services/shipping.ts. */
   rates: ShippingRate[];
+  /** Localised category name, for the specifications table. */
+  categoryName?: string;
 }
+
+const SEASON_KEY: Record<NonNullable<Product["season"]>, string> = {
+  "spring-summer": "seasonSpringSummer",
+  "autumn-winter": "seasonAutumnWinter",
+  resort: "seasonResort",
+  "all-season": "seasonAllSeason",
+};
+
+const GENDER_KEY: Record<Product["gender"], string> = {
+  women: "forWomen",
+  men: "forMen",
+  unisex: "forUnisex",
+  kids: "forKids",
+};
 
 /**
  * Concrete dates where the rate states a day range, its own words where it does not.
@@ -46,8 +62,28 @@ const TRIGGER_CLASS =
  * present-and-empty. Shipping and Returns are always shown because they are real store
  * policy rather than per-product data.
  */
-export function ProductAccordion({ product, rates }: ProductAccordionProps) {
+export function ProductAccordion({ product, rates, categoryName }: ProductAccordionProps) {
   const t = useTranslations("Pdp");
+
+  /**
+   * The facts about the shoe as a table: brand, colour, material, sizes, code. Product
+   * descriptions in this catalogue are mostly supplier bullet lists under 200 characters,
+   * so this is often the only structured, quotable content on the page — for a shopper
+   * scanning, for Google's product understanding, and for an AI answer that needs "what
+   * is it made of" in plain text. Every row reads from a field; an empty field is no row.
+   */
+  const specs: { label: string; value: string }[] = [
+    ...(product.brand ? [{ label: t("specBrand"), value: product.brand }] : []),
+    ...(categoryName ? [{ label: t("specCategory"), value: categoryName }] : []),
+    { label: t("specFor"), value: t(GENDER_KEY[product.gender]) },
+    ...(product.colors.length ? [{ label: t("specColor"), value: product.colors.map((color) => color.name).join(", ") }] : []),
+    ...(product.materials.length ? [{ label: t("specMaterial"), value: product.materials.join(", ") }] : []),
+    ...(product.sizes.length
+      ? [{ label: t("specSizes"), value: product.sizes.filter((size) => size.inStock).map((size) => size.name).join(", ") || t("specNoSizes") }]
+      : []),
+    ...(product.season ? [{ label: t("specSeason"), value: t(SEASON_KEY[product.season]) }] : []),
+    { label: t("specSku"), value: product.sku },
+  ];
   const hasMaterials = product.materials.length > 0;
   const hasCare = product.careInstructions.length > 0;
   // The threshold lives on each rate (buildShippingRates folds it in), so it is whatever
@@ -60,7 +96,21 @@ export function ProductAccordion({ product, rates }: ProductAccordionProps) {
     : null;
 
   return (
-    <Accordion className="border-t border-border">
+    <Accordion className="border-t border-border" defaultValue={["specifications"]}>
+      <AccordionItem value="specifications">
+        <AccordionTrigger className={TRIGGER_CLASS}>{t("specifications")}</AccordionTrigger>
+        <AccordionContent>
+          <dl className="grid grid-cols-[minmax(0,140px)_1fr] gap-x-6 gap-y-2 text-sm">
+            {specs.map((spec) => (
+              <div key={spec.label} className="contents">
+                <dt className="text-luxe-gray-dark">{spec.label}</dt>
+                <dd className="text-luxe-black">{spec.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </AccordionContent>
+      </AccordionItem>
+
       {hasMaterials ? (
         <AccordionItem value="composition">
           <AccordionTrigger className={TRIGGER_CLASS}>{t("composition")}</AccordionTrigger>
