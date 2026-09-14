@@ -273,6 +273,18 @@ const newsletterSchema = z.object({
   }),
 });
 
+const categorySpotlightSchema = z.object({
+  ...sectionBase,
+  type: z.literal("categorySpotlight"),
+  data: z.object({
+    categorySlug: nonEmpty("The category slug"),
+    eyebrow: z.string().optional(),
+    headline: z.string().optional(),
+    ctaLabel: nonEmpty("The link label"),
+    limit: z.number().int().min(1).max(24).optional(),
+  }),
+});
+
 export const homepageSectionSchema = z.discriminatedUnion("type", [
   heroSectionSchema,
   featuredCollectionsSchema,
@@ -283,6 +295,7 @@ export const homepageSectionSchema = z.discriminatedUnion("type", [
   socialGridSchema,
   brandStripSchema,
   newsletterSchema,
+  categorySpotlightSchema,
 ]);
 
 export const homepageSectionsSchema = z.array(homepageSectionSchema).superRefine((sections, ctx) => {
