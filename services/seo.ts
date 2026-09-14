@@ -4,8 +4,18 @@ import seoFallback from "@/data/seo.json";
 import { getSiteContent, setSiteContent } from "@/lib/site-content";
 import type { SiteSeoDefaults } from "@/types";
 
+/**
+ * The stored defaults, with one field the deployment owns: `siteUrl` is taken from
+ * `NEXT_PUBLIC_SITE_URL` whenever it is set. The URL lived in two places — this row (edited
+ * on /admin/seo) and the env var (redirects, email links) — and on launch day the row still
+ * said shopalexandris.vercel.app after the env had moved to the real domain, so every
+ * canonical, the sitemap and the JSON-LD kept pointing at the old host. One value now; the
+ * form shows the effective one and a save cannot put the two out of step again.
+ */
 export async function getSeoDefaults(): Promise<SiteSeoDefaults> {
-  return getSiteContent<SiteSeoDefaults>("seo", seoFallback as SiteSeoDefaults);
+  const stored = await getSiteContent<SiteSeoDefaults>("seo", seoFallback as SiteSeoDefaults);
+  const deployed = process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/+$/, "");
+  return deployed ? { ...stored, siteUrl: deployed } : stored;
 }
 
 export async function saveSeoDefaults(seo: SiteSeoDefaults): Promise<void> {

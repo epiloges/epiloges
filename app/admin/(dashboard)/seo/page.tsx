@@ -18,7 +18,7 @@ export default async function AdminSeoPage() {
         title="SEO Settings"
         description="Site-wide metadata defaults. Individual pages can still override title/description."
       />
-      <SeoSettingsForm initialSeo={seo} onSave={saveSeoDefaultsAction} />
+      <SeoSettingsForm initialSeo={seo} onSave={saveSeoDefaultsAction} siteUrlFromDeployment={Boolean(process.env.NEXT_PUBLIC_SITE_URL)} />
     </div>
   );
 }
