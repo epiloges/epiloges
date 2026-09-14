@@ -222,6 +222,12 @@ export function ProductListingPage({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `signature` already encodes every filter dimension `query` carries; listing them again would re-run this effect on each render for no change
   }, [signature, urlPage, commerce]);
 
+  const nextPageHref = (() => {
+    const next = new URLSearchParams(searchParams.toString());
+    next.set("page", String(urlPage + 1));
+    return `${pathname}?${next.toString()}`;
+  })();
+
   const updateParams = useCallback(
     (patch: Record<string, string | null>) => {
       const next = new URLSearchParams(searchParams.toString());
@@ -406,14 +412,23 @@ export function ProductListingPage({
 
                 {canLoadMore ? (
                   <div className="mt-10 flex justify-center">
-                    <button
-                      type="button"
-                      disabled={isLoading}
-                      onClick={() => updateParams({ page: String(urlPage + 1) })}
-                      className="h-12 border border-luxe-black px-8 text-xs font-medium tracking-[0.08em] uppercase transition-opacity hover:opacity-70 disabled:opacity-50"
+                    {/* A real link to the next page, not a button. The click is intercepted and
+                        loads in place exactly as before; what changed is that a crawler — which
+                        never runs the click — now has a URL to follow. Sandals has 55 products
+                        and a category page used to link to 8 of them; the other 47 were reachable
+                        only through the sitemap, with no internal link pointing at them. */}
+                    <a
+                      href={nextPageHref}
+                      rel="next"
+                      aria-disabled={isLoading}
+                      onClick={(event) => {
+                        event.preventDefault();
+                        if (!isLoading) updateParams({ page: String(urlPage + 1) });
+                      }}
+                      className="inline-flex h-12 items-center border border-luxe-black px-8 text-xs font-medium tracking-[0.08em] uppercase transition-opacity hover:opacity-70 aria-disabled:opacity-50"
                     >
                       {isLoading ? t("loading") : t("loadMore")}
-                    </button>
+                    </a>
                   </div>
                 ) : null}
               </>

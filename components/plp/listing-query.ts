@@ -40,6 +40,16 @@ export interface ListingPageProps {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
+/**
+ * The page a listing URL asks for, for the route's metadata. Page 2 of a category is its
+ * own URL with its own canonical — pointing it at page 1 (which is what happened before)
+ * told Google the two were the same page, and it dropped every product only page 2 linked.
+ */
+export async function listingPageNumber(searchParams: ListingPageProps["searchParams"]): Promise<number> {
+  const params = await searchParams;
+  return parseListingQuery(searchParamReader(params), "newest").page;
+}
+
 /** Reads one query-string value, whichever shape the caller happens to hold it in. */
 export type ParamReader = (key: string) => string | null;
 

@@ -8,6 +8,7 @@ import { Footer } from "@/components/layout/Footer";
 import { ProductListingSection } from "@/components/plp/ProductListingSection";
 import { getAllCollections, getCollectionBySlug, getNavigation, getSiteSettings, getSeoDefaults } from "@/services";
 import { localizeCollection } from "@/lib/localize";
+import { listingPageNumber } from "@/components/plp/listing-query";
 import { buildMetadata } from "@/lib/seo";
 import { resolveCollectionSeo } from "@/lib/seo/resolve";
 import type { Locale } from "@/i18n/config";
@@ -27,8 +28,8 @@ export async function generateStaticParams() {
   return collections.map((collection) => ({ slug: collection.slug }));
 }
 
-export async function generateMetadata({ params }: CollectionPageProps): Promise<Metadata> {
-  const { slug } = await params;
+export async function generateMetadata({ params, searchParams }: CollectionPageProps): Promise<Metadata> {
+  const [{ slug }, page] = await Promise.all([params, listingPageNumber(searchParams)]);
   const [raw, seo, locale] = await Promise.all([getCollectionBySlug(slug), getSeoDefaults(), getLocale()]);
   if (!raw) return {};
   // Localized here as well as in the page body. Without it the <title> and og:title stay
@@ -40,6 +41,7 @@ export async function generateMetadata({ params }: CollectionPageProps): Promise
   const resolved = resolveCollectionSeo(collection, { seo });
   return buildMetadata({
     seo,
+    page,
     title: resolved.title,
     description: resolved.description,
     canonical: resolved.canonical,

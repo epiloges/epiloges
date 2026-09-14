@@ -22,7 +22,15 @@ interface PageMetadataInput {
    * the request locale is available (see app/products/[slug]/page.tsx).
    */
   locale?: Locale;
+  /**
+   * Listing page number. Above 1 the canonical carries `?page=N` and the title says so —
+   * each page of a category is indexable on its own, which is what lets the products it
+   * links be found. Every OTHER query parameter still canonicalises to the clean URL.
+   */
+  page?: number;
 }
+
+const PAGE_LABEL: Record<Locale, string> = { en: "Page", el: "Σελίδα" };
 
 const OG_LOCALE: Record<Locale, string> = { en: "en_US", el: "el_GR" };
 
@@ -38,9 +46,12 @@ export function buildMetadata({
   ogTitle,
   ogDescription,
   locale = DEFAULT_LOCALE,
+  page = 1,
 }: PageMetadataInput): Metadata {
-  const url = canonical ?? new URL(path, seo.siteUrl).toString();
-  const resolvedTitle = title ?? seo.defaultTitle;
+  const baseUrl = canonical ?? new URL(path, seo.siteUrl).toString();
+  const url = page > 1 ? `${baseUrl}${baseUrl.includes("?") ? "&" : "?"}page=${page}` : baseUrl;
+  const baseTitle = title ?? seo.defaultTitle;
+  const resolvedTitle = page > 1 ? `${baseTitle} — ${PAGE_LABEL[locale]} ${page}` : baseTitle;
   const resolvedDescription = description ?? seo.defaultDescription;
   const resolvedImage = image ?? seo.defaultOgImage;
   const resolvedOgTitle = ogTitle ?? resolvedTitle;

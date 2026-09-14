@@ -55,7 +55,12 @@ interface ProductListingSectionProps {
  * become a 4,000-row query on a public endpoint, so it is capped — beyond the cap the first
  * pages render server-side and the client fills in the rest exactly as it always has.
  */
-const MAX_SERVER_RENDERED_PAGES = 5;
+/**
+ * 10 pages × 8 = 80 products, which covers the largest category (55) with room to grow. It
+ * has to: `?page=N` is now a real link a crawler follows, and a page that renders fewer
+ * products than the URL asks for is a page whose products no crawler will ever see.
+ */
+const MAX_SERVER_RENDERED_PAGES = 10;
 
 export async function ProductListingSection({
   title,

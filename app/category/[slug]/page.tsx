@@ -18,6 +18,7 @@ import {
   resolveRenamedCategorySlug,
 } from "@/services";
 import { localizeCategory, localizeCategories } from "@/lib/localize";
+import { listingPageNumber } from "@/components/plp/listing-query";
 import { buildMetadata, breadcrumbSchema, faqSchema } from "@/lib/seo";
 import { resolveCategorySeo } from "@/lib/seo/resolve";
 import { JsonLd } from "@/components/shared/JsonLd";
@@ -40,8 +41,8 @@ export async function generateStaticParams() {
   return categories.filter((c) => c.isVisible).map((category) => ({ slug: category.slug }));
 }
 
-export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
-  const { slug } = await params;
+export async function generateMetadata({ params, searchParams }: CategoryPageProps): Promise<Metadata> {
+  const [{ slug }, page] = await Promise.all([params, listingPageNumber(searchParams)]);
   const [raw, seo, locale] = await Promise.all([getCategoryBySlug(slug), getSeoDefaults(), getLocale()]);
   if (!raw || !raw.isVisible) return {};
   // Localized here as well as in the page body, which was already doing it. A Greek heading
@@ -51,6 +52,7 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
   const resolved = resolveCategorySeo(category, { seo });
   return buildMetadata({
     seo,
+    page,
     title: resolved.title,
     description: resolved.description,
     canonical: resolved.canonical,

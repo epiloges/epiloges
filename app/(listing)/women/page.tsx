@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ProductListingSection } from "@/components/plp/ProductListingSection";
-import type { ListingPageProps } from "@/components/plp/listing-query";
+import { listingPageNumber, type ListingPageProps } from "@/components/plp/listing-query";
 import { getNavigation, getSiteSettings, getSeoDefaults } from "@/services";
 import { buildMetadata } from "@/lib/seo";
 import { getLocale, getTranslations } from "next-intl/server";
@@ -13,10 +13,11 @@ import type { Locale } from "@/i18n/config";
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
 export const instant = false;
 
-export async function generateMetadata(): Promise<Metadata> {
-  const [seo, t, locale] = await Promise.all([getSeoDefaults(), getTranslations("Pages"), getLocale()]);
+export async function generateMetadata({ searchParams }: ListingPageProps): Promise<Metadata> {
+  const [seo, t, locale, page] = await Promise.all([getSeoDefaults(), getTranslations("Pages"), getLocale(), listingPageNumber(searchParams)]);
   return buildMetadata({
     seo,
+    page,
     title: t("womenTitle"),
     description: t("womenDescription"),
     path: "/women",
