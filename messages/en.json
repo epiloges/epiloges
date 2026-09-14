@@ -332,7 +332,14 @@
     "shopTheLookbook": "Shop the lookbook",
     "signInTitle": "Sign in",
     "createAccountTitle": "Create account",
-    "resetPasswordTitle": "Reset password"
+    "resetPasswordTitle": "Reset password",
+    "brandsTitle": "Brands",
+    "brandsDescription": "Every shoe brand you will find in our store — our own designs and selected houses.",
+    "brandTitle": "{brand} shoes",
+    "brandDescription": "{brand} shoes: {count} styles for women and men, shipped across Greece with free 14-day returns.",
+    "brandHeading": "{brand}",
+    "brandIntro": "Every {brand} shoe {siteName} carries, with the sizes available right now.",
+    "brandProductCount": "{count, plural, one {# style} other {# styles}}"
   },
   "Legal": {
     "lastUpdated": "Last updated {date}"

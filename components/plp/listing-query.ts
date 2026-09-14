@@ -99,7 +99,7 @@ export function parseListingQuery(get: ParamReader, defaultSort: PlpSort): Listi
  * page IS the gender, and a stray `?gender=men` must not contradict the heading.
  */
 export function listingSearchOptions(
-  baseFilters: Pick<SearchOptions, "gender" | "category" | "collectionId" | "isNew" | "isSale">,
+  baseFilters: Pick<SearchOptions, "gender" | "category" | "collectionId" | "brand" | "isNew" | "isSale">,
   query: ListingQuery,
   page: number
 ): SearchOptions {
@@ -130,7 +130,7 @@ export function listingSearchOptions(
  * change starts a fresh one.
  */
 export function listingSignature(
-  baseFilters: Pick<SearchOptions, "gender" | "category" | "collectionId" | "isNew" | "isSale">,
+  baseFilters: Pick<SearchOptions, "gender" | "category" | "collectionId" | "brand" | "isNew" | "isSale">,
   query: ListingQuery,
   searchQuery = ""
 ): string {

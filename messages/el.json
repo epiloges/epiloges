@@ -332,7 +332,14 @@
     "shopTheLookbook": "Αγοράστε από το lookbook",
     "signInTitle": "Σύνδεση",
     "createAccountTitle": "Δημιουργία λογαριασμού",
-    "resetPasswordTitle": "Επαναφορά κωδικού"
+    "resetPasswordTitle": "Επαναφορά κωδικού",
+    "brandsTitle": "Μάρκες",
+    "brandsDescription": "Όλες οι μάρκες παπουτσιών που θα βρείτε στο κατάστημά μας — τα δικά μας σχέδια και επιλεγμένοι οίκοι.",
+    "brandTitle": "{brand} παπούτσια",
+    "brandDescription": "{brand} παπούτσια: {count} σχέδια σε γυναικεία και ανδρικά, με αποστολή σε όλη την Ελλάδα και δωρεάν επιστροφή 14 ημερών.",
+    "brandHeading": "{brand}",
+    "brandIntro": "Όλα τα παπούτσια {brand} που διαθέτει το {siteName}, με τα νούμερα που είναι άμεσα διαθέσιμα.",
+    "brandProductCount": "{count, plural, one {# σχέδιο} other {# σχέδια}}"
   },
   "Legal": {
     "lastUpdated": "Τελευταία ενημέρωση {date}"

@@ -59,6 +59,7 @@ interface ScopeInput {
   gender?: string;
   includeUnisex?: boolean;
   collectionId?: string;
+  brand?: string;
   isNew?: boolean;
   isSale?: boolean;
   query?: string;
@@ -91,6 +92,7 @@ function scopeWhere(scope: ScopeInput): Prisma.Sql {
         : Prisma.sql`p.gender = ${scope.gender}`
     );
   }
+  if (scope.brand) clauses.push(Prisma.sql`p.brand = ${scope.brand}`);
   if (scope.collectionId) {
     clauses.push(
       Prisma.sql`EXISTS (SELECT 1 FROM product_collections pc WHERE pc."productId" = p.id AND pc."collectionId" = ${scope.collectionId})`
@@ -259,6 +261,7 @@ export async function searchProducts(query: string, options: SearchOptions = {})
     gender: options.gender,
     includeUnisex: Boolean(options.gender),
     collectionId: options.collectionId,
+    brand: options.brand,
     isNew: options.isNew,
     isSale: options.isSale,
     query: trimmed || undefined,

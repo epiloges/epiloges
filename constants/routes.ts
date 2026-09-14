@@ -6,6 +6,8 @@ export const ROUTES = {
   collections: "/collections",
   collection: (slug: string) => `/collections/${slug}`,
   category: (slug: string) => `/category/${slug}`,
+  brands: "/brands",
+  brand: (slug: string) => `/brands/${slug}`,
   sale: "/sale",
   journal: "/journal",
   journalPost: (slug: string) => `/journal/${slug}`,

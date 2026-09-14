@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { ROUTES } from "@/constants/routes";
 import { getAllCategories, getAllCollections, getPublishedPosts, getAllProducts, getLegalPages, getSeoDefaults } from "@/services";
+import { getAllBrands } from "@/services/brands";
 
 const STATIC_ROUTES: { path: string; priority: number }[] = [
   { path: ROUTES.home, priority: 1 },
@@ -8,6 +9,7 @@ const STATIC_ROUTES: { path: string; priority: number }[] = [
   { path: ROUTES.men, priority: 0.9 },
   { path: ROUTES.newIn, priority: 0.8 },
   { path: ROUTES.collections, priority: 0.8 },
+  { path: ROUTES.brands, priority: 0.6 },
   { path: ROUTES.sale, priority: 0.7 },
   { path: ROUTES.journal, priority: 0.6 },
   { path: ROUTES.about, priority: 0.5 },
@@ -21,12 +23,13 @@ const STATIC_ROUTES: { path: string; priority: number }[] = [
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const seo = await getSeoDefaults();
-  const [products, collections, categories, posts, legalPages] = await Promise.all([
+  const [products, collections, categories, posts, legalPages, brands] = await Promise.all([
     getAllProducts(),
     getAllCollections(),
     getAllCategories(),
     getPublishedPosts(),
     getLegalPages(),
+    getAllBrands(),
   ]);
 
   const toUrl = (path: string) => new URL(path, seo.siteUrl).toString();
@@ -97,6 +100,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
          */
         images: product.images.slice(0, 4).map((image) => image.src),
       })),
+    ...brands.map((brand) => ({
+      url: toUrl(ROUTES.brand(brand.slug)),
+      lastModified: buildTime,
+      changeFrequency: "weekly" as const,
+      priority: 0.6,
+    })),
     ...posts.map((post) => ({
       url: toUrl(ROUTES.journalPost(post.slug)),
       lastModified: post.publishedAt,

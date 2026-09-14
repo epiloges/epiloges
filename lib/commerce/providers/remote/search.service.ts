@@ -23,6 +23,7 @@ function toQuery(query: string, options: SearchOptions): string {
   if (options.category) params.set("category", options.category);
   if (options.gender) params.set("gender", options.gender);
   if (options.collectionId) params.set("collectionId", options.collectionId);
+  if (options.brand) params.set("brand", options.brand);
   // Separate from `gender` above: that one is the listing's scope, this is the shopper's
   // own choice inside a listing that spans both. See SearchOptions.
   if (options.genders?.length) params.set("genders", options.genders.join(","));

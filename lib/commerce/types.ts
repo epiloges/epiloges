@@ -293,6 +293,8 @@ export interface SearchOptions {
    */
   genders?: string[];
   collectionId?: string;
+  /** SCOPE, like `category`: the brand page /brands/[slug] browses one label. Exact match on Product.brand. */
+  brand?: string;
   colors?: string[];
   sizes?: string[];
   /** REFINEMENT, like `colors` — see the note on `genders`. Matched against Product.brand. */

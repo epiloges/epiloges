@@ -37,7 +37,7 @@ import { JsonLd } from "@/components/shared/JsonLd";
 interface ProductListingSectionProps {
   title: string;
   description?: string;
-  baseFilters: Pick<SearchOptions, "gender" | "category" | "collectionId" | "isNew" | "isSale">;
+  baseFilters: Pick<SearchOptions, "gender" | "category" | "collectionId" | "brand" | "isNew" | "isSale">;
   /** Set false when the page already renders its own hero/title above this section. */
   showHeader?: boolean;
   /** Sort applied when the shopper has not chosen one. /new-in uses "newest" so the page means something. */

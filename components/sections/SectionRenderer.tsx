@@ -10,6 +10,9 @@ import { BrandStrip } from "@/components/sections/BrandStrip";
 import { Newsletter } from "@/components/sections/Newsletter";
 import { getCollectionsByIds, getInstagramPosts, getNewArrivals, getPublishedProductsByIds, getSiteSettings } from "@/services";
 import { getCategoryBySlug } from "@/services/categories";
+import { getAllBrands } from "@/services/brands";
+import { slugify } from "@/lib/slug";
+import { ROUTES } from "@/constants/routes";
 import { localizeCategory, localizeCollections, localizeProducts } from "@/lib/localize";
 import type { Locale } from "@/i18n/config";
 import type { FeaturedTileRef, HomepageSection } from "@/types";
@@ -140,8 +143,18 @@ export async function SectionRenderer({ section }: SectionRendererProps) {
       return <SocialGrid data={section.data} profileUrl={instagramUrl} posts={posts} />;
     }
 
-    case "brandStrip":
-      return <BrandStrip data={section.data} />;
+    case "brandStrip": {
+      // A wordmark links to the label’s own page when the shop actually stocks it — the
+      // strip is the homepage’s one link into /brands/*, which is what gets those pages
+      // crawled. A CMS-set href still wins; a brand with no products stays unlinked.
+      const stocked = new Set((await getAllBrands()).map((brand) => brand.slug));
+      const brands = section.data.brands.map((brand) => {
+        if (brand.href) return brand;
+        const slug = slugify(brand.name);
+        return stocked.has(slug) ? { ...brand, href: ROUTES.brand(slug) } : brand;
+      });
+      return <BrandStrip data={{ ...section.data, brands }} />;
+    }
 
     case "newsletter":
       return <Newsletter data={section.data} />;
