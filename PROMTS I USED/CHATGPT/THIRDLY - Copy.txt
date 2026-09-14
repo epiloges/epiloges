@@ -1,4 +1,6 @@
-This was one phase of the five-part dashboard request — categories specifically. The other four (product management upgrade, real media library, roles/permissions enforcement) are still open; say the word when you want the next one.
+This was one phase of the five-part dashboard request — categories specifically. 
+The other four (product management upgrade, real media library, roles/permissions enforcement) are still 
+open; say the word when you want the next one.
 
 
 Principal Engineer Quality Audit — Phase Review

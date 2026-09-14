@@ -356,7 +356,7 @@
     "brandTitle": "{brand} παπούτσια",
     "brandDescription": "{brand} παπούτσια: {count} σχέδια σε γυναικεία και ανδρικά, με αποστολή σε όλη την Ελλάδα και δωρεάν επιστροφή 14 ημερών.",
     "brandHeading": "{brand}",
-    "brandIntro": "Όλα τα παπούτσια {brand} που διαθέτει το {siteName}, με τα νούμερα που είναι άμεσα διαθέσιμα.",
+    "brandIntro": "Όλα τα παπούτσια {brand} που διαθέτουν τα {siteName}, με τα νούμερα που είναι άμεσα διαθέσιμα.",
     "brandProductCount": "{count, plural, one {# σχέδιο} other {# σχέδια}}"
   },
   "Legal": {
@@ -376,7 +376,7 @@
   },
   "Auth": {
     "signIn": "Σύνδεση",
-    "welcomeBack": "Καλώς ήρθατε ξανά στο ALEXANDRIS.",
+    "welcomeBack": "Καλώς ήρθατε ξανά στα Καταστήματα Αλεξανδρής.",
     "emailAddress": "Διεύθυνση email",
     "password": "Κωδικός",
     "forgotPassword": "Ξεχάσατε τον κωδικό σας;",

@@ -1,11 +1,12 @@
 import type { MetadataRoute } from "next";
 import { getSiteSettings } from "@/services";
+import { storeName } from "@/constants/company";
 
 export default async function manifest(): Promise<MetadataRoute.Manifest> {
   const settings = await getSiteSettings();
 
   return {
-    name: `${settings.siteName} — ${settings.tagline}`,
+    name: `${storeName()} — ${settings.tagline}`,
     short_name: settings.siteName,
     description: settings.tagline,
     start_url: "/",

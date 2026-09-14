@@ -376,7 +376,7 @@
   },
   "Auth": {
     "signIn": "Sign In",
-    "welcomeBack": "Welcome back to ALEXANDRIS.",
+    "welcomeBack": "Welcome back to Alexandris Stores.",
     "emailAddress": "Email address",
     "password": "Password",
     "forgotPassword": "Forgot your password?",
@@ -386,7 +386,7 @@
     "createAccount": "Create an account",
     "continueAsGuest": "Continue as guest",
     "createAccountTitle": "Create Account",
-    "joinBlurb": "Join ALEXANDRIS for faster checkout and order tracking.",
+    "joinBlurb": "Join Alexandris Stores for faster checkout and order tracking.",
     "firstName": "First name",
     "lastName": "Last name",
     "confirmPassword": "Confirm password",

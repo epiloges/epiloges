@@ -1,4 +1,5 @@
 import { formatMoney } from "@/lib/format";
+import { storeName } from "@/constants/company";
 import type { Address, CartLineItem, CartTotals, ShippingRate } from "@/lib/commerce/types";
 
 interface RenderedEmail {
@@ -6,6 +7,12 @@ interface RenderedEmail {
   html: string;
   text: string;
 }
+
+/**
+ * `siteName` (ALEXANDRIS) is the wordmark: masthead, footer mark, `<title>`. In a sentence or a
+ * subject line the business is called by its name — emails are Greek, so the Greek one.
+ */
+const STORE = storeName("el");
 
 const SERIF = "Georgia, 'Times New Roman', Times, serif";
 const SANS = "'Helvetica Neue', Helvetica, Arial, sans-serif";
@@ -425,12 +432,12 @@ export function referralRewardEmail(input: {
  */
 export function welcomeEmail(input: { siteName: string; firstName: string; shopUrl: string; verifyUrl?: string; verifyExpiresInHours?: number }): RenderedEmail {
   const { siteName, firstName, shopUrl, verifyUrl, verifyExpiresInHours = 48 } = input;
-  const subject = verifyUrl ? `Καλώς ήρθατε στο ${siteName} — επιβεβαιώστε το email σας` : `Καλώς ήρθατε στο ${siteName}`;
+  const subject = verifyUrl ? `Καλώς ήρθατε στα ${STORE} — επιβεβαιώστε το email σας` : `Καλώς ήρθατε στα ${STORE}`;
   const intro = "Ο λογαριασμός σας είναι έτοιμος. Παρακολουθήστε τις παραγγελίες σας, αποθηκεύστε διευθύνσεις και δημιουργήστε τη λίστα επιθυμιών σας όποτε θέλετε.";
   const verifyLine = `Επιβεβαιώστε τη διεύθυνση email σας, ώστε να είμαστε σίγουροι ότι οι ενημερώσεις για τις παραγγελίες σας φτάνουν σε εσάς. Ο σύνδεσμος ισχύει για ${verifyExpiresInHours} ώρες.`;
   const html = layout(
     siteName,
-    `Καλώς ήρθατε στο ${siteName}, ${escapeHtml(firstName)}.`,
+    `Καλώς ήρθατε στα ${STORE}, ${escapeHtml(firstName)}.`,
     `
     ${eyebrow("Καλώς ήρθατε")}
     ${heading(`Καλώς ήρθατε, ${escapeHtml(firstName)}`)}
@@ -447,7 +454,7 @@ export function welcomeEmail(input: { siteName: string; firstName: string; shopU
 export function emailVerificationEmail(input: { siteName: string; firstName: string; verifyUrl: string; expiresInHours: number }): RenderedEmail {
   const { siteName, firstName, verifyUrl, expiresInHours } = input;
   const subject = "Επιβεβαιώστε το email σας";
-  const line = `Πατήστε το κουμπί για να επιβεβαιώσετε ότι αυτή είναι η διεύθυνση email του λογαριασμού σας στο ${siteName}. Ο σύνδεσμος ισχύει για ${expiresInHours} ώρες.`;
+  const line = `Πατήστε το κουμπί για να επιβεβαιώσετε ότι αυτή είναι η διεύθυνση email του λογαριασμού σας στα ${STORE}. Ο σύνδεσμος ισχύει για ${expiresInHours} ώρες.`;
   const html = layout(
     siteName,
     "Επιβεβαιώστε τη διεύθυνση email σας.",
@@ -456,9 +463,9 @@ export function emailVerificationEmail(input: { siteName: string; firstName: str
     ${heading(`Επιβεβαίωση email, ${escapeHtml(firstName)}`)}
     ${bodyText(line)}
     ${ctaButton("Επιβεβαίωση email", verifyUrl)}
-    <p style="color:${MUTED};font-size:12px;margin:24px 0 0;">Αν δεν δημιουργήσατε εσείς λογαριασμό στο ${escapeHtml(siteName)}, αγνοήστε αυτό το μήνυμα.</p>`
+    <p style="color:${MUTED};font-size:12px;margin:24px 0 0;">Αν δεν δημιουργήσατε εσείς λογαριασμό στα ${STORE}, αγνοήστε αυτό το μήνυμα.</p>`
   );
-  const text = `Επιβεβαίωση email, ${firstName}\n\n${line}\n\n${verifyUrl}\n\nΑν δεν δημιουργήσατε εσείς λογαριασμό στο ${siteName}, αγνοήστε αυτό το μήνυμα.`;
+  const text = `Επιβεβαίωση email, ${firstName}\n\n${line}\n\n${verifyUrl}\n\nΑν δεν δημιουργήσατε εσείς λογαριασμό στα ${STORE}, αγνοήστε αυτό το μήνυμα.`;
   return { subject, html, text };
 }
 
@@ -494,11 +501,11 @@ export function accountAlreadyExistsEmail(input: { siteName: string; loginUrl: s
     `
     ${eyebrow("Ασφάλεια λογαριασμού")}
     ${heading("Έχετε ήδη λογαριασμό")}
-    ${bodyText(`Κάποιος μόλις προσπάθησε να δημιουργήσει νέο λογαριασμό ${siteName} με αυτή τη διεύθυνση email. Αν ήσασταν εσείς, συνδεθείτε στον υπάρχοντα λογαριασμό σας — δεν έχει επηρεαστεί.`)}
+    ${bodyText(`Κάποιος μόλις προσπάθησε να δημιουργήσει νέο λογαριασμό στα ${STORE} με αυτή τη διεύθυνση email. Αν ήσασταν εσείς, συνδεθείτε στον υπάρχοντα λογαριασμό σας — δεν έχει επηρεαστεί.`)}
     ${ctaButton("Σύνδεση", loginUrl)}
     <p style="color:${MUTED};font-size:12px;margin:24px 0 0;">Αν δεν ήσασταν εσείς, αγνοήστε αυτό το μήνυμα — δεν δημιουργήθηκε νέος λογαριασμός.</p>`
   );
-  const text = `Έχετε ήδη λογαριασμό\n\nΚάποιος μόλις προσπάθησε να δημιουργήσει νέο λογαριασμό ${siteName} με αυτή τη διεύθυνση email. Αν ήσασταν εσείς, συνδεθείτε στον υπάρχοντα λογαριασμό σας.\n\n${loginUrl}\n\nΑν δεν ήσασταν εσείς, αγνοήστε αυτό το μήνυμα — δεν δημιουργήθηκε νέος λογαριασμός.`;
+  const text = `Έχετε ήδη λογαριασμό\n\nΚάποιος μόλις προσπάθησε να δημιουργήσει νέο λογαριασμό στα ${STORE} με αυτή τη διεύθυνση email. Αν ήσασταν εσείς, συνδεθείτε στον υπάρχοντα λογαριασμό σας.\n\n${loginUrl}\n\nΑν δεν ήσασταν εσείς, αγνοήστε αυτό το μήνυμα — δεν δημιουργήθηκε νέος λογαριασμός.`;
   return { subject, html, text };
 }
 
@@ -804,7 +811,7 @@ export function returnRequestedEmail(input: {
 /** To the visitor, after the contact form — "we got it" with what they wrote, so the thread starts in their inbox too. */
 export function contactAcknowledgementEmail(input: { siteName: string; name: string; subject: string; message: string }): RenderedEmail {
   const { siteName, name, subject, message } = input;
-  const emailSubject = `Λάβαμε το μήνυμά σας — ${siteName}`;
+  const emailSubject = `Λάβαμε το μήνυμά σας — ${STORE}`;
   const html = layout(
     siteName,
     "Λάβαμε το μήνυμά σας και θα απαντήσουμε σύντομα.",
@@ -822,7 +829,7 @@ export function contactAcknowledgementEmail(input: { siteName: string; name: str
 /** To the visitor, after "Ask a stylist". Same shape as the contact acknowledgement; the promise is a personal reply. */
 export function conciergeAcknowledgementEmail(input: { siteName: string; name: string; topic: string; message: string }): RenderedEmail {
   const { siteName, name, topic, message } = input;
-  const subject = `Λάβαμε το αίτημά σας — ${siteName}`;
+  const subject = `Λάβαμε το αίτημά σας — ${STORE}`;
   const html = layout(
     siteName,
     "Ένας άνθρωπος από την ομάδα μας θα σας απαντήσει προσωπικά.",
@@ -840,7 +847,7 @@ export function conciergeAcknowledgementEmail(input: { siteName: string; name: s
 /** To the visitor who signed up for the newsletter. The unsubscribe link is added by the pipeline. */
 export function newsletterWelcomeEmail(input: { siteName: string; shopUrl: string }): RenderedEmail {
   const { siteName, shopUrl } = input;
-  const subject = `Εγγραφήκατε στα νέα του ${siteName}`;
+  const subject = `Εγγραφήκατε στα νέα μας — ${STORE}`;
   const html = layout(
     siteName,
     "Είστε στη λίστα — νέες αφίξεις και προσφορές, πρώτοι.",

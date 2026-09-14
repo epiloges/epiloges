@@ -1,4 +1,5 @@
 import { feedDescription, money, xmlText, type FeedItem } from "@/lib/feeds/catalogue";
+import { storeName } from "@/constants/company";
 
 /**
  * Google Merchant Center product feed (RSS 2.0 with the `g:` namespace).
@@ -76,9 +77,9 @@ export function googleMerchantFeedXml(items: FeedItem[], options: MerchantFeedOp
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">',
     "  <channel>",
-    `    <title>${xmlText(options.siteName)}</title>`,
+    `    <title>${xmlText(storeName())}</title>`,
     `    <link>${xmlText(options.siteUrl)}</link>`,
-    `    <description>${xmlText(`${options.siteName} — product feed`)}</description>`,
+    `    <description>${xmlText(`${storeName()} — product feed`)}</description>`,
     ...entries,
     "  </channel>",
     "</rss>",

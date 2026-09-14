@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { cacheLife } from "next/cache";
 import type { NavigationConfig, SiteSettings } from "@/types";
+import type { Locale } from "@/i18n/config";
 import { NewsletterForm } from "@/components/shared/NewsletterForm";
 import { LanguageSwitcher } from "@/components/shared/LanguageSwitcher";
 import { getAcceptedPaymentMethodNames } from "@/services/payments";
-import { COMPANY, traderIdentityLine } from "@/constants/company";
+import { COMPANY, storeName, traderIdentityLine } from "@/constants/company";
 
 interface FooterProps {
   navigation: NavigationConfig;
@@ -45,6 +46,7 @@ export async function Footer({ navigation, settings }: FooterProps) {
   const year = await copyrightYear();
   const paymentMethods = await getAcceptedPaymentMethodNames();
   const t = await getTranslations("Footer");
+  const locale = (await getLocale()) as Locale;
 
   return (
     <footer className="border-t border-border bg-luxe-white">
@@ -113,7 +115,7 @@ export async function Footer({ navigation, settings }: FooterProps) {
         <div className="container-luxe flex flex-col-reverse items-center justify-between gap-4 py-6 md:flex-row">
           <div className="flex items-center gap-4">
             <p className="text-xs text-luxe-gray-dark">
-              &copy; {year} {settings.siteName}. {t("allRightsReserved")}
+              &copy; {year} {storeName(locale)}. {t("allRightsReserved")}
             </p>
             <LanguageSwitcher />
           </div>

@@ -1,10 +1,10 @@
 {
   "titleTemplate": "%s | Alexandris Stores",
-  "defaultTitle": "ALEXANDRIS — Γυναικεία & ανδρικά παπούτσια",
-  "defaultDescription": "Το ALEXANDRIS είναι κατάστημα υποδημάτων στο Ηράκλειο Κρήτης. Γυναικεία και ανδρικά παπούτσια, με προσοχή στη λεπτομέρεια και διαχρονικό σχεδιασμό.",
+  "defaultTitle": "Alexandris Stores | Καταστήματα Αλεξανδρής — Γυναικεία & ανδρικά παπούτσια",
+  "defaultDescription": "Καταστήματα Αλεξανδρής — κατάστημα υποδημάτων στο Ηράκλειο Κρήτης. Γυναικεία και ανδρικά παπούτσια, με προσοχή στη λεπτομέρεια και διαχρονικό σχεδιασμό.",
   "siteUrl": "https://alexandrisstores.gr",
   "organization": {
-    "name": "ALEXANDRIS",
+    "name": "Alexandris Stores",
     "logo": "https://shopalexandris.vercel.app/logo.svg",
     "sameAs": []
   }

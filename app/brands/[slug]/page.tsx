@@ -10,6 +10,7 @@ import { ProductListingSection } from "@/components/plp/ProductListingSection";
 import { ListingSkeleton } from "@/components/plp/ListingSkeleton";
 import { listingPageNumber, type ListingPageProps } from "@/components/plp/listing-query";
 import { JsonLd } from "@/components/shared/JsonLd";
+import { storeName } from "@/constants/company";
 import { breadcrumbSchema, buildMetadata } from "@/lib/seo";
 import { getNavigation, getSeoDefaults, getSiteSettings } from "@/services";
 import { getAllBrands, getBrandBySlug } from "@/services/brands";
@@ -58,13 +59,14 @@ export default async function BrandPage({ params, searchParams }: BrandPageProps
   const brand = await getBrandBySlug(slug);
   if (!brand) notFound();
 
-  const [navigation, settings, seo, tNav, t, resolvedSearchParams] = await Promise.all([
+  const [navigation, settings, seo, tNav, t, resolvedSearchParams, locale] = await Promise.all([
     getNavigation(),
     getSiteSettings(),
     getSeoDefaults(),
     getTranslations("Nav"),
     getTranslations("Pages"),
     searchParams,
+    getLocale(),
   ]);
   const breadcrumbs = [
     { name: tNav("home"), href: ROUTES.home },
@@ -81,7 +83,7 @@ export default async function BrandPage({ params, searchParams }: BrandPageProps
         <div className="container-luxe py-10 md:py-14">
           <p className="text-xs font-medium tracking-[0.2em] uppercase text-luxe-gray-dark">{t("brandsTitle")}</p>
           <h1 className="font-heading mt-2 text-3xl md:text-5xl">{t("brandHeading", { brand: brand.name })}</h1>
-          <p className="mt-3 max-w-xl text-luxe-gray-dark">{t("brandIntro", { brand: brand.name, siteName: settings.siteName })}</p>
+          <p className="mt-3 max-w-xl text-luxe-gray-dark">{t("brandIntro", { brand: brand.name, siteName: storeName(locale as Locale) })}</p>
         </div>
         <Suspense fallback={<ListingSkeleton />}>
           <ProductListingSection

@@ -1,3 +1,5 @@
+import { DEFAULT_LOCALE, type Locale } from "@/i18n/config";
+
 /**
  * The trader behind this shop — one source of truth for the identity details Greek and
  * EU law require a distance seller to publish.
@@ -8,15 +10,21 @@
  * contact page, the legal documents and the structured data separately. One wrong copy
  * is how the demo address survived as long as it did.
  *
- * `legalName` is the name registered in ΓΕΜΗ and is what the legal documents must use.
- * `brandName` is the shopfront name and is what customers see everywhere else — the two
- * are deliberately separate, because using the trading name in a Privacy Policy defeats
- * the point of naming the data controller.
+ * Three names, three jobs — the owner's rule (2026-09-14):
+ *
+ * - `brandName` — **ALEXANDRIS**, the wordmark. Header, footer mark, email masthead, the
+ *   maintenance page, the admin chrome: anywhere it is set like a logo. Never in a sentence.
+ * - `storeName` — **Καταστήματα Αλεξανδρής** / **Alexandris Stores**, what the business is
+ *   *called*: page titles, running copy, the © line, email subjects, structured data, the
+ *   legal pages' "who we are". Use `storeName(locale)`.
+ * - `legalName` — the ΓΕΜΗ registration, which the legal documents must name as the data
+ *   controller and contracting party; a trading name is not a legal person.
  */
 export const COMPANY = {
   /** As registered in ΓΕΜΗ. Greek convention is surname first. */
   legalName: "Alexandris Michail",
   brandName: "ALEXANDRIS",
+  storeName: { el: "Καταστήματα Αλεξανδρής", en: "Alexandris Stores" } satisfies Record<Locale, string>,
 
   address: {
     street: "Arthur Evans 9",
@@ -84,6 +92,11 @@ export const COMPANY = {
 export function formattedAddress(): string {
   const { street, postalCode, city, region, country } = COMPANY.address;
   return `${street}, ${postalCode} ${city}, ${region}, ${country}`;
+}
+
+/** The business's name for running text, in the visitor's language. */
+export function storeName(locale: Locale = DEFAULT_LOCALE): string {
+  return COMPANY.storeName[locale] ?? COMPANY.storeName[DEFAULT_LOCALE];
 }
 
 /**

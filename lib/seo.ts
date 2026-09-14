@@ -113,6 +113,8 @@ export function organizationSchema(seo: SiteSeoDefaults) {
     "@type": "Organization",
     "@id": organizationId(seo.siteUrl),
     name: seo.organization.name,
+    // The Greek trading name and the wordmark, so a search for either resolves to this entity.
+    alternateName: [COMPANY.storeName.el, COMPANY.brandName],
     legalName: COMPANY.legalName,
     url: seo.siteUrl,
     logo: seo.organization.logo,
@@ -147,6 +149,7 @@ export function storeSchema(seo: SiteSeoDefaults) {
     "@type": "ShoeStore",
     "@id": storeId(seo.siteUrl),
     name: seo.organization.name,
+    alternateName: [COMPANY.storeName.el, COMPANY.brandName],
     image: seo.organization.logo,
     url: seo.siteUrl,
     telephone: COMPANY.phoneE164,

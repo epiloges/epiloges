@@ -1,11 +1,10 @@
 import { connection } from "next/server";
-import { COMPANY, formattedAddress } from "@/constants/company";
+import { COMPANY, formattedAddress, storeName } from "@/constants/company";
 import { RETURN_WINDOW_DAYS } from "@/lib/seo/commerce-policy";
 import { ROUTES } from "@/constants/routes";
 import { getAllCategories } from "@/services/categories";
 import { getAllBrands } from "@/services/brands";
 import { getSeoDefaults } from "@/services/seo";
-import { getSiteSettings } from "@/services/settings";
 import { getShippingSettings } from "@/services/shipping";
 import { deliveryPolicy } from "@/lib/seo/commerce-policy";
 
@@ -18,9 +17,8 @@ import { deliveryPolicy } from "@/lib/seo/commerce-policy";
  */
 export async function GET() {
   await connection();
-  const [seo, settings, shipping, categories, brands] = await Promise.all([
+  const [seo, shipping, categories, brands] = await Promise.all([
     getSeoDefaults(),
-    getSiteSettings(),
     getShippingSettings(),
     getAllCategories(),
     getAllBrands(),
@@ -30,11 +28,11 @@ export async function GET() {
   const visible = categories.filter((category) => category.isVisible);
 
   const lines = [
-    `# ${settings.siteName}`,
+    `# ${storeName()}`,
     "",
     `> ${seo.defaultDescription}`,
     "",
-    `${settings.siteName} (${COMPANY.legalName}) είναι κατάστημα υποδημάτων στο Ηράκλειο Κρήτης με ηλεκτρονικό κατάστημα για όλη την Ελλάδα. Γυναικεία και ανδρικά παπούτσια: τα δικά μας σχέδια (${COMPANY.ownBrands[0]}) και επιλεγμένες μάρκες.`,
+    `Τα ${storeName()} (${COMPANY.legalName}) είναι κατάστημα υποδημάτων στο Ηράκλειο Κρήτης με ηλεκτρονικό κατάστημα για όλη την Ελλάδα. Γυναικεία και ανδρικά παπούτσια: τα δικά μας σχέδια (${COMPANY.ownBrands[0]}) και επιλεγμένες μάρκες.`,
     "",
     `- Διεύθυνση καταστήματος: ${formattedAddress()}`,
     `- Τηλέφωνο: ${COMPANY.phone} · Email: ${COMPANY.email}`,
