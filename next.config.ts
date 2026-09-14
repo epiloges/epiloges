@@ -124,7 +124,15 @@ const nextConfig: NextConfig = {
      * to "true" and redeploy. Default is off, so a fresh deploy can never silently
      * reintroduce broken images.
      */
-    unoptimized: process.env.NEXT_PUBLIC_OPTIMIZE_IMAGES !== "true",
+    /**
+     * SUPERSEDED, kept for the history above: images are now optimized by the shop's own
+     * route (app/api/img) through the custom loader below, which has no quota. Set
+     * NEXT_PUBLIC_OPTIMIZE_IMAGES=vercel to hand the job back to Vercel's optimizer on a
+     * plan that includes it; anything else uses ours.
+     */
+    ...(process.env.NEXT_PUBLIC_OPTIMIZE_IMAGES === "vercel"
+      ? {}
+      : { loader: "custom" as const, loaderFile: "./lib/image-loader.ts" }),
   },
   async headers() {
     /**

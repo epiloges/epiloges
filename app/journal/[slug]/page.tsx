@@ -53,7 +53,7 @@ export default async function JournalPostPage({ params }: JournalPostPageProps) 
           <h1 className="mt-2 font-heading text-4xl md:text-5xl">{post.title}</h1>
 
           <div className="relative mt-8 aspect-16/9 w-full overflow-hidden bg-luxe-gray-light">
-            <Image src={post.coverImage.src} alt={post.coverImage.alt} fill sizes="768px" className="object-cover" priority />
+            <Image src={post.coverImage.src} alt={post.coverImage.alt} fill sizes="768px" className="object-cover" preload fetchPriority="high" />
           </div>
 
           <p className="mt-8 text-lg text-luxe-gray-dark">{post.excerpt}</p>

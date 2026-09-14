@@ -57,7 +57,8 @@ export default async function LookbookPage({ params }: LookbookPageProps) {
                 fill
                 sizes="(min-width: 640px) 50vw, 100vw"
                 className="object-cover"
-                priority={index < 2}
+                preload={index < 2}
+                fetchPriority={index < 2 ? "high" : undefined}
               />
             </div>
           ))}

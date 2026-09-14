@@ -7,6 +7,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ProductListingSection } from "@/components/plp/ProductListingSection";
+import { ListingSkeleton } from "@/components/plp/ListingSkeleton";
 import {
   getAllCategories,
   getCategoryAncestors,
@@ -125,7 +126,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
 
         {heroImage ? (
           <div className="relative h-64 w-full overflow-hidden bg-luxe-gray-light md:h-80">
-            <Image src={heroImage.src} alt={heroImage.alt} fill sizes="100vw" className="object-cover" priority />
+            <Image src={heroImage.src} alt={heroImage.alt} fill sizes="100vw" className="object-cover" preload fetchPriority="high" />
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/30 text-center text-luxe-white">
               <h1 className="font-heading text-3xl md:text-5xl">{category.name}</h1>
               {category.description ? (
@@ -165,7 +166,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
           </div>
         ) : null}
 
-        <Suspense fallback={null}>
+        <Suspense fallback={<ListingSkeleton />}>
           {/* Always false — one of the two branches above has already rendered the
               category's name (and description), same as app/collections/[slug]/page.tsx. */}
           <ProductListingSection

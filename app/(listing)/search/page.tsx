@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ProductListingSection } from "@/components/plp/ProductListingSection";
+import { ListingSkeleton } from "@/components/plp/ListingSkeleton";
 import type { ListingPageProps } from "@/components/plp/listing-query";
 import { getNavigation, getSiteSettings, getSeoDefaults } from "@/services";
 import { buildMetadata } from "@/lib/seo";
@@ -53,7 +54,7 @@ export default async function SearchPage({ searchParams }: ListingPageProps) {
     <>
       <Header navigation={navigation} siteName={settings.siteName} announcementMessages={settings.announcementMessages} />
       <main id="main" className="flex-1 pt-header">
-        <Suspense fallback={null}>
+        <Suspense fallback={<ListingSkeleton withHeader />}>
           <ProductListingSection
             title={q ? t("searchTitleFor", { query: q }) : t("searchTitle")}
             description={q ? undefined : t("searchEmptyPrompt")}

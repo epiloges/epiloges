@@ -403,8 +403,8 @@ export function ProductListingPage({
                     instead; the other half of the gain comes from the page-level inset below.
                     Unchanged from `sm` up, where there is already room. */}
                 <div className="mt-6 grid grid-cols-2 gap-x-2 gap-y-8 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-10 lg:grid-cols-4">
-                  {products.map((product) => (
-                    <ProductCard key={product.id} product={product} />
+                  {products.map((product, index) => (
+                    <ProductCard key={product.id} product={product} loading={index < 2 ? "priority" : index < 4 ? "eager" : undefined} />
                   ))}
                 </div>
 

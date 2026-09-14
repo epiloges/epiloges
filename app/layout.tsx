@@ -28,7 +28,10 @@ export const instant = false;
 
 const inter = Inter({
   variable: "--font-body",
-  subsets: ["latin"],
+  // Greek is the language of nearly every word on the page. With only the Latin subset
+  // loaded, every Greek glyph fell through to the system sans-serif — and swapped once the
+  // real font arrived, which Lighthouse measured as a layout shift on each page.
+  subsets: ["latin", "greek"],
   display: "swap",
 });
 

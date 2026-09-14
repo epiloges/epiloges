@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ProductListingSection } from "@/components/plp/ProductListingSection";
+import { ListingSkeleton } from "@/components/plp/ListingSkeleton";
 import { listingPageNumber, type ListingPageProps } from "@/components/plp/listing-query";
 import { getNavigation, getSiteSettings, getSeoDefaults } from "@/services";
 import { buildMetadata } from "@/lib/seo";
@@ -38,7 +39,7 @@ export default async function WomenPage({ searchParams }: ListingPageProps) {
     <>
       <Header navigation={navigation} siteName={settings.siteName} announcementMessages={settings.announcementMessages} />
       <main id="main" className="flex-1 pt-header">
-        <Suspense fallback={null}>
+        <Suspense fallback={<ListingSkeleton withHeader />}>
           <ProductListingSection
             title={t("womenTitle")}
             baseFilters={{ gender: "women" }}

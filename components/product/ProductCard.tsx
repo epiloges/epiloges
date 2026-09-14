@@ -18,7 +18,17 @@ import type { Product } from "@/types";
 interface ProductCardProps {
   product: Product;
   className?: string;
+  /**
+   * Above the fold in a listing. The first row of a category is the page’s Largest
+   * Contentful Paint, and a lazy-loaded LCP image is the single most expensive thing a
+   * listing can do to itself — the browser will not even request it until layout is done.
+   * `"priority"` preloads (first two cards, the mobile first row); `"eager"` just skips
+   * lazy-loading (the rest of the first desktop row).
+   */
+  loading?: "priority" | "eager";
 }
+
+const CARD_SIZES = "(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw";
 
 const BADGE_STYLES: Record<string, string> = {
   sale: "bg-luxe-black text-luxe-white",
@@ -29,7 +39,7 @@ const BADGE_STYLES: Record<string, string> = {
   bestseller: "bg-luxe-white text-luxe-black",
 };
 
-export function ProductCard({ product, className }: ProductCardProps) {
+export function ProductCard({ product, className, loading }: ProductCardProps) {
   const tBadge = useTranslations("ProductBadge");
   const tCard = useTranslations("ProductCard");
   const { isInWishlist, toggle } = useWishlist();
@@ -48,7 +58,12 @@ export function ProductCard({ product, className }: ProductCardProps) {
             src={primaryImage.src}
             alt={primaryImage.alt}
             fill
-            sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+            // Two columns on phones, three from `sm`, four from `lg` — the previous
+            // `100vw` fallback fetched a full-viewport image for a half-width card.
+            sizes={CARD_SIZES}
+            preload={loading === "priority"}
+            fetchPriority={loading === "priority" ? "high" : undefined}
+            loading={loading === "eager" ? "eager" : undefined}
             placeholder="blur"
             blurDataURL={SHIMMER_BLUR_DATA_URL}
             className={cn(
@@ -61,7 +76,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
               src={hoverImage.src}
               alt={hoverImage.alt}
               fill
-              sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+              sizes={CARD_SIZES}
               placeholder="blur"
               blurDataURL={SHIMMER_BLUR_DATA_URL}
               className="object-cover opacity-0 transition-opacity duration-500 group-hover:opacity-100"

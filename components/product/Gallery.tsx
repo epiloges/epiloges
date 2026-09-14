@@ -86,7 +86,8 @@ export function Gallery({ images, videos = [], productName }: GalleryProps) {
               src={active.image.src}
               alt={active.image.alt}
               fill
-              priority
+              preload
+              fetchPriority="high"
               sizes="(min-width: 1024px) 44vw, 100vw"
               className="object-cover transition-transform duration-200 ease-out"
               style={{
