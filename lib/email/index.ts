@@ -17,14 +17,28 @@ export * from "@/lib/email/templates";
  * The value is lower-cased and trimmed before matching, and an unrecognised one
  * warns. `EMAIL_PROVIDER=Resend` previously fell through to `default` and sent
  * every order confirmation nowhere, in total silence.
+ *
+ * Surrounding quotes are stripped too. On launch day the Vercel dashboard held
+ * `EMAIL_PROVIDER` as the seven characters `"resend"` — copied from `.env.example`,
+ * where the quotes are file syntax, into a form where they are part of the value —
+ * and every welcome email of the afternoon went to the dev provider. Same treatment
+ * for the sender fields, which Resend would have refused for the same reason.
  */
+function env(name: string): string | undefined {
+  const raw = process.env[name]?.trim();
+  if (!raw) return undefined;
+  const quoted = raw.length >= 2 && (raw[0] === '"' || raw[0] === "'") && raw[raw.length - 1] === raw[0];
+  const value = quoted ? raw.slice(1, -1).trim() : raw;
+  return value || undefined;
+}
+
 function buildTransport(): EmailTransport {
-  const configured = process.env.EMAIL_PROVIDER?.trim();
+  const configured = env("EMAIL_PROVIDER");
   const providerName = configured ? configured.toLowerCase() : "dev";
   switch (providerName) {
     case "resend": {
-      const apiKey = process.env.RESEND_API_KEY;
-      const from = process.env.EMAIL_FROM;
+      const apiKey = env("RESEND_API_KEY");
+      const from = env("EMAIL_FROM");
       if (!apiKey || !from) {
         console.warn("[email] EMAIL_PROVIDER=resend but RESEND_API_KEY/EMAIL_FROM are not set — falling back to dev provider.");
         return createDevTransport();
@@ -37,7 +51,7 @@ function buildTransport(): EmailTransport {
           `[email] EMAIL_FROM is ${from} — Resend's test sender. It can only deliver to the account owner. Verify a domain at resend.com/domains and set EMAIL_FROM to an address on it before customers see this.`
         );
       }
-      return createResendTransport({ apiKey, from, replyTo: process.env.EMAIL_REPLY_TO ?? process.env.CONTACT_EMAIL });
+      return createResendTransport({ apiKey, from, replyTo: env("EMAIL_REPLY_TO") ?? env("CONTACT_EMAIL") });
     }
     case "dev":
       return createDevTransport();
