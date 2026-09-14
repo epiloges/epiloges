@@ -53,7 +53,10 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       "X-Robots-Tag": "noindex",
       "X-Frame-Options": "DENY",
       "X-Content-Type-Options": "nosniff",
-      "Referrer-Policy": "no-referrer",
+      // Origin only — never the path, which carries the payment id. The bank's page is
+      // handed the shopper by a cross-origin POST, and a gateway that validates where the
+      // hand-off came from needs to see the merchant's domain; `no-referrer` sent nothing.
+      "Referrer-Policy": "strict-origin-when-cross-origin",
       // The whole reason this route is excluded from the site-wide policy in
       // next.config.ts: `form-action` has to name the gateway. Everything else is as
       // locked down as the rest of the site, and the auto-submit script is the only
