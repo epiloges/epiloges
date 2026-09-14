@@ -23,7 +23,11 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
     rules: [
       {
         userAgent: "*",
-        allow: "/",
+        // The optimizer lives under /api, which is disallowed below. Without this exception
+        // every product photo on the site is a URL Googlebot may not fetch — no image
+        // search, and a rendered page with blank pictures. Longest match wins, so the
+        // allow beats the disallow. Same for the IndexNow key, which Bing must be able to read.
+        allow: ["/", "/api/img", "/api/indexnow/key"],
         disallow: [
           // Privileged, and nothing here should ever appear in a result.
           "/admin",

@@ -1,6 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
+import { notifyIndexNow } from "@/lib/indexnow";
+import { ROUTES } from "@/constants/routes";
 import { redirect } from "next/navigation";
 import { Prisma } from "@/lib/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -16,8 +19,11 @@ export interface ProductActionState {
 }
 
 /** Revalidating the whole tree is a blunt instrument, but correct: nothing in this phase can compute the precise set of storefront pages (PLPs, collections, related-product cross-links) affected by an arbitrary catalog edit. */
-function revalidateStorefront() {
+function revalidateStorefront(changedSlugs: string[] = []) {
   revalidatePath("/", "layout");
+  // After the response, so the admin is not kept waiting on a search engine: the product
+  // page(s) that changed plus the sitemap, which is what carries the new lastmod.
+  if (changedSlugs.length) after(() => notifyIndexNow([...changedSlugs.map((slug) => ROUTES.product(slug)), "/sitemap.xml"]));
 }
 
 export async function createProduct(values: ProductFormValues): Promise<ProductActionState> {
@@ -47,7 +53,7 @@ export async function createProduct(values: ProductFormValues): Promise<ProductA
     metadata: { sku: data.sku, name: data.name, price: data.price, status: data.status },
   });
 
-  revalidateStorefront();
+  revalidateStorefront([data.slug]);
   // Outside the try: redirect() signals by throwing, and catching that would swallow the
   // navigation and report it as a save failure.
   redirect(`/admin/products/${id}`);
@@ -74,7 +80,7 @@ export async function updateProduct(id: string, values: ProductFormValues): Prom
    */
   const before = await prisma.product.findUnique({
     where: { id },
-    select: { priceAmount: true, salePriceAmount: true, sku: true, name: true, status: true },
+    select: { priceAmount: true, salePriceAmount: true, sku: true, name: true, status: true, slug: true },
   });
 
   try {
@@ -102,7 +108,7 @@ export async function updateProduct(id: string, values: ProductFormValues): Prom
     },
   });
 
-  revalidateStorefront();
+  revalidateStorefront([data.slug, ...(before && before.slug !== data.slug ? [before.slug] : [])]);
   redirect(`/admin/products/${id}`);
 }
 
@@ -129,7 +135,7 @@ export async function deleteProduct(id: string): Promise<void> {
     summary: `Deleted product ${product?.sku ?? id}${product?.name ? ` (${product.name})` : ""}`,
     metadata: { sku: product?.sku, name: product?.name, slug: product?.slug },
   });
-  revalidateStorefront();
+  revalidateStorefront(product?.slug ? [product.slug] : []);
   redirect("/admin/products");
 }
 
