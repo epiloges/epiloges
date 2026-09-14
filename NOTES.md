@@ -241,6 +241,52 @@ the store code, and was fully reverted from a Neon point-in-time branch. 26 prod
 supplier codes in their names (Guess/Valentino bags, U.S. Polo); renaming them is the owner's
 job, by hand, in the admin.
 
+## SEO for the Greek shoe market (2026-09-14)
+
+**The domain is the whole game, and it already exists.** `alexandrisstores.gr` is the
+business's own domain, live for years on WooCommerce, showing "under renewal", with 638
+product URLs still in its sitemap and every backlink and ranking the shop has ever earned.
+Production has been running on `shopalexandris.vercel.app`, a host with no history and no
+country signal. **Launch = point alexandrisstores.gr at Vercel**, set `NEXT_PUBLIC_SITE_URL`
+to it, redeploy. Everything below is wired for that moment: `data/legacy-redirects.json`
+(744 entries, built by `scripts/build-legacy-redirects.mjs` from the old site's public REST
+API — every old product/category/page/tag 301s to its successor; the trailing number on our
+slugs IS the WooCommerce post id) served by `proxy.ts`; `next.config` 308s any
+`*.vercel.app` host to the domain once it is set. Re-run the script if products are
+renamed before the switch. Do NOT let the WordPress host go dark before DNS moves — the
+script reads it.
+
+**Channels that did not exist:** `/feeds/skroutz.xml` (Skroutz spec, BestPrice reads the
+same) and `/feeds/google-merchant.xml` (one item per size under an item_group_id). Both
+pure builders over `lib/feeds/catalogue.ts`, CDN-cached an hour. The owner still has to
+open the Skroutz merchant and Merchant Center accounts and paste the URLs. 0 of 182
+products have an EAN; supplier labels (Mont Martre, Verde, Polo) will be limited in
+Merchant Center until the boxes' barcodes go into `barcode`. 47 products have no brand at
+all — Google requires one; set them in the admin.
+
+**Core Web Vitals:** Vercel's image optimizer is OFF (quota), so `app/api/img` +
+`lib/image-loader.ts` are the optimizer now — sharp, WebP, fixed width ladder
+(`lib/image-sizes.ts`), only the configured hosts, a year at the CDN, redirect to the
+original on failure. Homepage 3.1 MB → 1.1 MB. Listings stream behind a Suspense
+boundary; the fallback is now `ListingSkeleton` (CLS 0.216 → 0). `priority` on
+`next/image` is deprecated in Next 16 and no longer sets fetchpriority — use `preload` +
+`fetchPriority="high"`. Remaining lab LCP is JS-bound (~376 KB of scripts on the
+homepage; framer-motion is the heaviest) — the next performance job, not done.
+
+**Also built:** crawlable pagination (`?page=N` self-canonical, "Load more" is a real
+link, server renders up to 10 pages); `/brands` + `/brands/[slug]` derived from
+`Product.brand` (brand is a listing scope now); ShoeStore / shipping / returns /
+BlogPosting / SearchAction structured data (`COMPANY.store` hours and geo are the owner's
+to fill); a specifications table on the PDP; `/llms.txt`; IndexNow pings from product
+saves when `INDEXNOW_KEY` is set; robots allows `/api/img`. `Playfair Display` has no Greek
+glyphs — every Greek heading renders in a fallback serif; swapping the heading font is a
+design decision left to the owner.
+
+**Owner's list (in the final report):** domain + DNS, Skroutz/BestPrice/Merchant Center/
+Business Profile/Search Console/Bing WMT accounts, EANs and brands in the admin, opening
+hours, hero H1 copy, the Unsplash stock photos still in homepage/navigation/collection
+content, reviews, and the landing pages + articles worth writing.
+
 ## Email audit (2026-09-13/14)
 
 **Why customers were not getting email:** `EMAIL_FROM` is `onboarding@resend.dev`, Resend's
