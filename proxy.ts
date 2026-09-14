@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSession } from "@/lib/auth";
 import { CUSTOMER_SESSION_COOKIE, verifyCustomerSession } from "@/lib/customer-auth";
 import { prisma } from "@/lib/prisma";
+import legacyRedirects from "@/data/legacy-redirects.json";
 
 /**
  * A real HTTP 404, for the same reason the redirects below live here (`SEO-002`).
@@ -139,8 +140,41 @@ async function missingCollection(request: NextRequest): Promise<NextResponse | n
 }
 
 /** Next only supports one proxy/middleware export per project — the admin, customer-account and category-redirect branches all live in this single function. */
+/**
+ * The old WooCommerce shop's URLs (SEO). alexandrisstores.gr has been live for years; its
+ * 638 product URLs, categories and pages are what Google and every backlink know. The day
+ * that domain points here, each of them must 301 to its successor or the authority the
+ * business earned is thrown away on a 404. The map is built by
+ * scripts/build-legacy-redirects.mjs and committed as data/legacy-redirects.json.
+ *
+ * Old paths are Greek, percent-encoded on the wire; the map holds them decoded, so the
+ * incoming path is decoded before lookup. A trailing slash (WordPress always had one) is
+ * ignored. 301 rather than 308: some of these links live in places that resend a POST.
+ */
+const LEGACY_PREFIXES = ["/product/", "/product-category/", "/product-tag/", "/shop", "/my-account", "/blog"];
+
+function legacyRedirect(request: NextRequest): NextResponse | null {
+  let path: string;
+  try {
+    path = decodeURIComponent(request.nextUrl.pathname).replace(/\/$/, "");
+  } catch {
+    return null;
+  }
+  const target = (legacyRedirects as Record<string, string>)[path];
+  if (!target) return null;
+  const url = request.nextUrl.clone();
+  url.pathname = target;
+  url.search = "";
+  return NextResponse.redirect(url, 301);
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  if (LEGACY_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(prefix)) || /%[0-9A-Fa-f]{2}/.test(pathname)) {
+    const redirect = legacyRedirect(request);
+    if (redirect) return redirect;
+  }
 
   if (pathname.startsWith("/category/")) {
     const redirectResponse = await renamedCategoryRedirect(request);
@@ -229,5 +263,20 @@ export async function proxy(request: NextRequest) {
 export const config = {
   // `/collections/:path*` joined this list for SEO-002 — the proxy is now the only place these
   // routes can answer 404 with a status, so it has to see them.
-  matcher: ["/admin/:path*", "/account/:path*", "/category/:path*", "/products/:path*", "/collections/:path*"],
+  matcher: [
+    "/admin/:path*",
+    "/account/:path*",
+    "/category/:path*",
+    "/products/:path*",
+    "/collections/:path*",
+    // The old WooCommerce shop's URL space — see legacyRedirect. Greek page slugs
+    // (/επικοινωνία, /η-εταιρεία, …) arrive percent-encoded, hence the last pattern.
+    "/product/:path*",
+    "/product-category/:path*",
+    "/product-tag/:path*",
+    "/shop",
+    "/my-account/:path*",
+    "/blog/:path*",
+    "/:slug(%[0-9A-Fa-f]{2}.*)",
+  ],
 };
