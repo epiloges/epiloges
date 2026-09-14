@@ -582,7 +582,13 @@
     "eyebrow": "Temporarily closed",
     "title": "We'll be back soon",
     "body": "Our online store is down for maintenance. Please try again shortly — our shop in Heraklion is open as always.",
-    "contact": "Contact"
+    "contact": "Contact",
+    "pinLegend": "Have an access code?",
+    "pinPlaceholder": "4 digits",
+    "pinSubmit": "Enter",
+    "pinWrong": "Wrong code.",
+    "pinTooMany": "Too many attempts — try again in a while.",
+    "pinFailed": "Something went wrong. Try again."
   },
   "ApiErrors": {
     "currentPasswordIncorrect": "Current password is incorrect.",

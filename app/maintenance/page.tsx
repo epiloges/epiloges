@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Clock } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { COMPANY } from "@/constants/company";
+import { MaintenancePinForm } from "@/components/shared/MaintenancePinForm";
 
 /**
  * What a customer sees while the dashboard's maintenance switch is on. Only ever reached by
@@ -10,12 +11,17 @@ import { COMPANY } from "@/constants/company";
  *
  * Deliberately bare: no header, no footer, no navigation. Every link those carry leads to a
  * page that would answer with this one again, and the header's cart and search would call
- * APIs for a shop that is closed. The contact details are the one way out, so they are here.
+ * APIs for a shop that is closed. The contact details are the one way out, so they are here —
+ * along with the PIN form, which is the way *in* for the people invited to test the shop.
  *
  * `noindex` belongs to the page, not the proxy, for the same reason as `not-found.tsx`: the
  * status already tells a crawler to come back later, and the tag makes sure the "back soon"
  * copy itself is never what gets indexed under the shop's name.
  */
+// The locale comes from a cookie (i18n/request.ts), which Cache Components will not prerender
+// around — the same opt-out every other translated storefront page carries.
+export const instant = false;
+
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("Maintenance");
   return { title: `${t("title")} — ${COMPANY.brandName}`, robots: { index: false, follow: false } };
@@ -40,6 +46,16 @@ export default async function MaintenancePage() {
           {COMPANY.email}
         </a>
       </p>
+      <MaintenancePinForm
+        labels={{
+          legend: t("pinLegend"),
+          placeholder: t("pinPlaceholder"),
+          submit: t("pinSubmit"),
+          wrong: t("pinWrong"),
+          tooMany: t("pinTooMany"),
+          failed: t("pinFailed"),
+        }}
+      />
     </main>
   );
 }

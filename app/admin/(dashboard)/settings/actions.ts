@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireCapability } from "@/lib/admin-session";
 import { recordAdminAction } from "@/services/audit-log";
 import { saveSiteSettings } from "@/services/settings";
-import { setMaintenanceMode } from "@/services/maintenance";
+import { setMaintenanceMode, setMaintenancePin } from "@/services/maintenance";
 import { firstIssueMessage, siteSettingsSchema } from "@/lib/validation/site-content";
 import type { SiteSettings } from "@/types";
 
@@ -42,6 +42,22 @@ export async function setMaintenanceModeAction(enabled: boolean): Promise<SiteCo
     targetId: "maintenance",
     summary: enabled ? "Closed the shop for maintenance" : "Reopened the shop",
     metadata: { enabled, changedAt: state.changedAt },
+  });
+  revalidatePath("/admin");
+  return {};
+}
+
+/** The tester PIN on the "back soon" page. Changing it logs out everyone who used the old one. */
+export async function setMaintenancePinAction(pin: string): Promise<SiteContentActionState> {
+  await requireCapability("admin:settings");
+  const cleaned = pin.trim();
+  if (!/^\d{4}$/.test(cleaned)) return { error: "The PIN must be exactly four digits." };
+  await setMaintenancePin(cleaned);
+  await recordAdminAction({
+    action: "settings.maintenance_toggled",
+    targetType: "settings",
+    targetId: "maintenance",
+    summary: "Changed the maintenance-mode tester PIN",
   });
   revalidatePath("/admin");
   return {};

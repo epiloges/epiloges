@@ -12,7 +12,8 @@ import { getEmailHealth } from "@/lib/email";
 import { getMaintenanceMode } from "@/services/maintenance";
 import { currentRoleHasCapability } from "@/lib/admin-session";
 import { MaintenanceModeToggle } from "@/components/admin/MaintenanceModeToggle";
-import { setMaintenanceModeAction } from "@/app/admin/(dashboard)/settings/actions";
+import { MaintenancePinField } from "@/components/admin/MaintenancePinField";
+import { setMaintenanceModeAction, setMaintenancePinAction } from "@/app/admin/(dashboard)/settings/actions";
 import type { Order } from "@/lib/commerce/types";
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
@@ -94,13 +95,18 @@ export default async function AdminDashboardPage() {
           </p>
           <p className="mt-1 text-luxe-gray-dark">
             {maintenance.enabled
-              ? `Customers see a "back soon" page and cannot order. You can still browse the store while signed in here. Closed${
+              ? `Customers see a "back soon" page and cannot order; anyone you give the tester PIN can enter it there and use the shop. You can browse it yourself while signed in here. Closed${
                   maintenance.changedBy ? ` by ${maintenance.changedBy}` : ""
                 }${maintenance.changedAt ? ` on ${formatDate(maintenance.changedAt, "en-GB")}` : ""}.`
               : "Switch on maintenance mode to take the storefront offline; the admin, payments and courier callbacks stay up."}
           </p>
         </div>
-        {canToggleMaintenance ? <MaintenanceModeToggle defaultEnabled={maintenance.enabled} onToggle={setMaintenanceModeAction} /> : null}
+        {canToggleMaintenance ? (
+          <div className="flex flex-col gap-3 sm:items-end">
+            <MaintenanceModeToggle defaultEnabled={maintenance.enabled} onToggle={setMaintenanceModeAction} />
+            {maintenance.enabled ? <MaintenancePinField defaultPin={maintenance.pin} onSave={setMaintenancePinAction} /> : null}
+          </div>
+        ) : null}
       </div>
 
       {/*

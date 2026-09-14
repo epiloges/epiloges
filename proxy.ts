@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSession } from "@/lib/auth";
 import { CUSTOMER_SESSION_COOKIE, verifyCustomerSession } from "@/lib/customer-auth";
 import { prisma } from "@/lib/prisma";
-import { isMaintenanceModeOn } from "@/services/maintenance";
+import { hasValidMaintenancePass, isMaintenanceModeOn, MAINTENANCE_PASS_COOKIE } from "@/services/maintenance";
 import legacyRedirects from "@/data/legacy-redirects.json";
 
 /**
@@ -181,8 +181,10 @@ function legacyRedirect(request: NextRequest): NextResponse | null {
  * the page providers call on load and which has nothing to sell on its own.
  *
  * A signed-in admin passes through, so the shop can be inspected from outside while it is
- * closed. `/maintenance` itself is only reachable while the switch is on; the rest of the time
- * it goes home, so the URL cannot be bookmarked into existence.
+ * closed, and so does anyone holding the cookie the "back soon" page hands out for the right
+ * PIN (`/api/maintenance/unlock`) — how friends get to test the shop before it opens.
+ * `/maintenance` itself is only reachable while the switch is on; the rest of the time it goes
+ * home, so the URL cannot be bookmarked into existence.
  */
 async function maintenanceResponse(request: NextRequest, pathname: string): Promise<NextResponse | null> {
   const isMaintenancePage = pathname === "/maintenance";
@@ -190,9 +192,9 @@ async function maintenanceResponse(request: NextRequest, pathname: string): Prom
   if (!closed) return isMaintenancePage ? NextResponse.redirect(new URL("/", request.url)) : null;
 
   const token = request.cookies.get(ADMIN_SESSION_COOKIE)?.value;
-  if (token && (await verifyAdminSession(token))) {
-    return isMaintenancePage ? NextResponse.redirect(new URL("/", request.url)) : null;
-  }
+  const admitted =
+    (token && (await verifyAdminSession(token))) || (await hasValidMaintenancePass(request.cookies.get(MAINTENANCE_PASS_COOKIE)?.value));
+  if (admitted) return isMaintenancePage ? NextResponse.redirect(new URL("/", request.url)) : null;
 
   const headers = { "Retry-After": "3600", "Cache-Control": "no-store" };
   if (pathname.startsWith("/api/")) {
