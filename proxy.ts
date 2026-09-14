@@ -205,14 +205,16 @@ async function maintenanceResponse(request: NextRequest, pathname: string): Prom
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  if (!pathname.startsWith("/admin")) {
-    const closed = await maintenanceResponse(request, pathname);
-    if (closed) return closed;
-  }
-
+  // Before the maintenance check: a 301 sells nothing, and a crawler retrying the old URLs
+  // while the shop is closed should still learn where they went. The target answers 503.
   if (LEGACY_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(prefix)) || /%[0-9A-Fa-f]{2}/.test(pathname)) {
     const redirect = legacyRedirect(request);
     if (redirect) return redirect;
+  }
+
+  if (!pathname.startsWith("/admin")) {
+    const closed = await maintenanceResponse(request, pathname);
+    if (closed) return closed;
   }
 
   if (pathname.startsWith("/category/")) {
