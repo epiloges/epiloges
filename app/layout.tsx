@@ -4,7 +4,7 @@ import { Inter, Playfair_Display } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import { JsonLd } from "@/components/shared/JsonLd";
-import { organizationSchema, websiteSchema } from "@/lib/seo";
+import { organizationSchema, storeSchema, websiteSchema } from "@/lib/seo";
 import { getSeoDefaultsCached } from "@/services";
 import { ToastProvider } from "@/components/providers/ToastProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
@@ -123,6 +123,7 @@ export default async function RootLayout({
       </head>
       <body className="min-h-full flex flex-col">
         <JsonLd data={organizationSchema(seo)} />
+        <JsonLd data={storeSchema(seo)} />
         <JsonLd data={websiteSchema(seo)} />
         <NextIntlClientProvider messages={messages}>
           {/*

@@ -8,6 +8,7 @@ import { getAllProducts } from "@/services/products";
 import { getSeoDefaults } from "@/services/seo";
 import { getSiteSettings } from "@/services/settings";
 import { getShippingSettings } from "@/services/shipping";
+import { deliveryPolicy } from "@/lib/seo/commerce-policy";
 
 /**
  * The product feeds the Greek market runs on. Skroutz (and BestPrice, same format) is where
@@ -28,13 +29,13 @@ export async function buildSkroutzFeed(): Promise<string> {
 
 export async function buildGoogleMerchantFeed(): Promise<string> {
   const [items, seo, settings, shipping] = await Promise.all([loadFeedItems(), getSeoDefaults(), getSiteSettings(), getShippingSettings()]);
-  // The cheapest domestic rate a shopper can pick is what Google shows as "delivery".
-  const enabled = shipping.rates.filter((rate) => rate.enabled);
-  const cheapest = enabled.length ? Math.min(...enabled.map((rate) => rate.amount)) : 0;
+  // The cheapest courier rate inside Greece is what Google shows as "delivery" — store
+  // pickup is free but is not a delivery, and the international rate is not Greece.
+  const delivery = deliveryPolicy(shipping, COMPANY.address.countryCode);
   return googleMerchantFeedXml(items, {
     siteName: settings.siteName,
     siteUrl: seo.siteUrl,
     ownBrands: [...COMPANY.ownBrands],
-    shipping: { country: COMPANY.address.countryCode, price: cheapest, freeAbove: shipping.freeShippingThreshold, currency: "EUR" },
+    shipping: { country: delivery.country, price: delivery.price, freeAbove: delivery.freeAbove, currency: delivery.currency },
   });
 }

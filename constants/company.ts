@@ -65,6 +65,19 @@ export const COMPANY = {
    * rather than leave blank.
    */
   ownBrands: ["Alexandris Shoes", "ALEXANDRIS"],
+
+  /**
+   * The physical shop, for the ShoeStore structured data (lib/seo.ts) and for local
+   * search: "παπούτσια Ηράκλειο" is answered by the store, not the website.
+   *
+   * OWNER: fill in the opening hours and the map coordinates. Empty means the markup says
+   * nothing about them, which is honest but forfeits the hours shown under the result.
+   * dayOfWeek values are schema.org's English day names; times are 24h "HH:MM".
+   */
+  store: {
+    openingHours: [] as { days: string[]; opens: string; closes: string }[],
+    geo: undefined as { latitude: number; longitude: number } | undefined,
+  },
 } as const;
 
 /** "Arthur Evans 9, 71201 Heraklion, Crete, Greece" — the one-line form for prose and footers. */

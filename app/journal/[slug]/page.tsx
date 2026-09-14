@@ -6,7 +6,11 @@ import { ArrowLeft } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { formatDate } from "@/lib/format";
-import { getPublishedPosts, getNavigation, getPublishedPostBySlug, getSiteSettings } from "@/services";
+import { getPublishedPosts, getNavigation, getPublishedPostBySlug, getSeoDefaults, getSiteSettings } from "@/services";
+import { JsonLd } from "@/components/shared/JsonLd";
+import { blogPostingSchema, buildMetadata } from "@/lib/seo";
+import { getLocale } from "next-intl/server";
+import type { Locale } from "@/i18n/config";
 import { getTranslations } from "next-intl/server";
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
@@ -24,9 +28,11 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: JournalPostPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const post = await getPublishedPostBySlug(slug);
+  const [post, seo, locale] = await Promise.all([getPublishedPostBySlug(slug), getSeoDefaults(), getLocale()]);
   if (!post) return {};
-  return { title: post.title, description: post.excerpt };
+  // Canonical, social card and og:locale like every other page — this one returned a bare
+  // title and description, so a shared post previewed with no image.
+  return buildMetadata({ seo, title: post.title, description: post.excerpt, path: `/journal/${post.slug}`, image: post.coverImage.src, locale: locale as Locale });
 }
 
 export default async function JournalPostPage({ params }: JournalPostPageProps) {
@@ -35,10 +41,11 @@ export default async function JournalPostPage({ params }: JournalPostPageProps) 
   const post = await getPublishedPostBySlug(slug);
   if (!post) notFound();
 
-  const [navigation, settings] = await Promise.all([getNavigation(), getSiteSettings()]);
+  const [navigation, settings, seo] = await Promise.all([getNavigation(), getSiteSettings(), getSeoDefaults()]);
 
   return (
     <>
+      <JsonLd data={blogPostingSchema(post, seo)} />
       <Header navigation={navigation} siteName={settings.siteName} announcementMessages={settings.announcementMessages} />
       <main id="main" className="flex-1 pt-header">
         <div className="container-luxe max-w-3xl py-10 md:py-14">

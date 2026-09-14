@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import type { BreadcrumbItem, FaqItem, Product, SiteSeoDefaults } from "@/types";
+import type { BlogPost, BreadcrumbItem, FaqItem, Product, SiteSeoDefaults } from "@/types";
 import { COMPANY } from "@/constants/company";
+import { deliveryPriceFor, RETURN_WINDOW_DAYS, type DeliveryPolicy } from "@/lib/seo/commerce-policy";
 import { DEFAULT_LOCALE, type Locale } from "@/i18n/config";
 
 interface PageMetadataInput {
@@ -103,10 +104,14 @@ export function buildMetadata({
  * constants/company.ts. For a single-location Greek shop that is what lets search
  * engines associate the site with an actual business rather than a name and a logo.
  */
+export const organizationId = (siteUrl: string) => `${siteUrl.replace(/\/$/, "")}/#organization`;
+export const storeId = (siteUrl: string) => `${siteUrl.replace(/\/$/, "")}/#store`;
+
 export function organizationSchema(seo: SiteSeoDefaults) {
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
+    "@id": organizationId(seo.siteUrl),
     name: seo.organization.name,
     legalName: COMPANY.legalName,
     url: seo.siteUrl,
@@ -129,6 +134,48 @@ export function organizationSchema(seo: SiteSeoDefaults) {
   };
 }
 
+/**
+ * The physical shop in Heraklion, as a `ShoeStore` (a LocalBusiness). This is the entity
+ * behind "παπούτσια Ηράκλειο": the Organization above is the trader, this is the place a
+ * customer can walk into — address, phone, and opening hours once COMPANY.store lists
+ * them. Same address as the Organization on purpose; `branchOf` ties the two together.
+ */
+export function storeSchema(seo: SiteSeoDefaults) {
+  const hours = COMPANY.store.openingHours;
+  return {
+    "@context": "https://schema.org",
+    "@type": "ShoeStore",
+    "@id": storeId(seo.siteUrl),
+    name: seo.organization.name,
+    image: seo.organization.logo,
+    url: seo.siteUrl,
+    telephone: COMPANY.phoneE164,
+    email: COMPANY.email,
+    priceRange: "€€",
+    currenciesAccepted: "EUR",
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: COMPANY.address.street,
+      postalCode: COMPANY.address.postalCode,
+      addressLocality: COMPANY.address.city,
+      addressRegion: COMPANY.address.region,
+      addressCountry: COMPANY.address.countryCode,
+    },
+    ...(COMPANY.store.geo ? { geo: { "@type": "GeoCoordinates", latitude: COMPANY.store.geo.latitude, longitude: COMPANY.store.geo.longitude } } : {}),
+    ...(hours.length > 0
+      ? {
+          openingHoursSpecification: hours.map((entry) => ({
+            "@type": "OpeningHoursSpecification",
+            dayOfWeek: entry.days,
+            opens: entry.opens,
+            closes: entry.closes,
+          })),
+        }
+      : {}),
+    branchOf: { "@id": organizationId(seo.siteUrl) },
+  };
+}
+
 export function websiteSchema(seo: SiteSeoDefaults) {
   return {
     "@context": "https://schema.org",
@@ -139,13 +186,14 @@ export function websiteSchema(seo: SiteSeoDefaults) {
     // set serving Greek content — claiming two languages here while every product name is
     // Greek would be the same misstatement `<html lang="en">` was making.
     inLanguage: DEFAULT_LOCALE,
-    // No `potentialAction`/SearchAction here. It used to advertise
-    // `${siteUrl}/search?q={search_term_string}` to search engines, and there is no
-    // /search route — search exists only as a header overlay with no URL of its own, so
-    // the declared endpoint 404s. Telling Google a sitelinks-searchbox target that does
-    // not resolve is worse than declaring nothing. Restore this the day a real /search
-    // page exists (which would also make results linkable, shareable and bookmarkable —
-    // see the audit's QA-042).
+    publisher: { "@id": organizationId(seo.siteUrl) },
+    // /search is a real page now (QA-042), so the sitelinks search box has a target that
+    // resolves. It was removed while search lived only in a header overlay.
+    potentialAction: {
+      "@type": "SearchAction",
+      target: { "@type": "EntryPoint", urlTemplate: `${seo.siteUrl.replace(/\/$/, "")}/search?q={search_term_string}` },
+      "query-input": "required name=search_term_string",
+    },
   };
 }
 
@@ -178,17 +226,32 @@ export function breadcrumbSchema(items: BreadcrumbItem[], siteUrl: string) {
  * visible stars are rendered from — one query, one number, agreeing by construction. Never
  * from that seeded column, which is still there and still means nothing.
  */
-export function productSchema(product: Product, siteUrl: string, reviews?: { average: number; count: number }) {
+export function productSchema(
+  product: Product,
+  siteUrl: string,
+  reviews?: { average: number; count: number },
+  /** Delivery terms for the offer. Omitted (tests, previews) → no shippingDetails block. */
+  delivery?: DeliveryPolicy
+) {
   const price = product.salePrice ?? product.price;
+  const audience = product.gender === "women" ? "female" : product.gender === "men" ? "male" : "unisex";
   return {
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.name,
     description: product.description,
     sku: product.sku,
-    ...(product.barcode ? { gtin: product.barcode } : {}),
+    // Google wants an identifier: a GTIN when the catalogue has one, else the MPN — the
+    // same rule the Merchant Center feed follows, so the page and the feed agree.
+    ...(product.barcode ? { gtin: product.barcode } : { mpn: product.sku }),
     ...(product.brand ? { brand: { "@type": "Brand", name: product.brand } } : {}),
     image: product.images.map((image) => image.src),
+    // Attributes a shopping result or an AI answer can quote: colour, material, who it is
+    // for, which sizes exist. Each reads from the field the page renders it from.
+    ...(product.colors.length ? { color: product.colors.map((color) => color.name).join(" / ") } : {}),
+    ...(product.materials.length ? { material: product.materials.join(", ") } : {}),
+    audience: { "@type": "PeopleAudience", suggestedGender: audience, ...(product.gender === "kids" ? { suggestedMinAge: 3 } : { suggestedMinAge: 13 }) },
+    ...(product.sizes.length ? { size: product.sizes.map((size) => size.name) } : {}),
     offers: {
       "@type": "Offer",
       url: new URL(`/products/${product.slug}`, siteUrl).toString(),
@@ -201,6 +264,32 @@ export function productSchema(product: Product, siteUrl: string, reviews?: { ave
       availability: product.availableForSale
         ? "https://schema.org/InStock"
         : "https://schema.org/OutOfStock",
+      seller: { "@id": organizationId(siteUrl) },
+      // "Free delivery · Free returns" under the result. Both come from the same settings
+      // the checkout charges and the Terms promise, so they cannot say something the shop
+      // does not do.
+      ...(delivery
+        ? {
+            shippingDetails: {
+              "@type": "OfferShippingDetails",
+              shippingRate: { "@type": "MonetaryAmount", value: deliveryPriceFor(delivery, price.amount), currency: delivery.currency },
+              shippingDestination: { "@type": "DefinedRegion", addressCountry: delivery.country },
+              deliveryTime: {
+                "@type": "ShippingDeliveryTime",
+                handlingTime: { "@type": "QuantitativeValue", minValue: 0, maxValue: 1, unitCode: "DAY" },
+                transitTime: { "@type": "QuantitativeValue", minValue: delivery.transitDays.min, maxValue: delivery.transitDays.max, unitCode: "DAY" },
+              },
+            },
+          }
+        : {}),
+      hasMerchantReturnPolicy: {
+        "@type": "MerchantReturnPolicy",
+        applicableCountry: COMPANY.address.countryCode,
+        returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
+        merchantReturnDays: RETURN_WINDOW_DAYS,
+        returnMethod: "https://schema.org/ReturnByMail",
+        returnFees: "https://schema.org/FreeReturn",
+      },
     },
     ...(reviews && reviews.count > 0
       ? {
@@ -265,5 +354,24 @@ export function faqSchema(items: FaqItem[]) {
         text: item.answer,
       },
     })),
+  };
+}
+
+/** A journal post, so it can carry a byline and a date in results and be understood as an article at all. */
+export function blogPostingSchema(post: BlogPost, seo: SiteSeoDefaults) {
+  const url = new URL(`/journal/${post.slug}`, seo.siteUrl).toString();
+  return {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    mainEntityOfPage: url,
+    headline: post.title,
+    description: post.excerpt,
+    image: [post.coverImage.src],
+    datePublished: post.publishedAt,
+    dateModified: post.publishedAt,
+    inLanguage: DEFAULT_LOCALE,
+    author: { "@type": "Organization", name: post.author || seo.organization.name },
+    publisher: { "@id": organizationId(seo.siteUrl) },
+    ...(post.tags.length ? { keywords: post.tags.join(", ") } : {}),
   };
 }

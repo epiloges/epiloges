@@ -70,14 +70,30 @@ describe("productSchema", () => {
     expect(productSchema(product(), SITE).offers.price).toBe(79.9);
   });
 
-  it("omits brand and gtin entirely rather than emitting empty values", () => {
-    const bare = productSchema(product(), SITE);
+  it("omits brand rather than emitting an empty value, and identifies by MPN until a GTIN exists", () => {
+    const bare = productSchema(product(), SITE) as Record<string, unknown>;
     expect(bare).not.toHaveProperty("brand");
     expect(bare).not.toHaveProperty("gtin");
+    // Google wants SOME identifier; the SKU as MPN is the honest one for a label with no barcode.
+    expect(bare.mpn).toBe(product().sku);
 
-    const full = productSchema(product({ brand: "U.S. Polo Assn.", barcode: "5201234567890" }), SITE);
+    const full = productSchema(product({ brand: "U.S. Polo Assn.", barcode: "5201234567890" }), SITE) as Record<string, unknown>;
     expect(full.brand).toEqual({ "@type": "Brand", name: "U.S. Polo Assn." });
     expect(full.gtin).toBe("5201234567890");
+    expect(full).not.toHaveProperty("mpn");
+  });
+
+  it("states delivery and return terms from the shipping settings, not literals", () => {
+    const delivery = { price: 2.95, currency: "EUR", freeAbove: 150, transitDays: { min: 1, max: 3 }, country: "GR" };
+    const cheap = productSchema(product(), SITE, undefined, delivery).offers;
+    expect(cheap.shippingDetails?.shippingRate.value).toBe(2.95);
+    expect(cheap.shippingDetails?.deliveryTime.transitTime.maxValue).toBe(3);
+    const dear = productSchema(product({ price: { amount: 199, currencyCode: "EUR" } }), SITE, undefined, delivery).offers;
+    expect(dear.shippingDetails?.shippingRate.value).toBe(0);
+    expect(cheap.hasMerchantReturnPolicy.merchantReturnDays).toBe(14);
+    expect(cheap.hasMerchantReturnPolicy.returnFees).toBe("https://schema.org/FreeReturn");
+    // No delivery policy passed → no shipping block, but returns are a constant of the shop.
+    expect(productSchema(product(), SITE).offers).not.toHaveProperty("shippingDetails");
   });
 
   it("reports availability from the purchasability flag", () => {

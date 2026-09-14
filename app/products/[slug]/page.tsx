@@ -28,7 +28,8 @@ import {
   resolveRenamedProductSlug,
 } from "@/services";
 import { ROUTES } from "@/constants/routes";
-import { getShippingRates } from "@/services/shipping";
+import { getShippingRates, getShippingSettings } from "@/services/shipping";
+import { deliveryPolicy } from "@/lib/seo/commerce-policy";
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
@@ -89,7 +90,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     notFound();
   }
 
-  const [navigation, settings, seo, rawRelated, reviews, reviewSummary, locale, category] = await Promise.all([
+  const [navigation, settings, seo, rawRelated, reviews, reviewSummary, locale, category, shippingSettings] = await Promise.all([
     getNavigation(),
     getSiteSettings(),
     getSeoDefaults(),
@@ -98,6 +99,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     getReviewSummary(rawProduct.id),
     getLocale(),
     getCategoryById(rawProduct.categoryId),
+    getShippingSettings(),
   ]);
   const product = localizeProduct(rawProduct, locale as Locale);
   const related = localizeProducts(rawRelated, locale as Locale);
@@ -117,7 +119,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   return (
     <>
-      <JsonLd data={productSchema(product, seo.siteUrl, reviewSummary)} />
+      <JsonLd data={productSchema(product, seo.siteUrl, reviewSummary, deliveryPolicy(shippingSettings))} />
       <JsonLd data={breadcrumbSchema(breadcrumbItems, seo.siteUrl)} />
 
       <Header
