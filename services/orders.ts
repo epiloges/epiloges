@@ -352,6 +352,30 @@ export async function markVouchersListed(trackingNumbers: string[], pickupListNo
   return count;
 }
 
+/**
+ * The day is closed and the driver has the parcels: every order whose voucher went onto
+ * the pickup list is shipped, in the shop's own words — "when he comes and picks them up,
+ * I change the orders to shipped". Done here so the shipping email, with the tracking
+ * link, goes out for each one without a second round of clicks. Only orders still before
+ * "shipped" move; one cancelled meanwhile stays cancelled.
+ */
+export async function markListedOrdersShipped(pickupListNo: string): Promise<string[]> {
+  const rows = await prisma.order.findMany({
+    where: { pickupListNo, status: { in: ["confirmed", "processing"] } },
+    select: { id: true },
+  });
+  const shipped: string[] = [];
+  for (const row of rows) {
+    try {
+      await updateOrderStatus(row.id, "shipped");
+      shipped.push(row.id);
+    } catch (error) {
+      logger.error("Could not mark a listed order shipped", error, { orderId: row.id, pickupListNo });
+    }
+  }
+  return shipped;
+}
+
 /** Every order placed under an email address, newest first — the customer detail page history. */
 export async function getOrdersForEmail(email: string): Promise<Order[]> {
   const rows = await prisma.order.findMany({

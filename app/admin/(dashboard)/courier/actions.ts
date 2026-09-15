@@ -3,7 +3,7 @@
 import { requireCapability } from "@/lib/admin-session";
 import { recordAdminAction } from "@/services/audit-log";
 import { getCourierProvider, type PickupListResult } from "@/lib/courier";
-import { markVouchersListed } from "@/services/orders";
+import { markListedOrdersShipped, markVouchersListed } from "@/services/orders";
 import { revalidatePath } from "next/cache";
 
 export interface IssuePickupListState {
@@ -30,14 +30,16 @@ export async function issuePickupListAction(date: string): Promise<IssuePickupLi
         const closed = await provider.listPickupListVouchers(result.pickupListNo, date);
         await markVouchersListed(closed, result.pickupListNo);
       }
+      // The driver has them: shipped, and the customers are told, with the tracking link.
+      const shipped = await markListedOrdersShipped(result.pickupListNo);
       revalidatePath("/admin/courier");
       revalidatePath("/admin/orders", "layout");
       await recordAdminAction({
         action: "courier.pickup_list_issued",
         targetType: "pickupList",
         targetId: result.pickupListNo,
-        summary: `Issued ACS pickup list ${result.pickupListNo} for ${date}`,
-        metadata: { date, pickupListNo: result.pickupListNo },
+        summary: `Issued ACS pickup list ${result.pickupListNo} for ${date}${shipped.length ? ` — ${shipped.length} order${shipped.length === 1 ? "" : "s"} marked shipped` : ""}`,
+        metadata: { date, pickupListNo: result.pickupListNo, shippedOrderIds: shipped },
       });
     }
     return { result };
