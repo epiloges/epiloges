@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { formatMoney } from "@/lib/format";
-import { getEffectivePrice, getProductMargin } from "@/lib/product";
+import { getEffectivePrice } from "@/lib/product";
 import { ListFilterBar } from "@/components/admin/ListFilterBar";
 import { Pagination } from "@/components/admin/Pagination";
 import { bulkUpdateProducts, type BulkProductAction, type BulkProductScope } from "@/app/admin/(dashboard)/products/actions";
@@ -229,7 +229,6 @@ export function ProductsTable({ products, total, page, pageCount, filter, catego
               { value: "name", label: "Name A–Z" },
               { value: "price-asc", label: "Price low–high" },
               { value: "price-desc", label: "Price high–low" },
-              { value: "margin", label: "Margin high–low" },
             ],
           },
         ]}
@@ -288,7 +287,7 @@ export function ProductsTable({ products, total, page, pageCount, filter, catego
               <th className="p-3 text-left font-medium">Product</th>
               <th className="p-3 text-left font-medium">Category</th>
               <th className="p-3 text-left font-medium">Price</th>
-              <th className="p-3 text-left font-medium">Margin</th>
+              <th className="p-3 text-left font-medium">Published</th>
               <th className="p-3 text-left font-medium">Status</th>
               <th className="w-24 p-3" />
             </tr>
@@ -496,7 +495,6 @@ function ProductRow({
   onToggle: () => void;
 }) {
   const [isPending, startTransition] = useTransition();
-  const margin = getProductMargin(product);
 
   return (
     <tr className="border-b border-border last:border-b-0">
@@ -528,15 +526,11 @@ function ProductRow({
       <td className="p-3">
         <InlinePriceCell product={product} />
       </td>
+      {/* The shelf date, in place of the margin column the owner never used: "newest" on
+          the storefront is this date, so this column IS the order of the new-arrivals rows,
+          and the list sorted Newest reads top to bottom as the shop does. */}
       <td className="p-3">
-        {margin ? (
-          <span className={margin.marginPercent < 0 ? "text-destructive" : undefined}>
-            {margin.marginPercent.toFixed(0)}%
-            <span className="ml-1 text-xs text-luxe-gray-dark">{formatMoney({ amount: margin.profit, currencyCode: product.price.currencyCode })}</span>
-          </span>
-        ) : (
-          <span className="text-xs text-luxe-gray-dark">No cost set</span>
-        )}
+        <InlinePublishedCell product={product} />
       </td>
       <td className="p-3">
         <InlineStatusCell product={product} />
@@ -665,6 +659,112 @@ function InlinePriceCell({ product }: { product: Product }) {
       {error ? <span className="text-xs text-destructive">{error}</span> : null}
     </div>
   );
+}
+
+/**
+ * The shelf date, edited from the list. "Now" is one click and saves at once — the case
+ * this exists for is a style that came back and should lead the arrivals today. The picker
+ * is for placing something deliberately behind or ahead of the rest.
+ */
+function InlinePublishedCell({ product }: { product: Product }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  const current = product.publishedAt ? new Date(product.publishedAt) : null;
+
+  function commit(iso: string) {
+    startTransition(async () => {
+      const result = await updateProductInline(product.id, { publishedAt: iso });
+      if (result?.error) {
+        setError(result.error);
+        return;
+      }
+      setError(null);
+      setEditing(false);
+    });
+  }
+
+  function open() {
+    setDraft(current ? toLocalInput(current) : "");
+    setError(null);
+    setEditing(true);
+  }
+
+  if (!editing) {
+    return (
+      <div className="flex flex-col gap-1">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={open}
+            title="Edit the shelf date"
+            className="text-left text-sm underline decoration-dotted underline-offset-4 hover:decoration-solid"
+          >
+            {current ? formatShelfDate(current) : "—"}
+          </button>
+          <button
+            type="button"
+            onClick={() => commit(new Date().toISOString())}
+            disabled={isPending}
+            title="Put it on the shelf now — it leads the new arrivals"
+            className="border border-border px-1.5 py-0.5 text-[10px] tracking-[0.1em] uppercase transition-colors hover:border-luxe-black disabled:opacity-50"
+          >
+            {isPending ? "…" : "Now"}
+          </button>
+        </div>
+        {error ? <span className="text-xs text-destructive">{error}</span> : null}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-1">
+      <div
+        className="flex items-center gap-1"
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            if (draft) commit(new Date(draft).toISOString());
+          } else if (e.key === "Escape") {
+            setEditing(false);
+          }
+        }}
+      >
+        <input
+          type="datetime-local"
+          autoFocus
+          aria-label="Published date and time"
+          className="h-8 border border-border px-1.5 text-sm"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+        />
+        <button
+          type="button"
+          onClick={() => draft && commit(new Date(draft).toISOString())}
+          disabled={isPending || !draft}
+          className="text-xs font-medium uppercase disabled:opacity-50"
+        >
+          {isPending ? "…" : "Save"}
+        </button>
+        <button type="button" onClick={() => setEditing(false)} disabled={isPending} className="text-xs text-luxe-gray-dark uppercase">
+          Esc
+        </button>
+      </div>
+      {error ? <span className="text-xs text-destructive">{error}</span> : null}
+    </div>
+  );
+}
+
+/** `YYYY-MM-DDTHH:mm` in the browser's zone — the only format `datetime-local` accepts. */
+function toLocalInput(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function formatShelfDate(date: Date): string {
+  return date.toLocaleString("el-GR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
 /** Publication state, changed from the list. Saves on selection — there is nothing to confirm. */

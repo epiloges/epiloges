@@ -36,6 +36,9 @@ const inlineEditSchema = z
     // instructions and the caller has to be able to express both.
     salePrice: z.number().positive("Sale price must be greater than 0.").nullable().optional(),
     status: productStatusSchema.optional(),
+    // The shelf date — ISO with offset, converted in the browser. Editing it from the list is
+    // the whole point: a returning style is bumped to "now" without opening the form.
+    publishedAt: z.string().datetime({ offset: true }).optional(),
   })
   .refine((value) => Object.keys(value).length > 0, { message: "Nothing to change." });
 
@@ -58,7 +61,7 @@ export async function updateProductInline(id: string, edit: InlineProductEdit): 
 
   const current = await prisma.product.findUnique({
     where: { id },
-    select: { priceAmount: true, salePriceAmount: true, status: true },
+    select: { priceAmount: true, salePriceAmount: true, status: true, publishedAt: true },
   });
   if (!current) return { error: "That product no longer exists." };
 
@@ -89,6 +92,7 @@ export async function updateProductInline(id: string, edit: InlineProductEdit): 
             isSale: parsed.data.salePrice !== null,
           }
         : {}),
+      ...(parsed.data.publishedAt !== undefined ? { publishedAt: new Date(parsed.data.publishedAt) } : {}),
       ...(parsed.data.status !== undefined
         ? {
             status: parsed.data.status,
@@ -118,6 +122,9 @@ export async function updateProductInline(id: string, edit: InlineProductEdit): 
   }
   if (parsed.data.status !== undefined && parsed.data.status !== current.status) {
     changes.push(`status ${current.status} → ${parsed.data.status}`);
+  }
+  if (parsed.data.publishedAt !== undefined && new Date(parsed.data.publishedAt).getTime() !== current.publishedAt.getTime()) {
+    changes.push(`published ${current.publishedAt.toISOString()} → ${parsed.data.publishedAt}`);
   }
   if (changes.length > 0) {
     await recordAdminAction({
