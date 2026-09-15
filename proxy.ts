@@ -207,6 +207,19 @@ async function maintenanceResponse(request: NextRequest, pathname: string): Prom
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // The old WooCommerce gateway endpoint. The bank's POS still carries it as the "back
+  // link" for a shopper who presses Cancel on the card form — the result URL was moved to
+  // /api/payments/webhooks/piraeus, the back link was not — and appends our ParamBackLink
+  // (`order=…`) as the query. Rewritten rather than redirected so a POST would arrive
+  // intact too, and before the maintenance check, because a payment callback is never a
+  // page. Stays after the bank updates its record: a shopper mid-payment during the
+  // switch-over still lands somewhere sensible.
+  if (pathname.replace(/\/$/, "") === "/wc-api/WC_Piraeusbank_Gateway") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/api/payments/webhooks/piraeus";
+    return NextResponse.rewrite(url);
+  }
+
   // Before the maintenance check: a 301 sells nothing, and a crawler retrying the old URLs
   // while the shop is closed should still learn where they went. The target answers 503.
   if (LEGACY_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(prefix)) || /%[0-9A-Fa-f]{2}/.test(pathname)) {
