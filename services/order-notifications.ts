@@ -3,8 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
 import { toOrder } from "@/lib/commerce/postgres/mappers";
 import {
-  adminNotificationEmail,
   getEmailProvider,
+  newOrderAdminEmail,
+  type NewOrderPaymentState,
   orderConfirmationEmail,
   paymentFailedEmail,
   paymentReceivedEmail,
@@ -14,7 +15,6 @@ import { signOrderLinkToken } from "@/lib/order-access";
 import { getSiteUrl } from "@/lib/site-url";
 import { paymentProviderRegistry } from "@/lib/payments/registry";
 import { getSiteSettings } from "@/services/settings";
-import { formatMoney, orderReference } from "@/lib/format";
 import type { Order } from "@/lib/commerce/types";
 import type { PaymentRecord } from "@/lib/payments/types";
 
@@ -34,6 +34,16 @@ export async function orderLink(orderId: string): Promise<string> {
 function methodName(payment: PaymentRecord | null): string | undefined {
   if (!payment) return undefined;
   return paymentProviderRegistry.getMethod(payment.methodId)?.defaultDisplayName ?? payment.methodId;
+}
+
+/** What the shop needs to know about the money before it touches the box. */
+function paymentState(payment: PaymentRecord | null): NewOrderPaymentState {
+  const name = methodName(payment) ?? "Χωρίς τρόπο πληρωμής";
+  if (!payment) return { kind: "other", methodName: name, status: "—" };
+  if (payment.status === "paid") return { kind: "paid", methodName: name };
+  if (payment.methodId === "cash-on-delivery") return { kind: "cash-on-delivery" };
+  if (payment.methodId === "bank-transfer" || payment.status === "awaiting_bank_transfer") return { kind: "awaiting-transfer", methodName: name };
+  return { kind: "other", methodName: name, status: payment.status };
 }
 
 /**
@@ -101,19 +111,18 @@ export async function notifyAdminOfNewOrder(order: Order, payment: PaymentRecord
     const settings = await getSiteSettings();
     const to = process.env.ADMIN_NOTIFY_EMAIL || process.env.CONTACT_EMAIL || settings.contactEmail;
     if (!to) return;
-    const units = order.lineItems.reduce((sum, item) => sum + item.quantity, 0);
-    const address = order.shippingAddress;
-    const message = adminNotificationEmail({
-      siteName: settings.siteName,
-      title: `Νέα παραγγελία #${orderReference(order.id)} — ${formatMoney(order.totals.total)}`,
-      summary: `${units} τεμ. για ${address.firstName} ${address.lastName}, ${address.city}. ${methodName(payment) ?? "Χωρίς τρόπο πληρωμής"}${payment ? ` (${payment.status})` : ""}.`,
-      rows: [
-        { label: "Πελάτης", value: `${address.firstName} ${address.lastName}\n${order.customerEmail}${address.phone ? `\n${address.phone}` : ""}` },
-        { label: "Παράδοση", value: `${order.shippingRate.label}\n${address.address1}, ${address.postalCode} ${address.city}` },
-        { label: "Προϊόντα", value: order.lineItems.map((item) => `${item.name} · ${item.size} · ×${item.quantity}`).join("\n") },
-        ...(order.customerNote ? [{ label: "Σημείωση", value: order.customerNote }] : []),
-        ...(order.giftWrap ? [{ label: "Δώρο", value: order.giftMessage ? `Ναι — "${order.giftMessage}"` : "Ναι" }] : []),
-      ],
+    const message = newOrderAdminEmail({
+      orderId: order.id,
+      placedAt: order.createdAt,
+      lineItems: order.lineItems,
+      totals: order.totals,
+      shippingAddress: order.shippingAddress,
+      shippingRate: order.shippingRate,
+      customerEmail: order.customerEmail,
+      customerNote: order.customerNote,
+      giftWrap: order.giftWrap,
+      giftMessage: order.giftMessage,
+      payment: paymentState(payment),
       adminUrl: `${getSiteUrl().replace(/\/$/, "")}/admin/orders/${order.id}`,
     });
     await getEmailProvider().send({ to, template: "admin-notification", idempotencyKey: `admin-new-order:${order.id}`, ...message });

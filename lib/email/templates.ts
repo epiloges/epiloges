@@ -865,6 +865,111 @@ export function newsletterWelcomeEmail(input: { siteName: string; shopUrl: strin
 // Internal
 // ---------------------------------------------------------------------------
 
+/** How the shop is getting its money for this order — decides the banner and the subject. */
+export type NewOrderPaymentState =
+  | { kind: "paid"; methodName: string }
+  | { kind: "cash-on-delivery" }
+  | { kind: "awaiting-transfer"; methodName: string }
+  | { kind: "other"; methodName: string; status: string };
+
+/**
+ * The shop's own copy of a new order — the one email read on a phone between customers,
+ * so it answers the three questions in order: has it been paid, what goes in the box, where
+ * does it go. The payment state is a coloured banner rather than a word in a sentence:
+ * a paid card order and a cash-on-delivery order are handled differently at the counter,
+ * and the difference must be visible before the email is even opened — hence the subject.
+ * Pictures of the items, because the owner picks by eye, not by name.
+ */
+export function newOrderAdminEmail(input: {
+  orderId: string;
+  placedAt: string;
+  lineItems: CartLineItem[];
+  totals: CartTotals;
+  shippingAddress: Address;
+  shippingRate: ShippingRate;
+  customerEmail: string;
+  customerNote?: string;
+  giftWrap?: boolean;
+  giftMessage?: string;
+  payment: NewOrderPaymentState;
+  adminUrl: string;
+}): RenderedEmail {
+  const { orderId, placedAt, lineItems, totals, shippingAddress, shippingRate, customerEmail, customerNote, giftWrap, giftMessage, payment, adminUrl } = input;
+  const ref = orderId.slice(-8).toUpperCase();
+  const total = formatMoney(totals.total);
+  const units = lineItems.reduce((sum, item) => sum + item.quantity, 0);
+  const when = new Intl.DateTimeFormat("el-GR", { timeZone: "Europe/Athens", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(placedAt));
+
+  const banner = ((): { bg: string; fg: string; title: string; detail: string; short: string } => {
+    switch (payment.kind) {
+      case "paid":
+        return { bg: "#1F7A3F", fg: "#FFFFFF", title: `ΠΛΗΡΩΜΕΝΗ · ${total}`, detail: `Μέσω ${payment.methodName}. Ετοιμάστε την για αποστολή.`, short: `ΠΛΗΡΩΜΕΝΗ (${payment.methodName})` };
+      case "cash-on-delivery":
+        return { bg: "#B45309", fg: "#FFFFFF", title: `ΑΝΤΙΚΑΤΑΒΟΛΗ · ${total}`, detail: "Εισπράττεται από τον courier στην παράδοση.", short: "ΑΝΤΙΚΑΤΑΒΟΛΗ" };
+      case "awaiting-transfer":
+        return { bg: "#6B7280", fg: "#FFFFFF", title: `ΑΝΑΜΟΝΗ ΚΑΤΑΘΕΣΗΣ · ${total}`, detail: `${payment.methodName}. Μην την αποστείλετε πριν φανεί η κατάθεση.`, short: "ΑΝΑΜΟΝΗ ΚΑΤΑΘΕΣΗΣ" };
+      default:
+        return { bg: "#6B7280", fg: "#FFFFFF", title: `${payment.methodName.toUpperCase()} · ${total}`, detail: `Κατάσταση πληρωμής: ${payment.status}.`, short: payment.methodName.toUpperCase() };
+    }
+  })();
+
+  const subject = `⚡ ΝΕΑ ΠΑΡΑΓΓΕΛΙΑ #${ref} · ${total} · ${banner.short}`;
+  const phone = shippingAddress.phone?.trim();
+  const contactHtml = `<p style="font-size:13px;color:${INK};line-height:1.7;margin:0;">
+      <strong>${escapeHtml(shippingAddress.firstName)} ${escapeHtml(shippingAddress.lastName)}</strong><br/>
+      ${phone ? `<a href="tel:${escapeHtml(phone.replace(/\s+/g, ""))}" style="color:${INK};text-decoration:none;">${escapeHtml(phone)}</a><br/>` : ""}
+      <a href="mailto:${escapeHtml(customerEmail)}" style="color:${INK};text-decoration:none;">${escapeHtml(customerEmail)}</a>
+    </p>`;
+
+  const html = layout(
+    "Alexandris Stores",
+    `${banner.short} · ${units} τεμ. για ${shippingAddress.firstName} ${shippingAddress.lastName}, ${shippingAddress.city}`,
+    `
+    ${eyebrow(`Νέα παραγγελία · ${escapeHtml(when)}`)}
+    ${heading(`#${ref} — ${total}`)}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 28px;">
+      <tr><td style="background-color:${banner.bg};padding:18px 20px;">
+        <p style="margin:0 0 4px;color:${banner.fg};font-size:15px;font-weight:600;letter-spacing:1.5px;">${escapeHtml(banner.title)}</p>
+        <p style="margin:0;color:${banner.fg};font-size:13px;opacity:0.92;">${escapeHtml(banner.detail)}</p>
+      </td></tr>
+    </table>
+    ${sectionLabel(`Προϊόντα · ${units} τεμ.`)}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${lineItemsHtml(lineItems)}</table>
+    ${totalsHtml(totals)}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:36px;">
+      <tr>
+        <td style="width:50%;vertical-align:top;padding-right:12px;">
+          ${sectionLabel("Πελάτης")}
+          ${contactHtml}
+        </td>
+        <td style="width:50%;vertical-align:top;">
+          ${sectionLabel("Αποστολή")}
+          <p style="font-size:13px;color:${INK};white-space:pre-line;line-height:1.7;margin:0;">${escapeHtml(addressLines(shippingAddress))}</p>
+          <p style="font-size:12px;color:${BODY};margin:8px 0 0;">${escapeHtml(shippingRate.label)}</p>
+        </td>
+      </tr>
+    </table>
+    ${customerNote ? `<div style="margin-top:28px;">${sectionLabel("Σημείωση πελάτη")}<p style="font-size:13px;color:${INK};white-space:pre-line;margin:0;border-left:3px solid ${HAIRLINE};padding-left:12px;">${escapeHtml(customerNote)}</p></div>` : ""}
+    ${giftWrap ? `<div style="margin-top:28px;">${sectionLabel("Συσκευασία δώρου")}<p style="font-size:13px;color:${INK};margin:0;">Ναι${giftMessage ? ` — <em>"${escapeHtml(giftMessage)}"</em>` : ""}</p></div>` : ""}
+    <div style="margin-top:36px;">${ctaButton("Άνοιγμα παραγγελίας", adminUrl)}</div>`
+  );
+
+  const text = [
+    `ΝΕΑ ΠΑΡΑΓΓΕΛΙΑ #${ref} — ${total} — ${when}`,
+    `${banner.title}\n${banner.detail}`,
+    `Προϊόντα (${units} τεμ.):\n${lineItems.map((i) => `- ${i.name} · ${i.color} · ${i.size} · ×${i.quantity} — ${formatMoney({ amount: i.unitPrice.amount * i.quantity, currencyCode: i.unitPrice.currencyCode })}`).join("\n")}`,
+    `Σύνολο: ${total}`,
+    `Πελάτης: ${shippingAddress.firstName} ${shippingAddress.lastName}${phone ? ` · ${phone}` : ""} · ${customerEmail}`,
+    `Αποστολή (${shippingRate.label}):\n${addressLines(shippingAddress)}`,
+    customerNote ? `Σημείωση πελάτη: ${customerNote}` : "",
+    giftWrap ? `Συσκευασία δώρου: Ναι${giftMessage ? ` — "${giftMessage}"` : ""}` : "",
+    adminUrl,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+  return { subject, html, text };
+}
+
 /**
  * To the shop, not a customer: a new order, a return request, a stylist request. Plain
  * and dense on purpose — this is read on a phone between customers — with a link straight
