@@ -29,7 +29,7 @@ const ADDRESS = {
   city: "Heraklion",
   postalCode: "71201",
   countryCode: "GR",
-  phone: "2814001031",
+  phone: "2897033730",
 };
 
 /** Everything this file created, torn down in reverse order of creation. */

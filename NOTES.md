@@ -247,7 +247,7 @@ job, by hand, in the admin.
 TLS issued), `NEXT_PUBLIC_SITE_URL` is set and now *owns* the SEO site URL (`services/seo.ts`;
 the /admin/seo field is read-only). The `shopalexandris.vercel.app` alias no longer reaches the
 project (404) — the redirect rule in next.config only fires if the hostname is re-added under
-Vercel → Domains. The domain has no MX; the shop's mailbox is alexandrisstores@gmail.com.
+Vercel → Domains. The domain has no MX; the shop's mailbox is epilogesfashion@gmail.com.
 
 **Maintenance mode is ON** (`f327c3a`, `06adf48`): the dashboard switch rewrites every storefront
 page to `/maintenance` with a 503 + Retry-After and refuses `/api/checkout`; legacy 301s still
@@ -258,7 +258,7 @@ homepage monitors are paused until launch (Sentry 2192093, UptimeRobot 803921152
 `/api/health` monitors are green. Never accept Vercel's "Attack Challenge Mode" suggestion: it
 403s the health checks, the feeds and the bank's callback.
 
-**Email works.** The shop has its own Resend account (alexandrisstores@gmail.com), domain
+**Email works.** The shop has its own Resend account (epilogesfashion@gmail.com), domain
 verified, first real delivery from `orders@alexandrisstores.gr` at 15:09 UTC. Two gotchas
 found on the way, both now handled in code: Vercel env values pasted with quotes
 (`EMAIL_PROVIDER="resend"` → dev provider; `8461bb0` strips them) and a Resend key scoped to

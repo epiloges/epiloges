@@ -7,6 +7,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ContactForm } from "@/components/shared/ContactForm";
 import { getNavigation, getSiteSettings } from "@/services";
+import { COMPANY } from "@/constants/company";
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
@@ -38,6 +39,22 @@ export default async function ContactPage() {
             </a>
             .
           </p>
+
+          <div className="mt-10 grid grid-cols-1 gap-6 border-y border-border py-8 sm:grid-cols-2">
+            {COMPANY.stores.map((store) => (
+              <div key={store.name}>
+                <p className="text-xs font-medium tracking-[0.15em] uppercase text-luxe-black">{store.name}</p>
+                <p className="mt-2 text-sm text-luxe-gray-dark">
+                  {store.street}
+                  <br />
+                  {store.postalCode} {store.city}
+                </p>
+                <a href={`tel:${COMPANY.phoneE164}`} className="mt-2 inline-block text-sm underline underline-offset-4">
+                  {COMPANY.phone}
+                </a>
+              </div>
+            ))}
+          </div>
 
           <div className="mt-10">
             <ContactForm />

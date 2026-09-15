@@ -63,26 +63,31 @@ export default async function AboutPage() {
           <p className="mx-auto max-w-3xl text-center font-heading text-2xl leading-snug text-luxe-black md:text-3xl">{about.intro}</p>
         </section>
 
-        {/* Chapters: photograph and prose side by side, alternating sides. */}
-        {about.chapters.map((chapter, index) => (
+        {/* Chapters: photograph and prose side by side, alternating sides. Optional — this
+            content model (chapters/statement) is newer than data/about.json's current
+            shape, so a fixture without them just skips straight to the sections below
+            instead of crashing on an undefined .map(). */}
+        {about.chapters?.map((chapter, index) => (
           <Chapter key={chapter.heading} chapter={chapter} reverse={index % 2 === 1} />
         ))}
 
         {/* The statement band between the chapters' halves would split the story; it goes
             after them, as the summary of what the two chapters just told. */}
-        <section className="bg-luxe-black py-16 text-luxe-white md:py-24">
-          <div className="container-luxe">
-            <p className="mx-auto max-w-4xl text-center font-heading text-3xl leading-tight md:text-5xl">{about.statement.line}</p>
-            <dl className="mx-auto mt-14 grid max-w-4xl grid-cols-2 gap-x-6 gap-y-10 text-center md:grid-cols-4">
-              {about.statement.facts.map((fact) => (
-                <div key={fact.label}>
-                  <dt className="order-2 mt-2 text-[11px] tracking-[0.25em] uppercase text-luxe-white/60">{fact.label}</dt>
-                  <dd className="font-heading text-4xl md:text-5xl">{fact.value}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-        </section>
+        {about.statement ? (
+          <section className="bg-luxe-black py-16 text-luxe-white md:py-24">
+            <div className="container-luxe">
+              <p className="mx-auto max-w-4xl text-center font-heading text-3xl leading-tight md:text-5xl">{about.statement.line}</p>
+              <dl className="mx-auto mt-14 grid max-w-4xl grid-cols-2 gap-x-6 gap-y-10 text-center md:grid-cols-4">
+                {about.statement.facts.map((fact) => (
+                  <div key={fact.label}>
+                    <dt className="order-2 mt-2 text-[11px] tracking-[0.25em] uppercase text-luxe-white/60">{fact.label}</dt>
+                    <dd className="font-heading text-4xl md:text-5xl">{fact.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          </section>
+        ) : null}
 
         {/* One more photograph before the prose — the shelf, the same frame as the hero. */}
         {about.interlude ? (
@@ -114,30 +119,33 @@ export default async function AboutPage() {
           </div>
         </section>
 
-        {/* Closing: the line, the signature under the wordmark, two ways onward. */}
-        <section className="border-t border-border">
-          <div className="container-luxe py-20 text-center md:py-28">
-            <p className="mx-auto max-w-3xl font-heading text-2xl leading-snug md:text-4xl">{about.closing.quote}</p>
-            <p className="mt-10 font-heading text-lg tracking-[0.35em] uppercase">Alexandris</p>
-            <p className="mt-2 text-sm text-luxe-gray-dark">{about.closing.signature}</p>
-            <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-              <Link
-                href={about.closing.cta.href}
-                className="inline-flex h-12 items-center bg-luxe-black px-8 text-xs font-medium tracking-[0.15em] text-luxe-white uppercase transition-opacity hover:opacity-90"
-              >
-                {about.closing.cta.label}
-              </Link>
-              {about.closing.secondary ? (
+        {/* Closing: the line, the signature under the wordmark, two ways onward. Optional,
+            same reasoning as chapters/statement above. */}
+        {about.closing ? (
+          <section className="border-t border-border">
+            <div className="container-luxe py-20 text-center md:py-28">
+              <p className="mx-auto max-w-3xl font-heading text-2xl leading-snug md:text-4xl">{about.closing.quote}</p>
+              <p className="mt-10 font-heading text-lg tracking-[0.35em] uppercase">{settings.siteName}</p>
+              <p className="mt-2 text-sm text-luxe-gray-dark">{about.closing.signature}</p>
+              <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
                 <Link
-                  href={about.closing.secondary.href}
-                  className="inline-flex h-12 items-center border border-luxe-black px-8 text-xs font-medium tracking-[0.15em] uppercase transition-colors hover:bg-luxe-black hover:text-luxe-white"
+                  href={about.closing.cta.href}
+                  className="inline-flex h-12 items-center bg-luxe-black px-8 text-xs font-medium tracking-[0.15em] text-luxe-white uppercase transition-opacity hover:opacity-90"
                 >
-                  {about.closing.secondary.label}
+                  {about.closing.cta.label}
                 </Link>
-              ) : null}
+                {about.closing.secondary ? (
+                  <Link
+                    href={about.closing.secondary.href}
+                    className="inline-flex h-12 items-center border border-luxe-black px-8 text-xs font-medium tracking-[0.15em] uppercase transition-colors hover:bg-luxe-black hover:text-luxe-white"
+                  >
+                    {about.closing.secondary.label}
+                  </Link>
+                ) : null}
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        ) : null}
       </main>
       <Footer navigation={navigation} settings={settings} />
     </>

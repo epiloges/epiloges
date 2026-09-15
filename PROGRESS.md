@@ -384,7 +384,7 @@ production, and a completed order decrements stock that deleting the order does 
 
 ### Also confirmed, and still outstanding
 
-The live database has **exactly one `AdminUser`**, `alexandrisstores@gmail.com`, and its password is
+The live database has **exactly one `AdminUser`**, `epilogesfashion@gmail.com`, and its password is
 **not** the seeded `admin123` — the demo account is gone from production. One account is still one
 lost password from lockout, so a second admin remains worth creating. Separately, `README.md` still
 advertises `admin@alexandris-demo.example` / `admin123` as the demo login in a **public** GitHub
@@ -495,7 +495,7 @@ compromised has to actually end the sessions using it.
 
 Trader identity now lives in `constants/company.ts` and feeds the footer, contact page, all three
 legal documents and the Organization JSON-LD — **Alexandris Michail, Arthur Evans 9, 71201
-Heraklion, Crete, ΑΦΜ 146214557, alexandrisstores@gmail.com, 2814 001 031**. `legalName` and
+Heraklion, Crete, ΑΦΜ 146214557, epilogesfashion@gmail.com, 2897 033730**. `legalName` and
 `brandName` are separate fields on purpose: legal documents must name the registered trader.
 The contact address was replaced in `data/settings.json` AND in the live `SiteContent` row — the
 JSON is only the fallback, which is exactly why the `.example` placeholder survived so long.
@@ -1211,7 +1211,7 @@ last audit and were cleared with a lockfile-only `npm audit fix` — back to 0. 
 
 ## Test-data discipline
 
-Every live-DB verification this session was set up, proven, then **restored and re-verified**: a nested category with a moved product, two products flipped to draft/archived, newsletter signups, and a throwaway admin account (created and deleted — the real `alexandrisstores@gmail.com` admin was never touched, and its password was never reset or read).
+Every live-DB verification this session was set up, proven, then **restored and re-verified**: a nested category with a moved product, two products flipped to draft/archived, newsletter signups, and a throwaway admin account (created and deleted — the real `epilogesfashion@gmail.com` admin was never touched, and its password was never reset or read).
 
 ## Batch 9 — Category slug redirects + media loose ends
 

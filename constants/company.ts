@@ -21,13 +21,14 @@ import { DEFAULT_LOCALE, type Locale } from "@/i18n/config";
  *   controller and contracting party; a trading name is not a legal person.
  */
 export const COMPANY = {
-  /** As registered in ΓΕΜΗ. Greek convention is surname first. */
-  legalName: "Alexandris Michail",
+  /** As registered in ΓΕΜΗ / with the tax office. */
+  legalName: "Epiloges Fashion Boutique" as string | null,
   brandName: "EPILOGES",
   /** The shop opened in Heraklion in 1984 — the "© 1984" the old site carried, now a fact the structured data states. */
   foundingYear: 1984,
   storeName: { el: "Επιλογές Fashion Boutique", en: "Epiloges Fashion Boutique" } satisfies Record<Locale, string>,
 
+  /** The ΓΕΜΗ-registered address — the legal pages' data controller address. */
   address: {
     street: "Arthur Evans 9",
     postalCode: "71201",
@@ -37,8 +38,38 @@ export const COMPANY = {
     country: "Greece",
   },
 
-  /** ΑΦΜ — the Greek VAT identification number. */
-  vatNumber: "146214557",
+  /**
+   * Both physical shops, for the contact page, the footer, and a Place entry per location
+   * in the structured data — a shopper searching "γυναικεία ρούχα Μάλια" needs the Malia
+   * address to turn up, not just Heraklion's. `address` above stays the single ΓΕΜΗ-registered
+   * address for the legal pages; this is the storefront-facing pair.
+   */
+  stores: [
+    {
+      name: "Ηράκλειο",
+      street: "Εβανς 9, Κέντρο Ηρακλείου",
+      postalCode: "71201",
+      city: "Ηράκλειο",
+      region: "Κρήτη",
+      countryCode: "GR",
+      country: "Ελλάδα",
+    },
+    {
+      name: "Μάλια",
+      street: "Ελ. Βενιζέλου 157",
+      postalCode: "70007",
+      city: "Μάλια",
+      region: "Κρήτη",
+      countryCode: "GR",
+      country: "Ελλάδα",
+    },
+  ] as { name: string; street: string; postalCode: string; city: string; region: string; countryCode: string; country: string }[],
+
+  /**
+   * ΑΦΜ — the Greek VAT identification number for Epiloges' own registration. Null until
+   * that's assigned; `traderIdentityLine()` omits it rather than printing a blank.
+   */
+  vatNumber: null as string | null,
 
   /**
    * ΓΕΜΗ (General Commercial Registry) number, printed in the trader identity line when
@@ -64,10 +95,10 @@ export const COMPANY = {
    */
   gemiRegistration: "not-registered" as "registered" | "not-registered" | "unknown",
 
-  email: "alexandrisstores@gmail.com",
+  email: "epilogesfashion@gmail.com",
   /** Heraklion landline, displayed nationally and dialled internationally. */
-  phone: "2814 001 031",
-  phoneE164: "+302814001031",
+  phone: "2897 033730",
+  phoneE164: "+302897033730",
 
   /**
    * Labels the shop manufactures or has made for itself. They have no supplier GTIN/MPN,
@@ -110,14 +141,14 @@ export function storeName(locale: Locale = DEFAULT_LOCALE): string {
 }
 
 /**
- * The identity line that has to be reachable from every page. Includes ΓΕΜΗ only once a
- * number exists, rather than printing an empty label.
+ * The identity line that has to be reachable from every page. Includes VAT/ΓΕΜΗ only once a
+ * number exists, rather than printing an empty label — same reasoning as `gemiNumber`.
  */
 export function traderIdentityLine(): string {
   const parts = [
     COMPANY.legalName,
     formattedAddress(),
-    `VAT (ΑΦΜ) ${COMPANY.vatNumber}`,
+    COMPANY.vatNumber ? `VAT (ΑΦΜ) ${COMPANY.vatNumber}` : null,
     COMPANY.gemiNumber ? `ΓΕΜΗ ${COMPANY.gemiNumber}` : null,
   ];
   return parts.filter(Boolean).join(" · ");

@@ -84,7 +84,9 @@ export async function Footer({ navigation, settings }: FooterProps) {
             <p className="text-xs font-medium tracking-[0.1em] uppercase">{column.title}</p>
             <ul className="mt-4 space-y-3">
               {column.links.map((link) => (
-                <li key={link.href}>
+                // label, not href: "Φροντίδα Προϊόντων" and "Συχνές ερωτήσεις" both point to
+                // /faq (same page, two entry points), so href collided as a React key here.
+                <li key={link.label}>
                   <Link
                     href={link.href}
                     className="text-sm text-luxe-gray-dark transition-colors hover:text-luxe-black"

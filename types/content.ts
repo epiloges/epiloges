@@ -1,19 +1,24 @@
 import type { CallToAction, Image, SlugEntity } from "./common";
 import type { HomepageSection } from "./homepage";
 
-/** The story page. Chapters carry the archive photographs; sections are prose only. */
+/**
+ * The story page. Chapters carry the archive photographs; sections are prose only.
+ * `eyebrow`/`chapters`/`statement`/`closing` are optional: a fixture that only has the
+ * older title/heroImage/intro/sections shape (data/about.json's current content) still
+ * renders — AboutPage skips whichever of these pieces aren't present.
+ */
 export interface AboutPageContent {
   title: string;
-  eyebrow: string;
+  eyebrow?: string;
   heroImage: Image;
   heroCaption?: string;
   intro: string;
-  chapters: { eyebrow: string; heading: string; body: string; image: Image; caption?: string }[];
-  statement: { line: string; facts: { value: string; label: string }[] };
+  chapters?: { eyebrow: string; heading: string; body: string; image: Image; caption?: string }[];
+  statement?: { line: string; facts: { value: string; label: string }[] };
   /** One more photograph between the facts and the prose. */
   interlude?: { image: Image; caption?: string };
   sections: { heading: string; body: string }[];
-  closing: {
+  closing?: {
     quote: string;
     signature: string;
     cta: { label: string; href: string };
