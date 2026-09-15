@@ -263,10 +263,10 @@ function PaymentMethodOption({
       onClick={onSelect}
       className={cn(
         "flex w-full items-start gap-3 border px-4 py-3.5 text-left transition-colors",
-        // A featured method sits on warm ivory with a gold hairline, so the eye lands on it
-        // before reading anything; the selection ring stays the same black as every option.
-        trust ? "bg-[#FBF6E9]" : "",
-        isSelected ? "border-luxe-black" : trust ? "border-[#D9C58F] hover:border-luxe-black/60" : "border-border hover:border-luxe-black/50"
+        // A featured method sits on the bank's own yellow, so the eye lands on it before
+        // reading anything; the selection ring stays the same black as every option.
+        trust ? "bg-[#FFE600]" : "",
+        isSelected ? "border-luxe-black" : trust ? "border-[#E0C800] hover:border-luxe-black/60" : "border-border hover:border-luxe-black/50"
       )}
     >
       <span
@@ -278,7 +278,7 @@ function PaymentMethodOption({
       >
         {isSelected ? <span className="size-2 rounded-full bg-luxe-black" /> : null}
       </span>
-      <PaymentMethodIcon icon={method.icon} className="mt-0.5 text-luxe-gray-dark" />
+      <PaymentMethodIcon icon={method.icon} className={cn("mt-0.5", trust ? "text-luxe-black" : "text-luxe-gray-dark")} />
       <span className="min-w-0 flex-1">
         <span className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
           <span className="text-sm font-medium">{method.displayName}</span>
@@ -297,14 +297,14 @@ function PaymentMethodOption({
               {trust.schemes?.map((scheme) => <SchemeMark key={scheme} scheme={scheme} />)}
             </span>
             {trust.assurances?.length ? (
-              <span className="mt-2 block text-[11px] text-luxe-gray-dark">{trust.assurances.join(" · ")}</span>
+              <span className="mt-2 block text-[11px] text-luxe-black/70">{trust.assurances.join(" · ")}</span>
             ) : null}
           </>
         ) : (
           <span className="mt-0.5 block text-xs text-luxe-gray-dark">{method.description}</span>
         )}
         {method.requiresRedirect ? (
-          <span className="mt-1 block text-[11px] text-luxe-gray-dark">
+          <span className={cn("mt-1 block text-[11px]", trust ? "text-luxe-black/70" : "text-luxe-gray-dark")}>
             {t("redirectNote")}
           </span>
         ) : null}
@@ -324,11 +324,11 @@ function PaymentMethodOption({
  */
 function SecuredByBadge({ institution }: { institution: string }) {
   return (
-    <span className="inline-flex items-center gap-1.5 border border-[#D9C58F] bg-luxe-white px-2 py-1">
-      <ShieldCheck className="size-4 text-[#1F7A3F]" strokeWidth={2} aria-hidden />
+    <span className="inline-flex items-center gap-1.5 bg-[#0B3B36] px-2.5 py-1.5 text-luxe-white">
+      <ShieldCheck className="size-4" strokeWidth={2} aria-hidden />
       <span className="flex flex-col leading-none">
         <span className="text-[11px] font-semibold tracking-[0.02em]">{institution}</span>
-        <span className="mt-0.5 text-[9px] tracking-[0.2em] uppercase text-luxe-gray-dark">ePay · secure</span>
+        <span className="mt-0.5 text-[9px] tracking-[0.2em] uppercase opacity-80">ePay · secure</span>
       </span>
     </span>
   );
