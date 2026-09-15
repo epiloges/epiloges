@@ -14,6 +14,8 @@ export interface VoucherQueueRow {
   cod: string | null;
   /** ISO timestamp, or null while unprinted. */
   printedAt: string | null;
+  /** Parcels on the voucher — labels this row prints. Absent means one. */
+  pieces?: number;
 }
 
 interface VoucherPrintQueueProps {
@@ -50,7 +52,9 @@ export function VoucherPrintQueue({ rows }: VoucherPrintQueueProps) {
 
   const chosen = unprinted.filter((row) => !unticked.has(row.orderId));
   const tooMany = chosen.length > 10;
-  const sheets = chosen.length === 0 ? 0 : Math.ceil((chosen.length + (start - 1)) / 3);
+  // Labels, not vouchers: a two-parcel voucher is two labels and takes two slots.
+  const labelCount = chosen.reduce((sum, row) => sum + (row.pieces ?? 1), 0);
+  const sheets = labelCount === 0 ? 0 : Math.ceil((labelCount + (start - 1)) / 3);
   const href = (format: "laser" | "thermal") =>
     `/api/admin/courier/voucher?orders=${chosen.map((row) => encodeURIComponent(row.orderId)).join(",")}&format=${format}&start=${start}`;
 
@@ -107,7 +111,10 @@ export function VoucherPrintQueue({ rows }: VoucherPrintQueueProps) {
                     <span className="text-luxe-gray-dark"> · {row.city}</span>
                   </span>
                   {row.cod ? <span className="bg-amber-100 px-1.5 py-px text-xs text-amber-800">ΑΝΤ. {row.cod}</span> : null}
-                  <span className="font-mono text-xs text-luxe-gray-dark">{row.trackingNumber}</span>
+                  <span className="font-mono text-xs text-luxe-gray-dark">
+                    {row.trackingNumber}
+                    {row.pieces && row.pieces > 1 ? ` · ${row.pieces} labels` : ""}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -129,7 +136,7 @@ export function VoucherPrintQueue({ rows }: VoucherPrintQueueProps) {
                 <span className={`${buttonClass} cursor-not-allowed opacity-50`}>Print A4</span>
               ) : (
                 <a href={href("laser")} target="_blank" rel="noopener" className={buttonClass}>
-                  Print A4 — {chosen.length} {chosen.length === 1 ? "voucher" : "vouchers"}, {sheets} {sheets === 1 ? "sheet" : "sheets"}
+                  Print A4 — {labelCount} {labelCount === 1 ? "label" : "labels"}, {sheets} {sheets === 1 ? "sheet" : "sheets"}
                 </a>
               )}
               {chosen.length === 0 || tooMany ? null : (

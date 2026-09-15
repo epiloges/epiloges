@@ -59,6 +59,7 @@ export default async function AdminCourierPage() {
         city: order.shippingAddress.city,
         cod: cod ? formatMoney(order.totals.total) : null,
         printedAt: order.voucherPrintedAt ?? null,
+        pieces: order.shipmentPieces,
       };
     })
   );

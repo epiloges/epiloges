@@ -202,7 +202,7 @@ export async function createAcsShipmentAction(orderId: string, options: CreateSh
       senderName: settings.siteName,
     });
 
-    await updateOrderTracking(orderId, result);
+    await updateOrderTracking(orderId, { ...result, pieces });
     // This one really did dispatch a courier voucher against the shop's ACS account, so it
     // costs money whether or not the parcel is ever sent.
     await recordAdminAction({

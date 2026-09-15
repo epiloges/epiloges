@@ -116,8 +116,12 @@ export function createAcsCourierProvider(creds: AcsCredentials): CourierProvider
     return { alias, output, first: values[0] ?? {}, rows, raw: body };
   }
 
-  /** One PDF per voucher, in the order asked for. `printType` 2 = laser A4, 1 = thermal. */
-  async function printVoucherPdfs(trackingNumbers: string[], printType: 1 | 2, startPosition: 1 | 2 | 3): Promise<Uint8Array[]> {
+  /**
+   * Every label ACS returns for a print request, in the order it returns them — the vouchers
+   * asked for, and for a multi-parcel voucher its piece labels as well (their own numbers,
+   * which the create call does not report). `printType` 2 = laser A4, 1 = thermal.
+   */
+  async function printLabelObjects(trackingNumbers: string[], printType: 1 | 2, startPosition: 1 | 2 | 3): Promise<{ voucher: string; pdf: Uint8Array }[]> {
     const out = await call("ACS_Print_Voucher", {
       Language: "GR",
       Voucher_No: trackingNumbers.join(","),
@@ -126,23 +130,20 @@ export function createAcsCourierProvider(creds: AcsCredentials): CourierProvider
     });
     const error = rowError(out);
     if (error) throw new CourierError(`ACS could not print the voucher: ${error}`);
-
-    // Live shape: ACSValueOutput[0].ACSObjectOutput = [{ Voucber_No (sic), PDFData (base64), … }].
     const objects = out.first.ACSObjectOutput;
     const items = Array.isArray(objects) ? (objects as Record<string, unknown>[]) : [];
-    const byVoucher = new Map<string, Uint8Array>();
+    const labels: { voucher: string; pdf: Uint8Array }[] = [];
     for (const item of items) {
       const voucher = String(item.Voucber_No ?? item.Voucher_No ?? "").trim();
       const data = item.PDFData;
-      if (voucher && typeof data === "string" && data.length > 0) byVoucher.set(voucher, Uint8Array.from(Buffer.from(data, "base64")));
+      if (typeof data === "string" && data.length > 0) labels.push({ voucher, pdf: Uint8Array.from(Buffer.from(data, "base64")) });
     }
-    const pdfs = trackingNumbers.map((voucher) => byVoucher.get(voucher));
-    if (pdfs.every((pdf) => pdf)) return pdfs as Uint8Array[];
-
-    // Shape drifted: fall back to anything PDF-like, which at least keeps single prints working.
-    const fallback = extractPdf(out.output);
-    if (fallback && trackingNumbers.length === 1) return [fallback];
-    throw new CourierError(`ACS_Print_Voucher returned no PDF for ${trackingNumbers.join(", ")}: ${JSON.stringify(out.raw).slice(0, 300)}`);
+    if (labels.length === 0) {
+      const fallback = extractPdf(out.output);
+      if (fallback) return [{ voucher: trackingNumbers[0], pdf: fallback }];
+      throw new CourierError(`ACS_Print_Voucher returned no PDF for ${trackingNumbers.join(", ")}: ${JSON.stringify(out.raw).slice(0, 300)}`);
+    }
+    return labels;
   }
 
   /** Per-row errors ride inside a successful execution — a rejected voucher is one of these. */
@@ -258,28 +259,44 @@ export function createAcsCourierProvider(creds: AcsCredentials): CourierProvider
       }
 
       if (format === "thermal") {
-        const pdfs = await printVoucherPdfs(trackingNumbers, 1, 1);
-        return trackingNumbers.length === 1 ? pdfs[0] : concatPdfs(pdfs);
+        // One label per page; a multi-parcel voucher simply contributes more pages.
+        const labels = await printLabelObjects(trackingNumbers, 1, 1);
+        return labels.length === 1 ? labels[0].pdf : concatPdfs(labels.map((label) => label.pdf));
       }
 
-      // Voucher i goes in slot ((start - 1 + i) mod 3) + 1 of sheet floor((start - 1 + i) / 3).
-      const bySlot = new Map<1 | 2 | 3, string[]>();
-      trackingNumbers.forEach((voucher, i) => {
-        const slot = (((startPosition - 1 + i) % 3) + 1) as 1 | 2 | 3;
-        bySlot.set(slot, [...(bySlot.get(slot) ?? []), voucher]);
-      });
-      const layerByVoucher = new Map<string, SheetLayer>();
-      for (const [slot, vouchers] of bySlot) {
-        const pdfs = await printVoucherPdfs(vouchers, 2, slot);
-        vouchers.forEach((voucher, i) => layerByVoucher.set(voucher, { pdf: pdfs[i], slot }));
+      /**
+       * A4, three labels to a sheet, each label in the slot it was requested at. A voucher's
+       * piece labels are only known from ACS's answer, so each voucher is asked for on its
+       * own at its slot; any piece labels that come back with it are then re-requested one by
+       * one at the following slots, so the sheet fills in order. A piece ACS will not print
+       * alone keeps the PDF it arrived with and goes on a sheet of its own.
+       */
+      const layers: SheetLayer[] = [];
+      let position = startPosition - 1; // 0-based running slot across sheets
+      const slotOf = (p: number) => ((p % 3) + 1) as 1 | 2 | 3;
+      const separate: Uint8Array[] = [];
+      for (const voucher of trackingNumbers) {
+        const returned = await printLabelObjects([voucher], 2, slotOf(position));
+        const main = returned.find((label) => label.voucher === voucher) ?? returned[0];
+        layers.push({ pdf: main.pdf, slot: slotOf(position) });
+        position += 1;
+        for (const piece of returned.filter((label) => label !== main)) {
+          try {
+            const [alone] = await printLabelObjects([piece.voucher], 2, slotOf(position));
+            layers.push({ pdf: alone.pdf, slot: slotOf(position) });
+            position += 1;
+          } catch {
+            separate.push(piece.pdf);
+          }
+        }
       }
 
-      const sheetCount = Math.ceil((startPosition - 1 + trackingNumbers.length) / 3);
+      const first = startPosition - 1;
+      const sheetCount = Math.ceil((first + layers.length) / 3);
       const sheets: SheetLayer[][] = Array.from({ length: sheetCount }, () => []);
-      trackingNumbers.forEach((voucher, i) => {
-        sheets[Math.floor((startPosition - 1 + i) / 3)].push(layerByVoucher.get(voucher)!);
-      });
-      return trackingNumbers.length === 1 ? layerByVoucher.get(trackingNumbers[0])!.pdf : overlaySheets(sheets);
+      layers.forEach((layer, i) => sheets[Math.floor((first + i) / 3)].push(layer));
+      const composed = layers.length === 1 && separate.length === 0 ? layers[0].pdf : await overlaySheets(sheets);
+      return separate.length === 0 ? composed : concatPdfs([composed, ...separate]);
     },
 
     async deleteShipment(trackingNumber: string): Promise<void> {

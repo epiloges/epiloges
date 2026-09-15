@@ -234,6 +234,8 @@ export interface Order {
   voucherPrintedAt?: string;
   /** The courier's pickup list the voucher is closed into, once the day is closed. */
   pickupListNo?: string;
+  /** Parcels the courier voucher covers — one label each. Absent for a manual tracking number. */
+  shipmentPieces?: number;
   createdAt: string;
 }
 

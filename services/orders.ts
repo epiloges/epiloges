@@ -284,6 +284,8 @@ export interface OrderTrackingInput {
   carrier?: string;
   trackingNumber?: string;
   trackingUrl?: string;
+  /** Parcels the voucher covers; only the courier adapter sets it. */
+  pieces?: number;
 }
 
 /**
@@ -310,6 +312,7 @@ export async function updateOrderTracking(id: string, input: OrderTrackingInput)
       // belonged to the old number.
       voucherPrintedAt: null,
       pickupListNo: null,
+      shipmentPieces: input.pieces ?? null,
     },
   });
   return toOrder(row);

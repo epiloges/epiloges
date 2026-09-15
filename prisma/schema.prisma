@@ -600,6 +600,9 @@ model Order {
   /// The ACS pickup list (Mass_Number) the voucher was closed into. Once set the voucher
   /// is a real shipment and can no longer be cancelled from the shop.
   pickupListNo     String?
+  /// Parcels the voucher was created for — one label each. What the courier page counts
+  /// when it says how many labels a print will produce. Null on a manual tracking number.
+  shipmentPieces   Int?
 
   /// Set exactly once, the moment status transitions to "delivered" (services/orders.ts's
   /// updateOrderStatus) — used to schedule the post-delivery review-request follow-up.

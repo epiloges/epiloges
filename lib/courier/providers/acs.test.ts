@@ -210,6 +210,37 @@ describe("printLabels", () => {
     expect((await PDFDocument.load(bytes)).getPageCount()).toBe(2);
   });
 
+  it("places a two-parcel voucher's piece label in the next slot — the main voucher's answer reveals the piece number", async () => {
+    const pdfs = { "9807543642": await labelPdf("MAIN"), "8807543643": await labelPdf("PIECE") };
+    const spy = vi.fn(async (_url: string, init: RequestInit) => {
+      const v = (JSON.parse(init.body as string).ACSInputParameters as { Voucher_No: string }).Voucher_No;
+      // Asking for the main voucher returns the main AND its piece; asking for the piece returns just the piece.
+      const entries = v === "9807543642" ? ["9807543642", "8807543643"] : [v];
+      return printResponse(entries.map((n) => ({ voucher: n, pdf: pdfs[n as keyof typeof pdfs] })));
+    });
+    vi.stubGlobal("fetch", spy);
+
+    const bytes = await createAcsCourierProvider(creds).printLabels!(["9807543642"], "laser", 1);
+
+    const slots = spy.mock.calls.map((c) => JSON.parse((c[1] as RequestInit).body as string).ACSInputParameters).map((p) => [p.Voucher_No, p.Start_Position]);
+    expect(slots).toEqual([["9807543642", 1], ["8807543643", 2]]);
+    expect((await PDFDocument.load(bytes)).getPageCount()).toBe(1);
+  });
+
+  it("keeps a piece label ACS will not print alone, on its own sheet", async () => {
+    const pdfs = { M: await labelPdf("M"), P: await labelPdf("P") };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_url: string, init: RequestInit) => {
+        const v = (JSON.parse(init.body as string).ACSInputParameters as { Voucher_No: string }).Voucher_No;
+        if (v === "P") return new Response(JSON.stringify({ ACSExecution_HasError: true, ACSExecutionErrorMessage: "not a voucher" }));
+        return printResponse([{ voucher: "M", pdf: pdfs.M }, { voucher: "P", pdf: pdfs.P }]);
+      })
+    );
+    const bytes = await createAcsCourierProvider(creds).printLabels!(["M"], "laser", 1);
+    expect((await PDFDocument.load(bytes)).getPageCount()).toBe(2);
+  });
+
   it("prints thermal labels one per page, in one call", async () => {
     const pdfs = { A: await labelPdf("A"), B: await labelPdf("B") };
     const spy = stubFetch(printResponse([{ voucher: "A", pdf: pdfs.A }, { voucher: "B", pdf: pdfs.B }]));
