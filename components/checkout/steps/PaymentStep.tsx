@@ -301,7 +301,7 @@ function PaymentMethodOption({
             ) : null}
           </>
         ) : (
-          <span className="mt-0.5 block text-xs text-luxe-gray-dark">{method.description}</span>
+          <LeadSentence text={method.description} className="mt-0.5 block text-xs text-luxe-gray-dark" />
         )}
         {method.requiresRedirect ? (
           <span className={cn("mt-1 block text-[11px]", trust ? "text-luxe-black/70" : "text-luxe-gray-dark")}>
@@ -330,6 +330,17 @@ function SecuredByBadge({ institution }: { institution: string }) {
         <span className="text-[11px] font-semibold tracking-[0.02em]">{institution}</span>
         <span className="mt-0.5 text-[9px] tracking-[0.2em] uppercase opacity-80">ePay · secure</span>
       </span>
+    </span>
+  );
+}
+
+/** The first sentence carries the instruction ("pay by deposit to our IBAN"); it is set bold, the rest stays quiet. */
+function LeadSentence({ text, className }: { text: string; className?: string }) {
+  const match = text.match(/^(.*?[.!;])s+([sS]+)$/);
+  if (!match) return <span className={className}>{text}</span>;
+  return (
+    <span className={className}>
+      <span className="font-semibold text-luxe-black">{match[1]}</span> {match[2]}
     </span>
   );
 }
