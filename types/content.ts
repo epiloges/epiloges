@@ -1,11 +1,21 @@
 import type { CallToAction, Image, SlugEntity } from "./common";
 import type { HomepageSection } from "./homepage";
 
+/** The story page. Chapters carry the archive photographs; sections are prose only. */
 export interface AboutPageContent {
   title: string;
+  eyebrow: string;
   heroImage: Image;
   intro: string;
-  sections: { heading: string; body: string; image?: Image }[];
+  chapters: { eyebrow: string; heading: string; body: string; image: Image; caption?: string }[];
+  statement: { line: string; facts: { value: string; label: string }[] };
+  sections: { heading: string; body: string }[];
+  closing: {
+    quote: string;
+    signature: string;
+    cta: { label: string; href: string };
+    secondary?: { label: string; href: string };
+  };
 }
 
 /** Shared shape for lightweight editorial/legal pages — heading+body sections, no hero image. */
