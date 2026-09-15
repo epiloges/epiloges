@@ -37,7 +37,25 @@ interface SeedGiftCard {
   active: boolean;
 }
 
-const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+// POSTGRES_PRISMA_URL fallback and the sslmode rewrite below: see the full comment on
+// withRelaxedSslForSupabasePooler in lib/prisma.ts. Short version — passing
+// `ssl: { rejectUnauthorized: false }` alongside `connectionString` does NOT work because
+// `pg` merges a parsed connection string's own `ssl` (derived from Supabase's
+// `sslmode=require`) over it; only rewriting `sslmode` in the string itself sticks.
+function withRelaxedSslForSupabasePooler(connectionString: string): string {
+  const url = new URL(connectionString);
+  url.searchParams.set("sslmode", "no-verify");
+  return url.toString();
+}
+
+const usingSupabasePooler = !process.env.DATABASE_URL && !!process.env.POSTGRES_PRISMA_URL;
+const rawConnectionString = process.env.DATABASE_URL || process.env.POSTGRES_PRISMA_URL;
+const adapter = new PrismaPg({
+  connectionString:
+    usingSupabasePooler && rawConnectionString
+      ? withRelaxedSslForSupabasePooler(rawConnectionString)
+      : rawConnectionString,
+});
 const prisma = new PrismaClient({ adapter });
 
 /** The JSON fixture predates both the Category table and the product lifecycle fields
