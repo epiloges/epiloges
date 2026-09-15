@@ -106,6 +106,20 @@ export type PaymentMethodType =
  * cannot toggle "supports refunds" into being true. Admin-editable merchandising
  * settings are a separate type (PaymentMethodSettings) stored in Postgres.
  */
+
+/**
+ * What a method can show to earn the shopper's confidence: who secures the payment and
+ * which card schemes it takes. Declared by the provider, rendered by the checkout — the
+ * checkout still knows no vendor; it draws whatever the method hands it.
+ */
+export interface PaymentMethodTrust {
+  /** The institution behind the payment page, e.g. "Τράπεζα Πειραιώς". */
+  securedBy: string;
+  schemes?: readonly ("visa" | "mastercard" | "maestro")[];
+  /** One short line of assurances, e.g. "3-D Secure · SSL". */
+  assurances?: readonly string[];
+}
+
 export interface PaymentMethodDefinition {
   id: PaymentMethodId;
   providerId: PaymentProviderId;
@@ -143,6 +157,8 @@ export interface PaymentMethodDefinition {
   clientCapability?: "apple-pay";
   /** Key the checkout/admin UI maps to a rendered mark. Avoids putting markup in the domain layer. */
   icon: "cash" | "bank" | "card" | "apple" | "iris" | "wallet";
+  /** Present on the methods worth featuring; the checkout gives them the prominent treatment. */
+  trust?: PaymentMethodTrust;
 }
 
 // ---------------------------------------------------------------------------

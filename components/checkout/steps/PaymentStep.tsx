@@ -4,7 +4,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState, useSyncExternalStore } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowRight, RefreshCw, ShieldCheck } from "lucide-react";
+import { ArrowRight, Lock, RefreshCw, ShieldCheck } from "lucide-react";
 import { buildAddressSchema, type AddressFormValues } from "@/lib/validation/checkout";
 import { localizedCountries } from "@/constants/countries";
 import { useCheckout, type CheckoutPaymentMethod } from "@/components/providers/CheckoutProvider";
@@ -254,6 +254,7 @@ function PaymentMethodOption({
   onSelect: () => void;
 }) {
   const t = useTranslations("Checkout");
+  const trust = method.trust;
   return (
     <button
       type="button"
@@ -262,7 +263,10 @@ function PaymentMethodOption({
       onClick={onSelect}
       className={cn(
         "flex w-full items-start gap-3 border px-4 py-3.5 text-left transition-colors",
-        isSelected ? "border-luxe-black" : "border-border hover:border-luxe-black/50"
+        // A featured method sits on warm ivory with a gold hairline, so the eye lands on it
+        // before reading anything; the selection ring stays the same black as every option.
+        trust ? "bg-[#FBF6E9]" : "",
+        isSelected ? "border-luxe-black" : trust ? "border-[#D9C58F] hover:border-luxe-black/60" : "border-border hover:border-luxe-black/50"
       )}
     >
       <span
@@ -282,7 +286,23 @@ function PaymentMethodOption({
             <span className="text-sm whitespace-nowrap">+{formatMoney(method.fee)}</span>
           ) : null}
         </span>
-        <span className="mt-0.5 block text-xs text-luxe-gray-dark">{method.description}</span>
+        {trust ? (
+          <>
+            <span className="mt-1.5 flex items-center gap-1.5 text-xs font-semibold text-luxe-black">
+              <Lock className="size-3.5" strokeWidth={2} aria-hidden />
+              {t("securedBy", { institution: trust.securedBy })}
+            </span>
+            <span className="mt-2.5 flex flex-wrap items-center gap-2">
+              <SecuredByBadge institution={trust.securedBy} />
+              {trust.schemes?.map((scheme) => <SchemeMark key={scheme} scheme={scheme} />)}
+            </span>
+            {trust.assurances?.length ? (
+              <span className="mt-2 block text-[11px] text-luxe-gray-dark">{trust.assurances.join(" · ")}</span>
+            ) : null}
+          </>
+        ) : (
+          <span className="mt-0.5 block text-xs text-luxe-gray-dark">{method.description}</span>
+        )}
         {method.requiresRedirect ? (
           <span className="mt-1 block text-[11px] text-luxe-gray-dark">
             {t("redirectNote")}
@@ -295,6 +315,46 @@ function PaymentMethodOption({
         ) : null}
       </span>
     </button>
+  );
+}
+
+/**
+ * The bank's name set as a badge — a shield, the name, "ePay" beneath — not the bank's own
+ * logo, which is theirs to license; the point is the name, read at a glance.
+ */
+function SecuredByBadge({ institution }: { institution: string }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 border border-[#D9C58F] bg-luxe-white px-2 py-1">
+      <ShieldCheck className="size-4 text-[#1F7A3F]" strokeWidth={2} aria-hidden />
+      <span className="flex flex-col leading-none">
+        <span className="text-[11px] font-semibold tracking-[0.02em]">{institution}</span>
+        <span className="mt-0.5 text-[9px] tracking-[0.2em] uppercase text-luxe-gray-dark">ePay · secure</span>
+      </span>
+    </span>
+  );
+}
+
+/** Card scheme marks drawn inline, so they never load from a third party and never go stale. */
+function SchemeMark({ scheme }: { scheme: "visa" | "mastercard" | "maestro" }) {
+  const box = "inline-flex h-7 w-11 items-center justify-center border border-border bg-luxe-white";
+  if (scheme === "visa") {
+    return (
+      <span className={box} aria-label="Visa" title="Visa">
+        <svg viewBox="0 0 40 14" className="h-3.5 w-9" aria-hidden>
+          <text x="20" y="12" textAnchor="middle" fontFamily="Arial, Helvetica, sans-serif" fontStyle="italic" fontWeight="700" fontSize="14" fill="#1A1F71">VISA</text>
+        </svg>
+      </span>
+    );
+  }
+  const right = scheme === "mastercard" ? "#F79E1B" : "#0099DF";
+  const left = scheme === "mastercard" ? "#EB001B" : "#ED0006";
+  return (
+    <span className={box} aria-label={scheme === "mastercard" ? "Mastercard" : "Maestro"} title={scheme === "mastercard" ? "Mastercard" : "Maestro"}>
+      <svg viewBox="0 0 24 16" className="h-4 w-6" aria-hidden>
+        <circle cx="9" cy="8" r="7" fill={left} />
+        <circle cx="15" cy="8" r="7" fill={right} fillOpacity="0.9" />
+      </svg>
+    </span>
   );
 }
 

@@ -39,6 +39,8 @@ export interface CheckoutPaymentMethod {
   requiresManualConfirmation: boolean;
   clientCapability?: string;
   sortOrder: number;
+  /** Who secures the payment and which schemes it takes — see PaymentMethodTrust. */
+  trust?: { securedBy: string; schemes?: readonly ("visa" | "mastercard" | "maestro")[]; assurances?: readonly string[] };
 }
 
 /**

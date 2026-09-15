@@ -147,6 +147,11 @@ const PIRAEUS_CARD_METHOD: PaymentMethodDefinition = {
   supportsRecurring: false,
   supportedCurrencies: ["EUR"],
   icon: "card",
+  trust: {
+    securedBy: "Τράπεζα Πειραιώς",
+    schemes: ["visa", "mastercard", "maestro"],
+    assurances: ["3-D Secure", "Κρυπτογράφηση SSL", "Τα στοιχεία της κάρτας δεν φτάνουν ποτέ στο κατάστημα"],
+  },
 };
 
 // ---------------------------------------------------------------------------

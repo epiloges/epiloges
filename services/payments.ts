@@ -26,6 +26,7 @@ import {
   type PaymentMethodDefinition,
   type PaymentMethodId,
   type PaymentMethodSettings,
+  type PaymentMethodTrust,
   type PaymentOrderContext,
   type PaymentProviderId,
   type PaymentRecord,
@@ -66,6 +67,7 @@ export interface AvailablePaymentMethod {
   /** Extra device gate the checkout applies on top (Apple Pay). Can only remove, never add. */
   clientCapability?: string;
   sortOrder: number;
+  trust?: PaymentMethodTrust;
 }
 
 export interface PaymentMethodQuery {
@@ -192,6 +194,7 @@ export async function getAvailablePaymentMethods(query: PaymentMethodQuery): Pro
       requiresManualConfirmation: definition.requiresManualConfirmation,
       clientCapability: definition.clientCapability,
       sortOrder: settings.sortOrder,
+      trust: definition.trust,
     });
   }
 
