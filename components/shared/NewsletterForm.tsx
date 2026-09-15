@@ -1,12 +1,19 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useId, useState, type FormEvent } from "react";
 import { useTranslations } from "next-intl";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowRight, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { newsletterSchema, type NewsletterFormValues } from "@/lib/validation/newsletter";
+import type { NewsletterFormValues } from "@/lib/validation/newsletter";
+
+/**
+ * One field, so no form library. This form is on every storefront page (the footer) and
+ * it used to pull react-hook-form and zod — with zod's locale tables — into the homepage
+ * bundle: ~300 KB of script, 62 KB over the wire, a third of everything the homepage
+ * loaded, to check that one string has an @. The API route still validates with the real
+ * schema; the browser only needs a plausibility check before it asks.
+ */
+const LOOKS_LIKE_EMAIL = /^[^s@]+@[^s@]+.[^s@]+$/;
 
 interface NewsletterFormProps {
   ctaLabel?: string;
@@ -36,18 +43,28 @@ export function NewsletterForm({
   // The footer renders this with no ctaLabel; the homepage passes one from editable
   // section data. The fallback has to be translated, not a hardcoded "Subscribe".
   const label = ctaLabel ?? t("subscribe");
+  const [email, setEmail] = useState("");
+  const [fieldError, setFieldError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors, isSubmitting },
-  } = useForm<NewsletterFormValues>({ resolver: zodResolver(newsletterSchema) });
+  const [isSubmitting, setSubmitting] = useState(false);
 
   // Previously this awaited a 500ms timer and then reported success unconditionally,
   // discarding the address — so the confirmation below was a lie on every submission.
-  const onSubmit = async (values: NewsletterFormValues) => {
+  const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     setSubmitError(null);
+    const trimmed = email.trim();
+    if (!trimmed) {
+      setFieldError(t("emailRequired"));
+      return;
+    }
+    if (!LOOKS_LIKE_EMAIL.test(trimmed)) {
+      setFieldError(t("emailInvalid"));
+      return;
+    }
+    setFieldError(null);
+    const values: NewsletterFormValues = { email: trimmed };
+    setSubmitting(true);
     try {
       if (onSubscribe) {
         await onSubscribe(values);
@@ -63,11 +80,13 @@ export function NewsletterForm({
         }
       }
       setSubmitted(true);
-      reset();
+      setEmail("");
     } catch (error) {
       // Staying on the form with the address intact is the point — showing the success
       // state here would repeat the original bug in a subtler form.
       setSubmitError(error instanceof Error ? error.message : t("failed"));
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -81,7 +100,7 @@ export function NewsletterForm({
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} noValidate className={className}>
+    <form onSubmit={onSubmit} noValidate className={className}>
       <div
         className={cn(
           "flex items-center border-b",
@@ -99,7 +118,14 @@ export function NewsletterForm({
             "w-full bg-transparent py-3 text-sm outline-none placeholder:text-current placeholder:opacity-50",
             compact ? "" : "text-base"
           )}
-          {...register("email")}
+          name="email"
+          autoComplete="email"
+          value={email}
+          onChange={(event) => {
+            setEmail(event.target.value);
+            if (fieldError) setFieldError(null);
+          }}
+          aria-invalid={fieldError ? true : undefined}
         />
         <button
           type="submit"
@@ -111,9 +137,9 @@ export function NewsletterForm({
           <ArrowRight className="size-4" strokeWidth={1.5} />
         </button>
       </div>
-      {errors.email || submitError ? (
+      {fieldError || submitError ? (
         <p role="alert" className="mt-2 text-xs text-destructive">
-          {errors.email?.message ?? submitError}
+          {fieldError ?? submitError}
         </p>
       ) : null}
     </form>

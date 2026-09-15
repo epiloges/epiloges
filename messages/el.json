@@ -387,7 +387,9 @@
     "failed": "Κάτι πήγε στραβά. Δοκιμάστε ξανά.",
     "emailLabel": "Διεύθυνση email",
     "emailPlaceholder": "Η διεύθυνση email σας",
-    "subscribe": "Εγγραφή"
+    "subscribe": "Εγγραφή",
+    "emailRequired": "Συμπληρώστε το email σας.",
+    "emailInvalid": "Γράψτε μια έγκυρη διεύθυνση email."
   },
   "Cookies": {
     "text": "Χρησιμοποιούμε απαραίτητα cookies για να λειτουργούν το καλάθι και ο λογαριασμός σας, και προαιρετικά cookies για να κατανοούμε τη χρήση του site. Δείτε την <policy>Πολιτική Cookies</policy>.",

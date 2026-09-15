@@ -387,7 +387,9 @@
     "failed": "Something went wrong. Please try again.",
     "emailLabel": "Email address",
     "emailPlaceholder": "Your email address",
-    "subscribe": "Subscribe"
+    "subscribe": "Subscribe",
+    "emailRequired": "Enter your email address.",
+    "emailInvalid": "Enter a valid email address."
   },
   "Cookies": {
     "text": "We use essential cookies to keep your cart and account working, and optional cookies to understand site usage. See our <policy>Cookie Policy</policy>.",
