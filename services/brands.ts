@@ -1,5 +1,7 @@
 import "server-only";
 import { cache } from "react";
+import { cacheLife, cacheTag } from "next/cache";
+import { PRODUCTS_CACHE_TAG } from "@/services/products";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/slug";
 
@@ -21,6 +23,9 @@ export interface Brand {
 }
 
 export const getAllBrands = cache(async function getAllBrands(): Promise<Brand[]> {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag(PRODUCTS_CACHE_TAG);
   const rows = await prisma.$queryRaw<{ brand: string; count: bigint; images: unknown }[]>`
     SELECT p.brand,
            COUNT(*)::bigint AS count,

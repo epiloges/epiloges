@@ -1,13 +1,13 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { z } from "zod";
 import { Prisma } from "@/lib/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { capabilityDenied } from "@/lib/admin-session";
 import { recordAdminAction } from "@/services/audit-log";
 import { productStatusSchema } from "@/lib/validation/product";
-import { productIdsMatching } from "@/services/products";
+import { productIdsMatching, PRODUCTS_CACHE_TAG } from "@/services/products";
 import type { BulkProductScope, ProductActionState } from "@/app/admin/(dashboard)/products/actions";
 
 /**
@@ -142,6 +142,7 @@ export async function updateProductInline(id: string, edit: InlineProductEdit): 
   }
 
   revalidatePath("/", "layout");
+  updateTag(PRODUCTS_CACHE_TAG);
   revalidatePath("/admin/products");
   return {};
 }
@@ -250,6 +251,7 @@ export async function bulkUpdatePrices(input: BulkPriceInput, scope: BulkProduct
   const inverted = Number(invertedRows[0]?.count ?? 0);
 
   revalidatePath("/", "layout");
+  updateTag(PRODUCTS_CACHE_TAG);
   revalidatePath("/admin/products");
   await recordAdminAction({
     action: "product.bulk_updated",
@@ -313,6 +315,7 @@ export async function bulkUpdateStock(input: BulkStockInput, scope: BulkProductS
     WHERE "productId" IN (${idList})`;
 
   revalidatePath("/", "layout");
+  updateTag(PRODUCTS_CACHE_TAG);
   revalidatePath("/admin/products");
   revalidatePath("/admin/inventory");
   await recordAdminAction({

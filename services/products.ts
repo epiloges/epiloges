@@ -1,4 +1,5 @@
 import "server-only";
+import { cacheLife, cacheTag } from "next/cache";
 import { Prisma } from "@/lib/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { Product, ProductStatus } from "@/types";
@@ -91,7 +92,18 @@ export async function getAllProducts(filter?: ProductListFilter): Promise<Produc
  * Unisex products appear in every gendered row, matching how the rest of the storefront
  * treats them.
  */
+/**
+ * Every catalogue write in the admin — form, inline edit, bulk, import, stock — updates
+ * this tag, so the homepage rows are exact after an edit; between edits they are served
+ * from cache for up to a few minutes. A sale that empties a size in that window still
+ * cannot oversell: add-to-cart and checkout read live stock.
+ */
+export const PRODUCTS_CACHE_TAG = "products";
+
 export async function getNewArrivals(options: { gender?: string; categorySlug?: string; limit?: number } = {}): Promise<Product[]> {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag(PRODUCTS_CACHE_TAG);
   const { gender, categorySlug, limit = 8 } = options;
   if (limit <= 0) return [];
 
@@ -181,6 +193,9 @@ export async function getProductsByIds(ids: string[]): Promise<Product[]> {
 
 /** Same as `getProductsByIds` but published-only — for curated storefront placements. */
 export async function getPublishedProductsByIds(ids: string[]): Promise<Product[]> {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag(PRODUCTS_CACHE_TAG);
   if (ids.length === 0) return [];
   const rows = await prisma.product.findMany({
     where: { id: { in: ids }, ...PUBLISHED },

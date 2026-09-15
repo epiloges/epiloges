@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { after } from "next/server";
 import { notifyIndexNow } from "@/lib/indexnow";
 import { ROUTES } from "@/constants/routes";
@@ -12,7 +12,7 @@ import { recordAdminAction } from "@/services/audit-log";
 import { productFormSchema, type ProductFormValues } from "@/lib/validation/product";
 import { writeProductRow } from "@/lib/products-import/write";
 import { uniqueConflictMessage } from "@/lib/prisma-conflicts";
-import { productIdsMatching, type AdminProductFilter } from "@/services/products";
+import { productIdsMatching, PRODUCTS_CACHE_TAG, type AdminProductFilter } from "@/services/products";
 
 export interface ProductActionState {
   error?: string;
@@ -21,6 +21,7 @@ export interface ProductActionState {
 /** Revalidating the whole tree is a blunt instrument, but correct: nothing in this phase can compute the precise set of storefront pages (PLPs, collections, related-product cross-links) affected by an arbitrary catalog edit. */
 function revalidateStorefront(changedSlugs: string[] = []) {
   revalidatePath("/", "layout");
+  updateTag(PRODUCTS_CACHE_TAG);
   // After the response, so the admin is not kept waiting on a search engine: the product
   // page(s) that changed plus the sitemap, which is what carries the new lastmod.
   if (changedSlugs.length) after(() => notifyIndexNow([...changedSlugs.map((slug) => ROUTES.product(slug)), "/sitemap.xml"]));
@@ -151,6 +152,7 @@ export async function archiveProduct(id: string): Promise<ProductActionState> {
   });
   revalidateStorefront();
   revalidatePath("/admin/products");
+  updateTag(PRODUCTS_CACHE_TAG);
   return {};
 }
 
@@ -169,6 +171,7 @@ export async function restoreProduct(id: string): Promise<ProductActionState> {
   });
   revalidateStorefront();
   revalidatePath("/admin/products");
+  updateTag(PRODUCTS_CACHE_TAG);
   return {};
 }
 
@@ -239,6 +242,7 @@ export async function duplicateProduct(id: string): Promise<ProductActionState> 
   });
 
   revalidatePath("/admin/products");
+  updateTag(PRODUCTS_CACHE_TAG);
   redirect(`/admin/products/${created.id}`);
 }
 
@@ -319,5 +323,6 @@ export async function bulkUpdateProducts(action: BulkProductAction, scope: BulkP
 
   revalidateStorefront();
   revalidatePath("/admin/products");
+  updateTag(PRODUCTS_CACHE_TAG);
   return { updated };
 }

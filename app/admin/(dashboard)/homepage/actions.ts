@@ -1,6 +1,7 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
+import { siteContentTag } from "@/lib/site-content";
 import { requireCapability } from "@/lib/admin-session";
 import { recordAdminAction } from "@/services/audit-log";
 import { saveHomepageSections } from "@/services/homepage";
@@ -21,6 +22,7 @@ export async function publishHomepageSections(sections: HomepageSection[]): Prom
   if (!parsed.success) return { error: firstIssueMessage(parsed.error) };
 
   await saveHomepageSections(parsed.data as HomepageSection[]);
+  updateTag(siteContentTag("homepage"));
   await recordAdminAction({
     action: "settings.updated",
     targetType: "settings",

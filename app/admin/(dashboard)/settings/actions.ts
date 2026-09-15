@@ -1,6 +1,7 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
+import { siteContentTag } from "@/lib/site-content";
 import { requireCapability } from "@/lib/admin-session";
 import { recordAdminAction } from "@/services/audit-log";
 import { saveSiteSettings } from "@/services/settings";
@@ -18,6 +19,7 @@ export async function saveSiteSettingsAction(settings: SiteSettings): Promise<Si
   if (!parsed.success) return { error: firstIssueMessage(parsed.error) };
 
   await saveSiteSettings(parsed.data);
+  updateTag(siteContentTag("settings"));
   await recordAdminAction({
     action: "settings.updated",
     targetType: "settings",

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { PRODUCTS_CACHE_TAG } from "@/services/products";
 import { prisma } from "@/lib/prisma";
 import { requireCapability } from "@/lib/admin-session";
 import { Prisma } from "@/lib/generated/prisma/client";
@@ -66,6 +67,7 @@ export async function POST(request: Request) {
     }
 
     revalidatePath("/", "layout");
+    revalidateTag(PRODUCTS_CACHE_TAG, "max");
     return NextResponse.json({ results });
   } catch (error) {
     return commerceErrorResponse(error);

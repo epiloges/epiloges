@@ -1,6 +1,7 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
+import { PRODUCTS_CACHE_TAG } from "@/services/products";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { capabilityDenied } from "@/lib/admin-session";
@@ -68,6 +69,7 @@ export async function updateSizeStock(sizeId: string, input: { quantity?: number
   }
 
   revalidatePath("/", "layout");
+  updateTag(PRODUCTS_CACHE_TAG);
   revalidatePath("/admin/inventory");
   return { quantity: updated.quantity, inStock: updated.inStock };
 }

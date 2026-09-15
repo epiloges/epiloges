@@ -1,6 +1,6 @@
 import "server-only";
 import settingsFallback from "@/data/settings.json";
-import { getSiteContent, setSiteContent } from "@/lib/site-content";
+import { getSiteContent, getSiteContentCached, setSiteContent } from "@/lib/site-content";
 import { getShippingSettings } from "@/services/shipping";
 import type { SiteSettings } from "@/types";
 
@@ -28,7 +28,7 @@ async function withLiveThreshold(settings: SiteSettings): Promise<SiteSettings> 
 }
 
 export async function getSiteSettings(): Promise<SiteSettings> {
-  const stored = await getSiteContent<SiteSettings>("settings", settingsFallback as SiteSettings);
+  const stored = await getSiteContentCached<SiteSettings>("settings", settingsFallback as SiteSettings);
   return withLiveThreshold(stored);
 }
 
