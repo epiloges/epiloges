@@ -6,9 +6,12 @@ export interface AboutPageContent {
   title: string;
   eyebrow: string;
   heroImage: Image;
+  heroCaption?: string;
   intro: string;
   chapters: { eyebrow: string; heading: string; body: string; image: Image; caption?: string }[];
   statement: { line: string; facts: { value: string; label: string }[] };
+  /** One more photograph between the facts and the prose. */
+  interlude?: { image: Image; caption?: string };
   sections: { heading: string; body: string }[];
   closing: {
     quote: string;

@@ -33,20 +33,23 @@ export default async function AboutPage() {
     <>
       <Header navigation={navigation} siteName={settings.siteName} announcementMessages={settings.announcementMessages} />
       <main id="main" className="flex-1 pt-header">
-        {/* Hero: the archive photograph, shown as the print it is. The scans are small (600px
-            on the long side) — stretched across a screen they would blur, so the shelf sits
-            framed on black at the size a print would hang, and the title takes the room
-            beneath it. */}
+        {/* Hero: the founder in front of the first shop, shown as the print it is. The
+            archive photographs are small — stretched across a screen they would blur — so
+            the picture sits framed on black at the size a print would hang, and the title
+            takes the room beneath it. */}
         <section className="bg-luxe-black py-12 text-luxe-white md:py-20">
           <div className="container-luxe">
-            <figure className="mx-auto max-w-3xl">
-              <div className="relative aspect-[598/402] w-full overflow-hidden bg-luxe-gray-dark p-2 md:p-3">
+            <figure className="mx-auto max-w-2xl">
+              <div className="relative aspect-[1320/1295] w-full overflow-hidden bg-luxe-gray-dark p-2 md:p-3">
                 <div className="relative h-full w-full bg-luxe-white p-2 md:p-3">
                   <div className="relative h-full w-full overflow-hidden">
-                    <Image src={about.heroImage.src} alt={about.heroImage.alt} fill sizes="(min-width: 768px) 768px, 100vw" className="object-cover" preload fetchPriority="high" />
+                    <Image src={about.heroImage.src} alt={about.heroImage.alt} fill sizes="(min-width: 768px) 672px, 100vw" className="object-cover" preload fetchPriority="high" />
                   </div>
                 </div>
               </div>
+              {about.heroCaption ? (
+                <figcaption className="mt-3 text-center text-[11px] tracking-[0.2em] uppercase text-luxe-white/60">{about.heroCaption}</figcaption>
+              ) : null}
             </figure>
             <div className="mx-auto mt-10 max-w-3xl text-center md:mt-14">
               <p className="text-[11px] tracking-[0.3em] uppercase text-luxe-white/70">{about.eyebrow}</p>
@@ -80,6 +83,24 @@ export default async function AboutPage() {
             </dl>
           </div>
         </section>
+
+        {/* One more photograph before the prose — the shelf, the same frame as the hero. */}
+        {about.interlude ? (
+          <section className="container-luxe pt-16 md:pt-24">
+            <figure className="mx-auto max-w-3xl">
+              <div className="relative aspect-[598/402] w-full overflow-hidden bg-luxe-gray-light p-2 md:p-3">
+                <div className="relative h-full w-full bg-luxe-white p-2 md:p-3">
+                  <div className="relative h-full w-full overflow-hidden">
+                    <Image src={about.interlude.image.src} alt={about.interlude.image.alt} fill sizes="(min-width: 768px) 768px, 100vw" className="object-cover" />
+                  </div>
+                </div>
+              </div>
+              {about.interlude.caption ? (
+                <figcaption className="mt-3 text-center text-[11px] tracking-[0.2em] uppercase text-luxe-gray-dark">{about.interlude.caption}</figcaption>
+              ) : null}
+            </figure>
+          </section>
+        ) : null}
 
         {/* Prose: three short pieces in one measure. */}
         <section className="container-luxe py-16 md:py-24">
