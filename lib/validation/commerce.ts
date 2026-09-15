@@ -7,12 +7,20 @@ export const moneySchema = z.object({
   currencyCode: z.string(),
 });
 
+/**
+ * The rate as stored on a checkout or an order. `freeOverAmount` MUST survive the round
+ * trip: the checkout re-prices delivery from the stored rate at the payment step and at
+ * order placement, and a schema that dropped the threshold (as this one did — z.object
+ * strips unknown keys) charged the flat fee on every order above the free-shipping line,
+ * while the delivery step, priced from the fresh rate, had promised "Δωρεάν".
+ */
 export const shippingRateSchema = z.object({
   id: z.string(),
   label: z.string(),
   description: z.string(),
   price: moneySchema,
   estimatedDelivery: z.string(),
+  freeOverAmount: z.number().nullable().optional(),
 });
 
 export const cartLineItemSchema = z.object({

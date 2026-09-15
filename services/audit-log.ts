@@ -35,6 +35,7 @@ export type AuditAction =
   | "order.shipment_created"
   | "order.shipment_cancelled"
   | "order.note_updated"
+  | "order.address_updated"
   | "courier.pickup_list_issued"
   | "adminUser.created"
   | "adminUser.role_changed"

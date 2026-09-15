@@ -3,11 +3,11 @@ import type { Prisma } from "@/lib/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
 import { DEFAULT_PAGE_SIZE, resolvePage, toPaged, type Paged } from "@/lib/pagination";
-import { toOrder } from "@/lib/commerce/postgres/mappers";
+import { toJsonInput, toOrder } from "@/lib/commerce/postgres/mappers";
 import { getEmailProvider, shippingUpdateEmail } from "@/lib/email";
 import { getSiteSettings } from "@/services/settings";
 import { creditStockForLines, quantitiesCreditedByReturns, subtractCreditedQuantities } from "@/services/restock";
-import { CommerceError, type Order } from "@/lib/commerce/types";
+import { CommerceError, type Address, type Order } from "@/lib/commerce/types";
 import { orderLink } from "@/services/order-notifications";
 import { getPrimaryPaymentForOrder } from "@/services/payments";
 import { paymentProviderRegistry } from "@/lib/payments/registry";
@@ -284,6 +284,19 @@ export interface OrderTrackingInput {
   carrier?: string;
   trackingNumber?: string;
   trackingUrl?: string;
+}
+
+/**
+ * A corrected delivery address. Only the fields a person can get wrong are replaced; the
+ * invoice block (ΑΦΜ, ΔΟΥ) belongs to the tax document and is left exactly as ordered.
+ */
+export async function updateOrderShippingAddress(id: string, address: Omit<Address, "countryCode" | "invoice">): Promise<Order> {
+  const current = await prisma.order.findUnique({ where: { id }, select: { shippingAddress: true } });
+  if (!current) throw new Error("Order not found.");
+  const previous = current.shippingAddress as unknown as Address;
+  const next: Address = { ...previous, ...address };
+  const row = await prisma.order.update({ where: { id }, data: { shippingAddress: toJsonInput(next) } });
+  return toOrder(row);
 }
 
 export async function updateOrderTracking(id: string, input: OrderTrackingInput): Promise<Order> {

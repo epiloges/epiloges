@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import { requireCapability } from "@/lib/admin-session";
 import { prisma } from "@/lib/prisma";
 import { recordAdminAction } from "@/services/audit-log";
-import { getOrderById, updateOrderStatus, updateOrderTracking, type OrderTrackingInput } from "@/services/orders";
+import { getOrderById, updateOrderShippingAddress, updateOrderStatus, updateOrderTracking, type OrderTrackingInput } from "@/services/orders";
+import { addressSchema } from "@/lib/validation/checkout";
 import { getCourierProvider, ACS_CARRIER_NAME } from "@/lib/courier";
 import { getPrimaryPaymentForOrder } from "@/services/payments";
 import { getSiteSettings } from "@/services/settings";
@@ -87,6 +88,60 @@ export async function updateOrderTrackingAction(orderId: string, input: OrderTra
     metadata: { ...input },
   });
   revalidatePath("/", "layout");
+}
+
+export interface ShippingAddressInput {
+  firstName: string;
+  lastName: string;
+  company?: string;
+  address1: string;
+  address2?: string;
+  city: string;
+  region?: string;
+  postalCode: string;
+  phone: string;
+}
+
+export interface ShippingAddressActionState {
+  error?: string;
+}
+
+/**
+ * The delivery address, corrected by the shop. Validated with the checkout's own address
+ * schema, so the admin cannot save what the customer could not have typed. Refused while a
+ * courier voucher exists: the label carries the old address, and a voucher that says one
+ * thing while the order says another is how a parcel goes to the wrong door.
+ */
+export async function updateOrderShippingAddressAction(orderId: string, input: ShippingAddressInput): Promise<ShippingAddressActionState> {
+  await requireCapability("orders:manage");
+  const order = await getOrderById(orderId);
+  if (!order) return { error: "Order not found." };
+  if (order.trackingNumber) {
+    return { error: `Voucher ${order.trackingNumber} already carries this address. Cancel the voucher, correct the address, then create it again.` };
+  }
+
+  const parsed = addressSchema.omit({ invoice: true }).safeParse({ ...input, countryCode: order.shippingAddress.countryCode });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Check the address." };
+  const { countryCode: _countryCode, ...address } = parsed.data;
+
+  const before = order.shippingAddress;
+  await updateOrderShippingAddress(orderId, {
+    ...address,
+    company: address.company || undefined,
+    address2: address.address2 || undefined,
+    region: address.region || undefined,
+  });
+
+  const line = (a: { address1: string; postalCode: string; city: string }) => `${a.address1}, ${a.postalCode} ${a.city}`;
+  await recordAdminAction({
+    action: "order.address_updated",
+    targetType: "order",
+    targetId: orderId,
+    summary: `Corrected the delivery address: "${line(before)}" → "${line(address)}"`,
+    metadata: { before, after: address },
+  });
+  revalidatePath(`/admin/orders/${orderId}`);
+  return {};
 }
 
 export interface CreateShipmentActionState {

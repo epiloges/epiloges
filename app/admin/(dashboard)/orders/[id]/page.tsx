@@ -3,6 +3,7 @@ import { connection } from "next/server";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { OrderStatusSelect } from "@/components/admin/OrderStatusSelect";
 import { OrderTrackingForm } from "@/components/admin/OrderTrackingForm";
+import { ShippingAddressEditor } from "@/components/admin/ShippingAddressEditor";
 import { formatDate, formatDateTime, formatMoney } from "@/lib/format";
 import Link from "next/link";
 import Image from "next/image";
@@ -16,6 +17,7 @@ import {
   updateOrderTrackingAction,
   updateOrderInternalNoteAction,
   createAcsShipmentAction,
+  updateOrderShippingAddressAction,
   cancelAcsShipmentAction,
 } from "@/app/admin/(dashboard)/orders/actions";
 import { isAcsCourierConfigured, ACS_CARRIER_NAME } from "@/lib/courier";
@@ -61,6 +63,7 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderDetailP
 
   const boundUpdateTracking = updateOrderTrackingAction.bind(null, order.id);
   const boundCreateAcsShipment = createAcsShipmentAction.bind(null, order.id);
+  const boundUpdateShippingAddress = updateOrderShippingAddressAction.bind(null, order.id);
   const unitCount = order.lineItems.reduce((sum, item) => sum + item.quantity, 0);
   const boundCancelAcsShipment = cancelAcsShipmentAction.bind(null, order.id);
   const acsConfigured = isAcsCourierConfigured();
@@ -385,6 +388,11 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderDetailP
                 <p key={i}>{line}</p>
               ))}
             </div>
+            <ShippingAddressEditor
+              address={order.shippingAddress}
+              lockedBy={order.trackingNumber ?? null}
+              onSave={boundUpdateShippingAddress}
+            />
           </div>
           <div className="border border-border bg-luxe-white p-4">
             <h3 className="mb-3 text-xs font-medium tracking-[0.05em] uppercase text-luxe-gray-dark">Billing Address</h3>

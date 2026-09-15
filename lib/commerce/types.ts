@@ -153,8 +153,10 @@ export interface ShippingRate {
    * need no configuration parameter — which is what keeps them usable from a client
    * component and from a unit test without either reaching for the database.
    *
-   * Absent on rates persisted before shipping became configurable. Those live on completed
-   * orders and are only ever displayed, never re-priced.
+   * Absent on rates persisted before shipping became configurable. Stored rates ARE
+   * re-priced — the checkout reads the rate back for the payment step and the order — so
+   * `shippingRateSchema` keeps this field on the way back; it once dropped it, and every
+   * order above the threshold paid the flat fee.
    */
   freeOverAmount?: number | null;
 }
