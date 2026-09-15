@@ -34,8 +34,11 @@ export function MobileMenu({ items, supportLinks = [], open, onOpenChange, trigg
   // desktop header hides) down with Account and Wishlist, in the same quiet small type.
   // A phone menu is the navigation, so they stay reachable; they just stop competing
   // with the shop.
-  const catalogueItems = items.filter((item) => !item.mobileOnly);
-  const quietItems = items.filter((item) => item.mobileOnly);
+  // Home is also mobile-only (the desktop header's logo is home) but it is not editorial:
+  // it stays in capitals at the top of the list, where a phone user expects it.
+  const isQuiet = (item: NavItem) => Boolean(item.mobileOnly) && item.href !== "/";
+  const catalogueItems = items.filter((item) => !isQuiet(item));
+  const quietItems = items.filter(isQuiet);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
