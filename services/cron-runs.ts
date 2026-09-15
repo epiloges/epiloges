@@ -25,7 +25,7 @@ import { getSiteContent, setSiteContent } from "@/lib/site-content";
  */
 
 /** The three jobs declared in vercel.json. Kept here so health can report on all of them. */
-export const CRON_JOBS = ["data-retention", "email-followups", "instagram-token"] as const;
+export const CRON_JOBS = ["data-retention", "email-followups", "instagram-token", "acs-delivery"] as const;
 export type CronJob = (typeof CRON_JOBS)[number];
 
 /**

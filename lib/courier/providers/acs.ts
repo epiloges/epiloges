@@ -6,8 +6,7 @@ import {
   type CreateShipmentResult,
   type LabelFormat,
   type PickupListResult,
-  type PickupListSummary,
-} from "@/lib/courier/types";
+  type PickupListSummary, type TrackingEvent, type TrackingStatus } from "@/lib/courier/types";
 import { ACS_CARRIER_NAME, buildTrackingUrl } from "@/lib/courier/tracking-url";
 import { concatPdfs, overlaySheets, type SheetLayer } from "@/lib/courier/label-sheets";
 
@@ -297,6 +296,46 @@ export function createAcsCourierProvider(creds: AcsCredentials): CourierProvider
       layers.forEach((layer, i) => sheets[Math.floor((first + i) / 3)].push(layer));
       const composed = layers.length === 1 && separate.length === 0 ? layers[0].pdf : await overlaySheets(sheets);
       return separate.length === 0 ? composed : concatPdfs([composed, ...separate]);
+    },
+
+    /**
+     * ACS_TrackingDetails answers with one table row per checkpoint. Until a parcel is
+     * scanned in, the reply is the row error "Δεν βρέθηκε αποστολή…" — that is `known:
+     * false`, not a failure. The row fields are located by name pattern rather than by
+     * the exact keys, because no scanned voucher has been seen yet (verified live on
+     * 2026-09-15 against three fresh vouchers); the raw rows ride along so the first real
+     * one can be read back from the activity log and these patterns tightened.
+     */
+    async trackShipment(trackingNumber: string): Promise<TrackingStatus> {
+      const out = await call("ACS_TrackingDetails", { Voucher_No: trackingNumber, Language: "GR" });
+      const error = rowError(out);
+      if (error) {
+        if (/δεν βρέθηκε|not found/i.test(error)) return { trackingNumber, known: false, delivered: false, events: [], raw: [] };
+        throw new CourierError(`ACS could not track the voucher: ${error}`);
+      }
+      const rows = out.rows.length > 0 ? out.rows : Object.keys(out.first).length > 0 ? [out.first] : [];
+      const pick = (row: Record<string, unknown>, pattern: RegExp) => {
+        const entry = Object.entries(row).find(([key, value]) => pattern.test(key) && value != null && String(value).trim() !== "");
+        return entry ? String(entry[1]).trim() : undefined;
+      };
+      const events: TrackingEvent[] = rows.map((row) => ({
+        at: pick(row, /date|time|ημερ/i),
+        status: pick(row, /status|action|descr|checkpoint|κατάστ|ενέργ/i) ?? "",
+        location: pick(row, /station|location|branch|city|κατάστημα|πόλη/i),
+      }));
+      const delivered = rows.some((row) => {
+        const text = Object.values(row).map(String).join(" ");
+        return /παραδόθηκε|παράδοσηs+ολοκληρ|delivered|deliverys+completed/i.test(text) || /^(1|true|Y)$/i.test(pick(row, /deliver(ed|y)_?flag|delivered/i) ?? "");
+      });
+      const deliveredRow = rows.find((row) => /παραδόθηκε|delivered/i.test(Object.values(row).map(String).join(" ")));
+      return {
+        trackingNumber,
+        known: true,
+        delivered,
+        deliveredAt: deliveredRow ? pick(deliveredRow, /date|time|ημερ/i) : undefined,
+        events,
+        raw: rows,
+      };
     },
 
     async deleteShipment(trackingNumber: string): Promise<void> {

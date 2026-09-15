@@ -12,6 +12,8 @@ import { orderLink } from "@/services/order-notifications";
 import { getPrimaryPaymentForOrder } from "@/services/payments";
 import { paymentProviderRegistry } from "@/lib/payments/registry";
 import { canTransitionOrder } from "@/lib/order-transitions";
+import { ACS_CARRIER_NAME } from "@/lib/courier/tracking-url";
+import { getSiteUrl } from "@/lib/site-url";
 
 export async function getOrderById(id: string): Promise<Order | null> {
   const row = await prisma.order.findUnique({ where: { id } });
@@ -261,7 +263,12 @@ export async function updateOrderStatus(id: string, status: Order["status"]): Pr
         lineItems: order.lineItems,
         trackingNumber: order.trackingNumber,
         carrier: order.carrier,
-        trackingUrl: order.trackingUrl,
+        // An ACS voucher links to the shop's own tracking page — ACS's site has no address
+        // that opens on a number — so the customer sees the parcel's state in one tap.
+        trackingUrl:
+          order.carrier === ACS_CARRIER_NAME && order.trackingNumber
+            ? `${getSiteUrl().replace(/\/$/, "")}/track/${order.trackingNumber}`
+            : order.trackingUrl,
         orderUrl: await orderLink(order.id),
         refundedAmount: payment && payment.refundedAmount.amount > 0 ? payment.refundedAmount : undefined,
         paymentMethodName: payment ? paymentProviderRegistry.getMethod(payment.methodId)?.defaultDisplayName : undefined,

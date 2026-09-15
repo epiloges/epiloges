@@ -72,6 +72,28 @@ export interface CourierProvider {
   listPickupLists?(date: string): Promise<PickupListSummary[]>;
   /** The tracking numbers a pickup list closed. */
   listPickupListVouchers?(pickupListNo: string, date: string): Promise<string[]>;
+  /** Where a parcel is, from the courier's tracking service. */
+  trackShipment?(trackingNumber: string): Promise<TrackingStatus>;
+}
+
+/** One line of a parcel's history, newest last. */
+export interface TrackingEvent {
+  /** ISO timestamp when the courier gave one, else the raw text. */
+  at?: string;
+  status: string;
+  location?: string;
+}
+
+export interface TrackingStatus {
+  trackingNumber: string;
+  /** True once the courier has scanned the parcel in — before that ACS knows nothing of it. */
+  known: boolean;
+  delivered: boolean;
+  /** ISO timestamp of the delivery, when reported. */
+  deliveredAt?: string;
+  events: TrackingEvent[];
+  /** The courier's own rows, untouched — kept until the response shape is known for sure. */
+  raw: Record<string, unknown>[];
 }
 
 export class CourierError extends Error {
