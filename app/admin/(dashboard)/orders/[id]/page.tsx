@@ -9,7 +9,7 @@ import Image from "next/image";
 import { getOrderById } from "@/services/orders";
 import { getPaymentsForOrder } from "@/services/payments";
 import { paymentProviderRegistry } from "@/lib/payments/registry";
-import { isSettled } from "@/lib/payments/status";
+import { isSettled, PAYMENT_STATUS_LABEL, PAYMENT_STATUS_TONE } from "@/lib/payments/status";
 import { PaymentStatusPill } from "@/components/admin/PaymentStatusPill";
 import {
   updateOrderStatusAction,
@@ -65,6 +65,28 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderDetailP
   const acsConfigured = isAcsCourierConfigured();
   const hasAcsVoucher = acsConfigured && order.carrier === ACS_CARRIER_NAME && Boolean(order.trackingNumber);
 
+  // The one thing to know before touching the box, as a colour rather than a word: green
+  // means the money is in, amber means it is still owed (cash at the door, a transfer not
+  // yet landed), grey means it went back. Mirrors the banner on the shop's new-order email.
+  const primaryPayment = payments.find((payment) => isSettled(payment.status)) ?? payments[0] ?? null;
+  const primaryMethod = primaryPayment ? paymentProviderRegistry.getMethod(primaryPayment.methodId) : null;
+  const paymentTone = primaryPayment ? PAYMENT_STATUS_TONE[primaryPayment.status] : "neutral";
+  const paymentBanner = {
+    positive: "border-green-700/40 bg-green-700/10 text-green-900",
+    pending: "border-amber-600/40 bg-amber-400/15 text-amber-900",
+    negative: "border-destructive/40 bg-destructive/10 text-destructive",
+    neutral: "border-border bg-luxe-gray-light text-luxe-gray-dark",
+  }[paymentTone];
+  const paymentHint = !primaryPayment
+    ? "No payment record."
+    : primaryPayment.status === "paid"
+      ? "Paid — ready to pack and ship."
+      : primaryPayment.methodId === "cash-on-delivery"
+        ? "Cash on delivery — the courier collects the total at the door."
+        : primaryPayment.methodId === "bank-transfer" || primaryPayment.status === "awaiting_bank_transfer"
+          ? "Awaiting the bank transfer — do not ship before it lands."
+          : PAYMENT_STATUS_LABEL[primaryPayment.status];
+
   return (
     <div>
       <AdminPageHeader
@@ -84,6 +106,21 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderDetailP
           </div>
         }
       />
+
+      <div className={`mb-6 flex flex-wrap items-center justify-between gap-3 border px-4 py-3 ${paymentBanner}`}>
+        <div>
+          <p className="text-sm font-semibold tracking-[0.08em] uppercase">
+            {primaryPayment ? `${PAYMENT_STATUS_LABEL[primaryPayment.status]} · ${formatMoney(order.totals.total)}` : "No payment"}
+            {primaryMethod ? <span className="ml-2 font-normal normal-case tracking-normal opacity-80">via {primaryMethod.defaultDisplayName}</span> : null}
+          </p>
+          <p className="mt-0.5 text-xs opacity-80">{paymentHint}</p>
+        </div>
+        {primaryPayment ? (
+          <Link href={`/admin/payments/${primaryPayment.id}`} className="text-xs tracking-[0.05em] uppercase underline-offset-4 hover:underline">
+            Payment details
+          </Link>
+        ) : null}
+      </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
@@ -210,7 +247,7 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderDetailP
         </div>
 
         <div className="space-y-6">
-          <div className="border border-border bg-luxe-white p-4">
+          <div className={`border p-4 ${paymentTone === "positive" ? "border-green-700/40 bg-green-700/5" : paymentTone === "pending" ? "border-amber-600/40 bg-amber-400/10" : "border-border bg-luxe-white"}`}>
             <h3 className="mb-3 text-xs font-medium tracking-[0.05em] uppercase text-luxe-gray-dark">Payment</h3>
             {payments.length === 0 ? (
               <p className="text-sm text-luxe-gray-dark">

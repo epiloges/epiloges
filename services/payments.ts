@@ -538,6 +538,21 @@ export async function getPrimaryPaymentForOrder(orderId: string): Promise<Paymen
   return payments.find((payment) => isSettled(payment.status)) ?? payments[0] ?? null;
 }
 
+/** getPrimaryPaymentForOrder for a page of orders, in one query — for the orders list. */
+export async function getPrimaryPaymentsForOrders(orderIds: string[]): Promise<Map<string, PaymentRecord>> {
+  if (orderIds.length === 0) return new Map();
+  const rows = await prisma.payment.findMany({ where: { orderId: { in: orderIds } }, orderBy: { createdAt: "desc" } });
+  const byOrder = new Map<string, PaymentRecord>();
+  for (const row of rows) {
+    const record = toPaymentRecord(row);
+    const current = byOrder.get(record.orderId);
+    // Rows arrive newest first, so the first one seen is the latest attempt; a settled one
+    // beats it whenever it turns up.
+    if (!current || (isSettled(record.status) && !isSettled(current.status))) byOrder.set(record.orderId, record);
+  }
+  return byOrder;
+}
+
 export async function getPaymentTimeline(paymentId: string): Promise<PaymentTimelineEntry[]> {
   const rows = await prisma.paymentTransaction.findMany({
     where: { paymentId },

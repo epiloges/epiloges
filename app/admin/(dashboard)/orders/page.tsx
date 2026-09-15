@@ -7,6 +7,8 @@ import { Pagination } from "@/components/admin/Pagination";
 import { formatDate, formatMoney, orderReference } from "@/lib/format";
 import { DEFAULT_PAGE_SIZE, parsePage, parseSearch } from "@/lib/pagination";
 import { listOrdersForAdmin, ORDER_STATUS_FILTERS } from "@/services/orders";
+import { getPrimaryPaymentsForOrders } from "@/services/payments";
+import { PaymentStatusPill } from "@/components/admin/PaymentStatusPill";
 import { updateOrderStatusAction } from "@/app/admin/(dashboard)/orders/actions";
 import type { Order } from "@/lib/commerce/types";
 
@@ -36,6 +38,7 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
     page: parsePage(params.page),
     pageSize: DEFAULT_PAGE_SIZE,
   });
+  const paymentByOrder = await getPrimaryPaymentsForOrders(rows.map((row) => row.id));
 
   const isFiltered = Boolean(search || status);
 
@@ -81,6 +84,15 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
                 ),
               },
               { header: "Date", cell: (row) => formatDate(row.createdAt) },
+              {
+                // Green is money in, amber is money still owed — the same colours as the
+                // order page banner and the shop's new-order email.
+                header: "Payment",
+                cell: (row) => {
+                  const payment = paymentByOrder.get(row.id);
+                  return payment ? <PaymentStatusPill status={payment.status} /> : <span className="text-xs text-luxe-gray-dark">—</span>;
+                },
+              },
               {
                 header: "Status",
                 cell: (row) => (
