@@ -138,6 +138,11 @@ export function ReviewStep() {
                 </span>
               ) : null}
             </p>
+            {/* What the button does next, for a method that finishes on the bank's page: the
+                choice between card, IRIS and Google Pay is made there, not here. */}
+            {selectedPaymentMethod.requiresRedirect ? (
+              <p className="mt-2 text-xs text-luxe-gray-dark">{t("redirectAfterPlacing", { button: t("placeOrder") })}</p>
+            ) : null}
           </div>
         ) : null}
         {giftWrap ? (
