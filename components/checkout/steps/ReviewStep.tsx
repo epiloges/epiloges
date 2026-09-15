@@ -125,17 +125,19 @@ export function ReviewStep() {
         {selectedPaymentMethod ? (
           <div className="py-4">
             <p className="text-eyebrow mb-1.5">{t("paymentMethod")}</p>
-            <p className="text-sm text-luxe-gray-dark">
-              {selectedPaymentMethod.displayName}
-              {selectedPaymentMethod.fee.amount > 0 ? ` · +${formatMoney(selectedPaymentMethod.fee)}` : ""}
+            <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-luxe-gray-dark">
+              <span>
+                {selectedPaymentMethod.displayName}
+                {selectedPaymentMethod.fee.amount > 0 ? ` · +${formatMoney(selectedPaymentMethod.fee)}` : ""}
+              </span>
+              {/* The same reassurance the shopper chose on the previous step, on the same line as the method. */}
+              {selectedPaymentMethod.trust ? (
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0B3B36]">
+                  <ShieldCheck className="size-4" strokeWidth={2} aria-hidden />
+                  {t("securedBy", { institution: selectedPaymentMethod.trust.securedBy })}
+                </span>
+              ) : null}
             </p>
-            {/* The same reassurance the shopper chose on the previous step, restated where they press the button. */}
-            {selectedPaymentMethod.trust ? (
-              <p className="mt-2 inline-flex items-center gap-1.5 bg-[#0B3B36] px-2.5 py-1.5 text-xs font-semibold text-luxe-white">
-                <ShieldCheck className="size-4" strokeWidth={2} aria-hidden />
-                {t("securedBy", { institution: selectedPaymentMethod.trust.securedBy })}
-              </p>
-            ) : null}
           </div>
         ) : null}
         {giftWrap ? (
