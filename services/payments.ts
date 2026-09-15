@@ -138,7 +138,13 @@ export async function getProviderStates(): Promise<Map<PaymentProviderId, Provid
  * a shop that could only take cash on delivery, one of which (PayPal) is not implemented
  * anywhere in the codebase.
  */
-export async function getAcceptedPaymentMethodNames(): Promise<string[]> {
+export interface AcceptedPaymentMethod {
+  name: string;
+  /** The schemes the method takes, for the footer to draw marks instead of a word. */
+  schemes?: PaymentMethodTrust["schemes"];
+}
+
+export async function getAcceptedPaymentMethods(): Promise<AcceptedPaymentMethod[]> {
   const [settingsList, states] = await Promise.all([getAllMethodSettings(), loadProviderStates()]);
   const settingsById = new Map(settingsList.map((settings) => [settings.methodId, settings]));
 
@@ -150,7 +156,10 @@ export async function getAcceptedPaymentMethodNames(): Promise<string[]> {
       return Boolean(settings?.enabled && state?.enabled && state?.configured);
     })
     .sort((a, b) => (settingsById.get(a.id)?.sortOrder ?? 0) - (settingsById.get(b.id)?.sortOrder ?? 0))
-    .map((definition) => settingsById.get(definition.id)?.displayName || definition.defaultDisplayName);
+    .map((definition) => ({
+      name: settingsById.get(definition.id)?.displayName || definition.defaultDisplayName,
+      schemes: definition.trust?.schemes,
+    }));
 }
 
 /**

@@ -5,7 +5,8 @@ import type { NavigationConfig, SiteSettings } from "@/types";
 import type { Locale } from "@/i18n/config";
 import { NewsletterForm } from "@/components/shared/NewsletterForm";
 import { LanguageSwitcher } from "@/components/shared/LanguageSwitcher";
-import { getAcceptedPaymentMethodNames } from "@/services/payments";
+import { getAcceptedPaymentMethods } from "@/services/payments";
+import { SchemeMark } from "@/components/checkout/PaymentMarks";
 import { COMPANY, storeName, traderIdentityLine } from "@/constants/company";
 
 interface FooterProps {
@@ -44,7 +45,7 @@ async function copyrightYear(): Promise<number> {
 
 export async function Footer({ navigation, settings }: FooterProps) {
   const year = await copyrightYear();
-  const paymentMethods = await getAcceptedPaymentMethodNames();
+  const paymentMethods = await getAcceptedPaymentMethods();
   const t = await getTranslations("Footer");
   const locale = (await getLocale()) as Locale;
 
@@ -121,14 +122,24 @@ export async function Footer({ navigation, settings }: FooterProps) {
           </div>
           {paymentMethods.length > 0 ? (
             <ul className="flex flex-wrap items-center gap-2">
-              {paymentMethods.map((method) => (
-                <li
-                  key={method}
-                  className="rounded-none border border-border px-2.5 py-1 text-[10px] tracking-[0.05em] text-luxe-gray-dark uppercase"
-                >
-                  {method}
-                </li>
-              ))}
+              {/* A method that takes card schemes shows their marks — the same official
+                  artwork as the checkout — and the others keep their word. */}
+              {paymentMethods.map((method) =>
+                method.schemes?.length ? (
+                  method.schemes.map((scheme) => (
+                    <li key={scheme}>
+                      <SchemeMark scheme={scheme} />
+                    </li>
+                  ))
+                ) : (
+                  <li
+                    key={method.name}
+                    className="inline-flex h-8 items-center rounded-none border border-border px-2.5 text-[10px] tracking-[0.05em] text-luxe-gray-dark uppercase"
+                  >
+                    {method.name}
+                  </li>
+                )
+              )}
             </ul>
           ) : null}
         </div>
