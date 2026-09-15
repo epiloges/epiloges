@@ -658,6 +658,17 @@ export function ProductForm({ defaultValues, collections, categories, seoDefault
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
+            <label className={labelClass} htmlFor="pf-publishedAt">Published (shelf date)</label>
+            <Controller
+              name="publishedAt"
+              control={control}
+              render={({ field }) => <PublishedAtField id="pf-publishedAt" value={field.value} onChange={field.onChange} />}
+            />
+            <p className="mt-1 text-xs text-luxe-gray-dark">
+              What &ldquo;newest&rdquo; means on the storefront. Set it to now and a returning style is a new arrival again.
+            </p>
+          </div>
+          <div>
             <label className={labelClass} htmlFor="pf-inventoryPolicy">Inventory policy</label>
             <select id="pf-inventoryPolicy" className={inputClass} {...register("inventoryPolicy")}>
               <option value="deny">Deny (stop selling at 0 stock)</option>
@@ -744,4 +755,38 @@ export function ProductForm({ defaultValues, collections, categories, seoDefault
       </div>
     </form>
   );
+}
+
+/**
+ * The shelf date, edited in the shopkeeper's own clock. The form holds an ISO string with
+ * offset (what the server stores, timezone-safe); the input speaks `datetime-local`, which
+ * is wall-clock time with no zone at all, so the conversion happens here, in the browser
+ * that knows which zone the person is in. "Now" is the whole reason the field exists.
+ */
+function PublishedAtField({ id, value, onChange }: { id: string; value?: string; onChange: (value: string | undefined) => void }) {
+  const local = value ? toLocalInput(new Date(value)) : "";
+  return (
+    <div className="flex gap-2">
+      <input
+        id={id}
+        type="datetime-local"
+        className={inputClass}
+        value={local}
+        onChange={(event) => onChange(event.target.value ? new Date(event.target.value).toISOString() : undefined)}
+      />
+      <button
+        type="button"
+        onClick={() => onChange(new Date().toISOString())}
+        className="shrink-0 border border-border px-3 text-xs tracking-[0.1em] uppercase transition-colors hover:border-luxe-black"
+      >
+        Now
+      </button>
+    </div>
+  );
+}
+
+/** `YYYY-MM-DDTHH:mm` in the browser's zone — the only format `datetime-local` accepts. */
+function toLocalInput(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }

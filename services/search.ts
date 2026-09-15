@@ -100,7 +100,7 @@ function scopeWhere(scope: ScopeInput): Prisma.Sql {
   }
   // "New" is the admin's flag OR anything added in the last six weeks — so the New In page
   // stays true on its own as stock arrives, instead of listing the whole catalogue.
-  if (scope.isNew) clauses.push(Prisma.sql`(p."isNew" = true OR p."createdAt" >= now() - interval '45 days')`);
+  if (scope.isNew) clauses.push(Prisma.sql`(p."isNew" = true OR p."publishedAt" >= now() - interval '45 days')`);
   if (scope.isSale) clauses.push(Prisma.sql`p."isSale" = true`);
 
   if (scope.query) {
@@ -161,7 +161,7 @@ function orderBy(sort: SearchOptions["sort"]): Prisma.Sql {
     case "price-desc":
       return Prisma.sql`${EFFECTIVE_PRICE} DESC, p.id ASC`;
     case "newest":
-      return Prisma.sql`p."createdAt" DESC, p.id ASC`;
+      return Prisma.sql`p."publishedAt" DESC, p.id ASC`;
     case "discount":
       return Prisma.sql`${DISCOUNT_RATIO} DESC, ${EFFECTIVE_PRICE} ASC, p.id ASC`;
     default:
@@ -175,7 +175,7 @@ function orderBy(sort: SearchOptions["sort"]): Prisma.Sql {
        * `p.id` is the tiebreaker on every branch. Without a total order, two products with the
        * same price can swap between pages and one of them is never seen.
        */
-      return Prisma.sql`p."createdAt" ASC, p.id ASC`;
+      return Prisma.sql`p."publishedAt" ASC, p.id ASC`;
   }
 }
 

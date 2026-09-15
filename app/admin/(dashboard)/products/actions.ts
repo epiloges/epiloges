@@ -196,6 +196,7 @@ export async function duplicateProduct(id: string): Promise<ProductActionState> 
     id: _id,
     createdAt: _createdAt,
     updatedAt: _updatedAt,
+    publishedAt: _publishedAt,
     colors,
     sizes,
     collections,

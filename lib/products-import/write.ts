@@ -51,6 +51,7 @@ function toProductWriteData(data: ProductFormValues, categoryId: string, previou
     careInstructions: data.careInstructions,
     relatedProductIds: data.relatedProductIds,
     isNew: data.isNew,
+    publishedAt: data.publishedAt ? new Date(data.publishedAt) : undefined,
     // The badge follows the price: a product with a sale price IS on sale whether or not the
     // box was ticked — the inline editor has always kept the two in step, the form did not.
     isSale: data.isSale || data.salePrice !== undefined,

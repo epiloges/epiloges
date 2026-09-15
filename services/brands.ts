@@ -24,7 +24,7 @@ export const getAllBrands = cache(async function getAllBrands(): Promise<Brand[]
   const rows = await prisma.$queryRaw<{ brand: string; count: bigint; images: unknown }[]>`
     SELECT p.brand,
            COUNT(*)::bigint AS count,
-           (SELECT p2.images FROM products p2 WHERE p2.brand = p.brand AND p2.status = 'active' ORDER BY p2."createdAt" DESC LIMIT 1) AS images
+           (SELECT p2.images FROM products p2 WHERE p2.brand = p.brand AND p2.status = 'active' ORDER BY p2."publishedAt" DESC LIMIT 1) AS images
     FROM products p
     WHERE p.status = 'active' AND p.brand IS NOT NULL AND btrim(p.brand) <> ''
     GROUP BY p.brand

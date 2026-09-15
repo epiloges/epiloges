@@ -220,6 +220,9 @@ export const productFormSchema = z
     careInstructions: trimmedList,
     relatedProductIds: trimmedList,
     isNew: z.boolean(),
+    // ISO 8601 with offset — the form converts the shopkeeper's local time before submitting,
+    // so the server never guesses a timezone. Absent on create: the database stamps "now".
+    publishedAt: z.string().datetime({ offset: true }).optional(),
     isSale: z.boolean(),
     isPreorder: z.boolean(),
     isBackorder: z.boolean(),
@@ -301,6 +304,7 @@ export function productToFormValues(product: Product): ProductFormValues {
     careInstructions: product.careInstructions,
     relatedProductIds: product.relatedProductIds ?? [],
     isNew: product.isNew ?? false,
+    publishedAt: product.publishedAt,
     isSale: product.isSale ?? false,
     isPreorder: product.isPreorder ?? false,
     isBackorder: product.isBackorder ?? false,

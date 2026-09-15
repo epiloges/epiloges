@@ -69,7 +69,7 @@ export async function getAllProducts(filter?: ProductListFilter): Promise<Produc
       ...(filter?.isSale ? { isSale: true } : {}),
     },
     include: productInclude,
-    orderBy: { createdAt: "asc" },
+    orderBy: { publishedAt: "asc" },
   });
   return rows.map(toProduct);
 }
@@ -83,10 +83,10 @@ export async function getAllProducts(filter?: ProductListFilter): Promise<Produc
  * hand-typed product ids under a heading reading "Μόλις παραλάβαμε".
  *
  * When nothing is flagged, or too little is, the row is topped up with the most recently
- * created products so it is never short. That fallback is doing real work today and will
- * quietly stop mattering: every product in the catalogue was imported from WooCommerce
- * inside the same minute, so ordering them by `createdAt` is really ordering them by row
- * number in the import file — but anything added from now on has a truthful timestamp.
+ * PUBLISHED products so it is never short. `publishedAt` is the shelf date, editable on the
+ * product form: every product was imported from WooCommerce inside the same minute, so the
+ * imported dates are really row numbers in the import file, but the shopkeeper can set a
+ * returning style to today and it is a new arrival again.
  *
  * Unisex products appear in every gendered row, matching how the rest of the storefront
  * treats them.
@@ -106,7 +106,7 @@ export async function getNewArrivals(options: { gender?: string; categorySlug?: 
   const flagged = await prisma.product.findMany({
     where: { ...scope, isNew: true },
     include: productInclude,
-    orderBy: { createdAt: "desc" },
+    orderBy: { publishedAt: "desc" },
     take: limit,
   });
   if (flagged.length >= limit) return flagged.map(toProduct);
@@ -115,7 +115,7 @@ export async function getNewArrivals(options: { gender?: string; categorySlug?: 
     // Excluding what we already have, or a flagged product would appear twice in one row.
     where: { ...scope, id: { notIn: flagged.map((row) => row.id) } },
     include: productInclude,
-    orderBy: { createdAt: "desc" },
+    orderBy: { publishedAt: "desc" },
     take: limit - flagged.length,
   });
 
@@ -286,7 +286,7 @@ function adminProductOrderBy(sort: ProductSortKey): Prisma.Sql {
         END DESC NULLS LAST, p.id ASC
       `;
     default:
-      return Prisma.sql`p."createdAt" DESC, p.id ASC`;
+      return Prisma.sql`p."publishedAt" DESC, p.id ASC`;
   }
 }
 

@@ -123,6 +123,7 @@ export function toProduct(row: ProductRow): Product {
     vendor: row.vendor ?? undefined,
     seo: row.seo ? productSeoOverrideSchema.parse(row.seo) : undefined,
     createdAt: row.createdAt.toISOString(),
+    publishedAt: row.publishedAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
 }

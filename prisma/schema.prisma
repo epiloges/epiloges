@@ -100,6 +100,10 @@ model Product {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  /// When it went on the shelf — what "newest" means everywhere on the storefront. Editable
+  /// on the product form, because a shoe that comes back after a year is a new arrival
+  /// again; createdAt stays the row's true birthday.
+  publishedAt DateTime @default(now())
 
   /// The storefront's hottest read path: every PLP (/women, /men, /collections/[slug],
   /// category pages) filters on gender and/or category. Those filters are applied in the
