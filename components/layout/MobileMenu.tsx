@@ -30,6 +30,12 @@ export function MobileMenu({ items, supportLinks = [], open, onOpenChange, trigg
   const tA11y = useTranslations("A11y");
   const t = useTranslations("MobileMenu");
   const close = () => onOpenChange(false);
+  // The catalogue in capitals up top; the editorial links (Journal, About — the ones the
+  // desktop header hides) down with Account and Wishlist, in the same quiet small type.
+  // A phone menu is the navigation, so they stay reachable; they just stop competing
+  // with the shop.
+  const catalogueItems = items.filter((item) => !item.mobileOnly);
+  const quietItems = items.filter((item) => item.mobileOnly);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -56,7 +62,7 @@ export function MobileMenu({ items, supportLinks = [], open, onOpenChange, trigg
 
         <nav className="flex-1 overflow-y-auto px-6 py-4" aria-label={tA11y("mobileNav")}>
           <Accordion>
-            {items.map((item) =>
+            {catalogueItems.map((item) =>
               item.children?.length ? (
                 <AccordionItem key={item.id} value={item.id}>
                   <AccordionTrigger className="py-4 text-[13px] font-medium tracking-[0.08em] uppercase no-underline hover:no-underline">
@@ -104,6 +110,13 @@ export function MobileMenu({ items, supportLinks = [], open, onOpenChange, trigg
 
         <div className="border-t border-border px-6 py-6">
           <ul className="font-heading flex flex-col gap-3 text-sm text-luxe-gray-dark">
+            {quietItems.map((item) => (
+              <li key={item.id}>
+                <Link href={item.href} onClick={close} className="no-underline">
+                  {item.label}
+                </Link>
+              </li>
+            ))}
             <li>
               <Link href="/account" onClick={close} className="no-underline">
                 {t("account")}
