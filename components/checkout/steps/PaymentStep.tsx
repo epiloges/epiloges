@@ -346,8 +346,29 @@ function LeadSentence({ text, className }: { text: string; className?: string })
 }
 
 /** Card scheme marks drawn inline, so they never load from a third party and never go stale. */
-function SchemeMark({ scheme }: { scheme: "visa" | "mastercard" | "maestro" }) {
+function SchemeMark({ scheme }: { scheme: "visa" | "mastercard" | "maestro" | "iris" | "google-pay" }) {
   const box = "inline-flex h-7 w-11 items-center justify-center border border-border bg-luxe-white";
+  if (scheme === "iris") {
+    return (
+      <span className={box} aria-label="IRIS online payments" title="IRIS">
+        <svg viewBox="0 0 40 14" className="h-3.5 w-9" aria-hidden>
+          <circle cx="7" cy="7" r="4.5" fill="#E4002B" />
+          <circle cx="7" cy="7" r="2" fill="#FFFFFF" />
+          <text x="14" y="11.5" fontFamily="Arial, Helvetica, sans-serif" fontWeight="700" fontSize="11" fill="#1D1D1B">IRIS</text>
+        </svg>
+      </span>
+    );
+  }
+  if (scheme === "google-pay") {
+    return (
+      <span className={box} aria-label="Google Pay" title="Google Pay">
+        <svg viewBox="0 0 40 14" className="h-3.5 w-9" aria-hidden>
+          <text x="3" y="11.5" fontFamily="Arial, Helvetica, sans-serif" fontWeight="700" fontSize="12" fill="#4285F4">G</text>
+          <text x="13" y="11.5" fontFamily="Arial, Helvetica, sans-serif" fontWeight="500" fontSize="11" fill="#3C4043">Pay</text>
+        </svg>
+      </span>
+    );
+  }
   if (scheme === "visa") {
     return (
       <span className={box} aria-label="Visa" title="Visa">

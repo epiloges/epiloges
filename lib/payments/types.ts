@@ -115,7 +115,8 @@ export type PaymentMethodType =
 export interface PaymentMethodTrust {
   /** The institution behind the payment page, e.g. "Τράπεζα Πειραιώς". */
   securedBy: string;
-  schemes?: readonly ("visa" | "mastercard" | "maestro")[];
+  /** Card schemes and wallets the page accepts — the checkout draws a mark for each. */
+  schemes?: readonly ("visa" | "mastercard" | "maestro" | "iris" | "google-pay")[];
   /** One short line of assurances, e.g. "3-D Secure · SSL". */
   assurances?: readonly string[];
 }

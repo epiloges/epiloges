@@ -131,8 +131,8 @@ const PIRAEUS_CARD_METHOD: PaymentMethodDefinition = {
   id: "piraeus-card",
   providerId: "piraeus",
   name: "Cards (Piraeus Bank epay)",
-  defaultDisplayName: "Πιστωτική / Χρεωστική κάρτα",
-  defaultDescription: "Visa, Mastercard, Maestro. Ασφαλής πληρωμή στο περιβάλλον της Τράπεζας Πειραιώς.",
+  defaultDisplayName: "Κάρτα · IRIS · Google Pay",
+  defaultDescription: "Visa, Mastercard, Maestro, IRIS ή Google Pay — επιλέγετε στην ασφαλή σελίδα της Τράπεζας Πειραιώς.",
   type: "card",
   // Requires credentials, so it can never be on before someone supplies them.
   defaultEnabled: false,
@@ -149,7 +149,9 @@ const PIRAEUS_CARD_METHOD: PaymentMethodDefinition = {
   icon: "card",
   trust: {
     securedBy: "Τράπεζα Πειραιώς",
-    schemes: ["visa", "mastercard", "maestro"],
+    // IRIS and Google Pay are live on the bank's hosted page for this POS; the shopper
+    // picks between them there. Shown here so they know before they commit.
+    schemes: ["visa", "mastercard", "maestro", "iris", "google-pay"],
     assurances: ["3-D Secure", "Κρυπτογράφηση SSL", "Τα στοιχεία της κάρτας δεν φτάνουν ποτέ στο κατάστημα"],
   },
 };
