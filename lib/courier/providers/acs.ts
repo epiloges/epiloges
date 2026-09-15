@@ -218,10 +218,29 @@ export function createAcsCourierProvider(creds: AcsCredentials): CourierProvider
         );
       }
 
+      /**
+       * A multi-parcel voucher comes back with more than one number. The guide does not
+       * name the field, so every voucher-shaped value in the first row and the table rows
+       * is collected — anything that is not the main number — and the row's keys are
+       * reported so the shape is on record after the first real multi-piece shipment.
+       */
+      const looksLikeVoucher = (value: unknown) => (typeof value === "string" || typeof value === "number") && /^\d{8,12}$/.test(String(value).trim());
+      const pieces = new Set<string>();
+      for (const row of [out.first, ...out.rows]) {
+        for (const [key, value] of Object.entries(row)) {
+          if (/voucher|piece|item/i.test(key) && looksLikeVoucher(value)) {
+            const number = String(value).trim();
+            if (number !== trackingNumber) pieces.add(number);
+          }
+        }
+      }
+
       return {
         trackingNumber,
         carrier: ACS_CARRIER_NAME,
         trackingUrl: buildTrackingUrl(ACS_CARRIER_NAME) ?? "https://www.acscourier.net/en/track-and-trace",
+        pieceTrackingNumbers: [...pieces],
+        responseKeys: itemQuantity > 1 ? Object.keys(out.first) : undefined,
       };
     },
 

@@ -98,6 +98,19 @@ describe("createShipment", () => {
     });
   });
 
+  it("sends the parcel count through and collects the piece vouchers a multi-parcel response carries", async () => {
+    const spy = stubFetch(
+      acsResponse([{ Voucher_No: "9807525324", Voucher_No_Return: null, Item_Voucher_No: "8807525325", Error_Message: "" }])
+    );
+    const provider = createAcsCourierProvider(creds);
+    const result = await provider.createShipment({ orderId: "o", recipientName: "X", address, weightGrams: 2000, itemQuantity: 2 });
+
+    expect(sentBody(spy).ACSInputParameters).toMatchObject({ Item_Quantity: 2, Weight: 2 });
+    expect(result.trackingNumber).toBe("9807525324");
+    expect(result.pieceTrackingNumbers).toEqual(["8807525325"]);
+    expect(result.responseKeys).toContain("Voucher_No");
+  });
+
   it("sends no COD fields at all for a prepaid order, and never a weight under ACS's 0.5 kg floor", async () => {
     const spy = stubFetch(acsResponse([{ Voucher_No: "1", Error_Message: "" }]));
     await createAcsCourierProvider(creds).createShipment({

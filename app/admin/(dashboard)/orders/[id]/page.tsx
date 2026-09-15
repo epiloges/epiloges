@@ -61,6 +61,7 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderDetailP
 
   const boundUpdateTracking = updateOrderTrackingAction.bind(null, order.id);
   const boundCreateAcsShipment = createAcsShipmentAction.bind(null, order.id);
+  const unitCount = order.lineItems.reduce((sum, item) => sum + item.quantity, 0);
   const boundCancelAcsShipment = cancelAcsShipmentAction.bind(null, order.id);
   const acsConfigured = isAcsCourierConfigured();
   const hasAcsVoucher = acsConfigured && order.carrier === ACS_CARRIER_NAME && Boolean(order.trackingNumber);
@@ -233,6 +234,8 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderDetailP
               courierProviderIsAcs={acsConfigured && !hasAcsVoucher}
               onSave={boundUpdateTracking}
               onCreateAcsShipment={boundCreateAcsShipment}
+              shippingAddress={order.shippingAddress}
+              unitCount={unitCount}
             />
             {hasAcsVoucher && order.trackingNumber ? (
               <AcsVoucherActions

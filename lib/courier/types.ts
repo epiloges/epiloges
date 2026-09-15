@@ -20,6 +20,14 @@ export interface CreateShipmentResult {
   trackingNumber: string;
   carrier: string;
   trackingUrl: string;
+  /**
+   * For a shipment of several parcels: every voucher number the courier returned besides
+   * the main one, in the order it returned them. ACS issues one label per parcel (the
+   * owner's words: "one starting with 9, the other with 8"). Empty for a single parcel.
+   */
+  pieceTrackingNumbers?: string[];
+  /** The raw keys of the courier's first response row — kept once so a new response shape is visible in the activity log rather than guessed at. */
+  responseKeys?: string[];
 }
 
 /** Laser = A4 sheet with three labels; thermal = label roll. */

@@ -98,7 +98,12 @@ export interface CreateShipmentActionState {
  * live shipment/voucher, not a no-op. Only reachable from the admin order detail
  * page's button, which is itself only rendered when ACS is configured.
  */
-export async function createAcsShipmentAction(orderId: string): Promise<CreateShipmentActionState> {
+export interface CreateShipmentOptions {
+  /** Parcels the courier collects — one label each. Defaults to one per pair. */
+  pieces?: number;
+}
+
+export async function createAcsShipmentAction(orderId: string, options: CreateShipmentOptions = {}): Promise<CreateShipmentActionState> {
   await requireCapability("orders:manage");
   try {
     const order = await getOrderById(orderId);
@@ -114,6 +119,12 @@ export async function createAcsShipmentAction(orderId: string): Promise<CreateSh
     }
 
     const totalQuantity = order.lineItems.reduce((sum, item) => sum + item.quantity, 0);
+    /**
+     * Shoes ship one box per pair — a boxed pair does not fit in another pair's box — so the
+     * default is one parcel per unit, and the admin can override it for the odd order that
+     * goes in one carton. ACS issues a label per parcel and expects the count up front.
+     */
+    const pieces = Math.min(20, Math.max(1, Math.round(options.pieces ?? totalQuantity)));
     const [payment, settings] = await Promise.all([getPrimaryPaymentForOrder(order.id), getSiteSettings()]);
     /**
      * Αντικαταβολή rides on the voucher: the courier collects the order total at the door.
@@ -127,13 +138,10 @@ export async function createAcsShipmentAction(orderId: string): Promise<CreateSh
       orderId: order.id,
       recipientName: `${order.shippingAddress.firstName} ${order.shippingAddress.lastName}`,
       address: order.shippingAddress,
-      // Order snapshots don't carry per-line-item weight — a reasonable flat
-      // estimate per unit until real per-product shipping weight is threaded
-      // through the cart/order snapshot.
-      weightGrams: Math.max(500, totalQuantity * 500),
-      // One parcel per order. ACS reads Item_Quantity as the number of PARCELS and issues
-      // a voucher per parcel; a three-pair order still ships in one box.
-      itemQuantity: 1,
+      // Order snapshots don't carry per-line-item weight; a boxed pair of shoes is about a
+      // kilo, and ACS corrects the weight at pickup anyway.
+      weightGrams: Math.max(500, pieces * 1000),
+      itemQuantity: pieces,
       codAmount: collectOnDelivery ? order.totals.total.amount : undefined,
       deliveryNotes: order.customerNote,
       senderName: settings.siteName,
@@ -146,8 +154,8 @@ export async function createAcsShipmentAction(orderId: string): Promise<CreateSh
       action: "order.shipment_created",
       targetType: "order",
       targetId: orderId,
-      summary: `Created an ACS shipment${result.trackingNumber ? ` (${result.trackingNumber})` : ""}${collectOnDelivery ? ` collecting ${order.totals.total.amount.toFixed(2)} on delivery` : ""}`,
-      metadata: { ...result, codAmount: collectOnDelivery ? order.totals.total.amount : null },
+      summary: `Created an ACS shipment${result.trackingNumber ? ` (${result.trackingNumber})` : ""}, ${pieces} parcel${pieces === 1 ? "" : "s"}${result.pieceTrackingNumbers?.length ? ` (pieces ${result.pieceTrackingNumbers.join(", ")})` : ""}${collectOnDelivery ? `, collecting ${order.totals.total.amount.toFixed(2)} on delivery` : ""}`,
+      metadata: { ...result, pieces, codAmount: collectOnDelivery ? order.totals.total.amount : null },
     });
     revalidatePath("/", "layout");
     return {};
