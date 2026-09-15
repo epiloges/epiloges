@@ -297,12 +297,18 @@ function PaymentMethodOption({
               {t("securedBy", { institution: trust.securedByGenitive ?? trust.securedBy })}
             </span>
             <span className="mt-2.5 flex flex-wrap items-center gap-2">
-              <SecuredByBadge institution={trust.securedBy} />
+              <Mark id="epay" />
               {trust.schemes?.map((scheme) => <SchemeMark key={scheme} scheme={scheme} />)}
             </span>
-            {trust.assurances?.length ? (
-              <span className="mt-2 block text-[11px] text-luxe-gray-dark">{trust.assurances.join(" · ")}</span>
-            ) : null}
+            <span className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+              <span className="inline-flex items-center gap-2">
+                <Mark id="visa-secure" boxed={false} />
+                <Mark id="mastercard-idcheck" boxed={false} />
+              </span>
+              {trust.assurances?.length ? (
+                <span className="text-[11px] text-luxe-gray-dark">{trust.assurances.join(" · ")}</span>
+              ) : null}
+            </span>
           </>
         ) : (
           <LeadSentence text={method.description} className="mt-0.5 block text-xs text-luxe-gray-dark" />
@@ -323,17 +329,39 @@ function PaymentMethodOption({
 }
 
 /**
- * The bank's name set as a badge — a shield, the name, "ePay" beneath — not the bank's own
- * logo, which is theirs to license; the point is the name, read at a glance.
+ * The official marks from epay's merchant kit (section 8 of the Redirection manual), served
+ * from /public/payments — the epay logotype, the card schemes, IRIS, and the two 3-D Secure
+ * programme marks. Plain <img>: static files under our own origin, nothing to optimise, and
+ * a brand mark must never be recompressed or recoloured. Google Pay is not in the kit; its
+ * mark stays drawn inline until Google's own asset is added.
  */
-function SecuredByBadge({ institution }: { institution: string }) {
+const MARKS: Record<"epay" | "visa" | "mastercard" | "maestro" | "iris" | "visa-secure" | "mastercard-idcheck", { src: string; alt: string; className: string }> = {
+  epay: { src: "/payments/epay.png", alt: "epay", className: "h-5" },
+  visa: { src: "/payments/visa.svg", alt: "Visa", className: "h-3.5" },
+  mastercard: { src: "/payments/mastercard.svg", alt: "Mastercard", className: "h-6" },
+  maestro: { src: "/payments/maestro.svg", alt: "Maestro", className: "h-5" },
+  iris: { src: "/payments/iris.png", alt: "IRIS online payments", className: "h-5" },
+  "visa-secure": { src: "/payments/visa-secure.jpg", alt: "Visa Secure", className: "h-7" },
+  "mastercard-idcheck": { src: "/payments/mastercard-idcheck.png", alt: "Mastercard ID Check", className: "h-6" },
+};
+
+function Mark({ id, boxed = true }: { id: keyof typeof MARKS; boxed?: boolean }) {
+  const mark = MARKS[id];
+  const img = (
+    // eslint-disable-next-line @next/next/no-img-element -- a brand mark from /public; see MARKS.
+    <img src={mark.src} alt={mark.alt} title={mark.alt} className={cn("w-auto", mark.className)} />
+  );
+  return boxed ? <span className="inline-flex h-8 min-w-11 items-center justify-center border border-border bg-luxe-white px-1.5">{img}</span> : img;
+}
+
+function SchemeMark({ scheme }: { scheme: "visa" | "mastercard" | "maestro" | "iris" | "google-pay" }) {
+  if (scheme !== "google-pay") return <Mark id={scheme} />;
   return (
-    <span className="inline-flex items-center gap-1.5 bg-[#0B3B36] px-2.5 py-1.5 text-luxe-white">
-      <ShieldCheck className="size-4" strokeWidth={2} aria-hidden />
-      <span className="flex flex-col leading-none">
-        <span className="text-[11px] font-semibold tracking-[0.02em]">{institution}</span>
-        <span className="mt-0.5 text-[9px] tracking-[0.2em] uppercase opacity-80">ePay · secure</span>
-      </span>
+    <span className="inline-flex h-8 min-w-11 items-center justify-center border border-border bg-luxe-white px-1.5" aria-label="Google Pay" title="Google Pay">
+      <svg viewBox="0 0 40 14" className="h-3.5 w-9" aria-hidden>
+        <text x="3" y="11.5" fontFamily="Arial, Helvetica, sans-serif" fontWeight="700" fontSize="12" fill="#4285F4">G</text>
+        <text x="13" y="11.5" fontFamily="Arial, Helvetica, sans-serif" fontWeight="500" fontSize="11" fill="#3C4043">Pay</text>
+      </svg>
     </span>
   );
 }
@@ -345,51 +373,6 @@ function LeadSentence({ text, className }: { text: string; className?: string })
   return (
     <span className={className}>
       <span className="font-semibold text-luxe-black">{match[1]}</span> {match[2]}
-    </span>
-  );
-}
-
-/** Card scheme marks drawn inline, so they never load from a third party and never go stale. */
-function SchemeMark({ scheme }: { scheme: "visa" | "mastercard" | "maestro" | "iris" | "google-pay" }) {
-  const box = "inline-flex h-7 w-11 items-center justify-center border border-border bg-luxe-white";
-  if (scheme === "iris") {
-    return (
-      <span className={box} aria-label="IRIS online payments" title="IRIS">
-        <svg viewBox="0 0 40 14" className="h-3.5 w-9" aria-hidden>
-          <circle cx="7" cy="7" r="4.5" fill="#E4002B" />
-          <circle cx="7" cy="7" r="2" fill="#FFFFFF" />
-          <text x="14" y="11.5" fontFamily="Arial, Helvetica, sans-serif" fontWeight="700" fontSize="11" fill="#1D1D1B">IRIS</text>
-        </svg>
-      </span>
-    );
-  }
-  if (scheme === "google-pay") {
-    return (
-      <span className={box} aria-label="Google Pay" title="Google Pay">
-        <svg viewBox="0 0 40 14" className="h-3.5 w-9" aria-hidden>
-          <text x="3" y="11.5" fontFamily="Arial, Helvetica, sans-serif" fontWeight="700" fontSize="12" fill="#4285F4">G</text>
-          <text x="13" y="11.5" fontFamily="Arial, Helvetica, sans-serif" fontWeight="500" fontSize="11" fill="#3C4043">Pay</text>
-        </svg>
-      </span>
-    );
-  }
-  if (scheme === "visa") {
-    return (
-      <span className={box} aria-label="Visa" title="Visa">
-        <svg viewBox="0 0 40 14" className="h-3.5 w-9" aria-hidden>
-          <text x="20" y="12" textAnchor="middle" fontFamily="Arial, Helvetica, sans-serif" fontStyle="italic" fontWeight="700" fontSize="14" fill="#1A1F71">VISA</text>
-        </svg>
-      </span>
-    );
-  }
-  const right = scheme === "mastercard" ? "#F79E1B" : "#0099DF";
-  const left = scheme === "mastercard" ? "#EB001B" : "#ED0006";
-  return (
-    <span className={box} aria-label={scheme === "mastercard" ? "Mastercard" : "Maestro"} title={scheme === "mastercard" ? "Mastercard" : "Maestro"}>
-      <svg viewBox="0 0 24 16" className="h-4 w-6" aria-hidden>
-        <circle cx="9" cy="8" r="7" fill={left} />
-        <circle cx="15" cy="8" r="7" fill={right} fillOpacity="0.9" />
-      </svg>
     </span>
   );
 }
