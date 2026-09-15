@@ -40,7 +40,7 @@ export interface CheckoutPaymentMethod {
   clientCapability?: string;
   sortOrder: number;
   /** Who secures the payment and which schemes it takes — see PaymentMethodTrust. */
-  trust?: { securedBy: string; schemes?: readonly ("visa" | "mastercard" | "maestro" | "iris" | "google-pay")[]; assurances?: readonly string[] };
+  trust?: { securedBy: string; securedByGenitive?: string; schemes?: readonly ("visa" | "mastercard" | "maestro" | "iris" | "google-pay")[]; assurances?: readonly string[] };
 }
 
 /**

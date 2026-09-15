@@ -149,6 +149,7 @@ const PIRAEUS_CARD_METHOD: PaymentMethodDefinition = {
   icon: "card",
   trust: {
     securedBy: "Τράπεζα Πειραιώς",
+    securedByGenitive: "Τράπεζας Πειραιώς",
     // IRIS and Google Pay are live on the bank's hosted page for this POS; the shopper
     // picks between them there. Shown here so they know before they commit.
     schemes: ["visa", "mastercard", "maestro", "iris", "google-pay"],

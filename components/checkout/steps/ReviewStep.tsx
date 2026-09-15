@@ -134,7 +134,7 @@ export function ReviewStep() {
               {selectedPaymentMethod.trust ? (
                 <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0B3B36]">
                   <ShieldCheck className="size-4" strokeWidth={2} aria-hidden />
-                  {t("securedBy", { institution: selectedPaymentMethod.trust.securedBy })}
+                  {t("securedBy", { institution: selectedPaymentMethod.trust.securedByGenitive ?? selectedPaymentMethod.trust.securedBy })}
                 </span>
               ) : null}
             </p>

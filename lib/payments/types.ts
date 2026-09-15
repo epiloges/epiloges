@@ -115,6 +115,12 @@ export type PaymentMethodType =
 export interface PaymentMethodTrust {
   /** The institution behind the payment page, e.g. "Τράπεζα Πειραιώς". */
   securedBy: string;
+  /**
+   * The same name as it reads after "μέσω" — Greek declines it ("μέσω Τράπεζας Πειραιώς").
+   * The sentence must say VIA: a shopper who reads "Τράπεζα Πειραιώς" next to "card" can
+   * think they need an account there. Falls back to securedBy for languages that don't decline.
+   */
+  securedByGenitive?: string;
   /** Card schemes and wallets the page accepts — the checkout draws a mark for each. */
   schemes?: readonly ("visa" | "mastercard" | "maestro" | "iris" | "google-pay")[];
   /** One short line of assurances, e.g. "3-D Secure · SSL". */

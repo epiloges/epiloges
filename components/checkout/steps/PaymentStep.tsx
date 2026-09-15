@@ -263,10 +263,9 @@ function PaymentMethodOption({
       onClick={onSelect}
       className={cn(
         "flex w-full items-start gap-3 border px-4 py-3.5 text-left transition-colors",
-        // A featured method sits on the bank's own yellow, so the eye lands on it before
-        // reading anything; the selection ring stays the same black as every option.
-        trust ? "bg-[#FFE600]" : "",
-        isSelected ? "border-luxe-black" : trust ? "border-[#E0C800] hover:border-luxe-black/60" : "border-border hover:border-luxe-black/50"
+        // No colour on the featured method: a bank-yellow panel read as "you need an account
+        // with this bank". It earns its place with the badge and the marks instead.
+        isSelected ? "border-luxe-black" : "border-border hover:border-luxe-black/50"
       )}
     >
       <span
@@ -278,10 +277,15 @@ function PaymentMethodOption({
       >
         {isSelected ? <span className="size-2 rounded-full bg-luxe-black" /> : null}
       </span>
-      <PaymentMethodIcon icon={method.icon} className={cn("mt-0.5", trust ? "text-luxe-black" : "text-luxe-gray-dark")} />
+      <PaymentMethodIcon icon={method.icon} className="mt-0.5 text-luxe-gray-dark" />
       <span className="min-w-0 flex-1">
         <span className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
-          <span className="text-sm font-medium">{method.displayName}</span>
+          <span className="flex flex-wrap items-center gap-2">
+            <span className="text-sm font-medium">{method.displayName}</span>
+            {trust ? (
+              <span className="bg-luxe-black px-1.5 py-0.5 text-[10px] font-medium tracking-[0.12em] uppercase text-luxe-white">{t("mostPopular")}</span>
+            ) : null}
+          </span>
           {method.fee.amount > 0 ? (
             <span className="text-sm whitespace-nowrap">+{formatMoney(method.fee)}</span>
           ) : null}
@@ -290,21 +294,21 @@ function PaymentMethodOption({
           <>
             <span className="mt-1.5 flex items-center gap-1.5 text-xs font-semibold text-luxe-black">
               <Lock className="size-3.5" strokeWidth={2} aria-hidden />
-              {t("securedBy", { institution: trust.securedBy })}
+              {t("securedBy", { institution: trust.securedByGenitive ?? trust.securedBy })}
             </span>
             <span className="mt-2.5 flex flex-wrap items-center gap-2">
               <SecuredByBadge institution={trust.securedBy} />
               {trust.schemes?.map((scheme) => <SchemeMark key={scheme} scheme={scheme} />)}
             </span>
             {trust.assurances?.length ? (
-              <span className="mt-2 block text-[11px] text-luxe-black/70">{trust.assurances.join(" · ")}</span>
+              <span className="mt-2 block text-[11px] text-luxe-gray-dark">{trust.assurances.join(" · ")}</span>
             ) : null}
           </>
         ) : (
           <LeadSentence text={method.description} className="mt-0.5 block text-xs text-luxe-gray-dark" />
         )}
         {method.requiresRedirect ? (
-          <span className={cn("mt-1 block text-[11px]", trust ? "text-luxe-black/70" : "text-luxe-gray-dark")}>
+          <span className="mt-1 block text-[11px] text-luxe-gray-dark">
             {t("redirectNote")}
           </span>
         ) : null}
