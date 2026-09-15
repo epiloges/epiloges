@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
+import { ShieldCheck } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import { formatMoney } from "@/lib/format";
 import { computeShippingChargeForRate } from "@/lib/shipping";
@@ -128,6 +129,13 @@ export function ReviewStep() {
               {selectedPaymentMethod.displayName}
               {selectedPaymentMethod.fee.amount > 0 ? ` · +${formatMoney(selectedPaymentMethod.fee)}` : ""}
             </p>
+            {/* The same reassurance the shopper chose on the previous step, restated where they press the button. */}
+            {selectedPaymentMethod.trust ? (
+              <p className="mt-2 inline-flex items-center gap-1.5 bg-[#0B3B36] px-2.5 py-1.5 text-xs font-semibold text-luxe-white">
+                <ShieldCheck className="size-4" strokeWidth={2} aria-hidden />
+                {t("securedBy", { institution: selectedPaymentMethod.trust.securedBy })}
+              </p>
+            ) : null}
           </div>
         ) : null}
         {giftWrap ? (
