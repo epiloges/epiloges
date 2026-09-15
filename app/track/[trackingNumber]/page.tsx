@@ -5,8 +5,9 @@ import { PackageCheck, PackageSearch, Truck } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { getNavigation, getSiteSettings } from "@/services";
-import { getCourierProvider, ACS_CARRIER_NAME, buildTrackingUrl } from "@/lib/courier";
+import { getCourierProvider } from "@/lib/courier";
 import type { TrackingStatus } from "@/lib/courier/types";
+import { COMPANY } from "@/constants/company";
 
 export const instant = false;
 
@@ -33,17 +34,18 @@ async function trackCached(trackingNumber: string): Promise<TrackingStatus | nul
 }
 
 /**
- * The link in the shipping email. ACS's own site has no address that opens on a number
- * (it is an app that asks for it), so the customer lands here: the voucher number, what
- * ACS says about it, and a link to ACS's page for the rest. Nothing about the order —
- * who, what, how much — is on it; a voucher number is printed on a box.
+ * The link in the shipping email — no live courier integration is configured for this
+ * deployment (manual carrier entry, see lib/courier), so there's no external tracking
+ * page to defer to. The customer lands here instead: the tracking number, and whatever
+ * status a future provider's `trackShipment` reports (none yet, so always "pending").
+ * Nothing about the order — who, what, how much — is on it; a tracking number is
+ * printed on a box.
  */
 export default async function TrackPage({ params }: { params: Promise<{ trackingNumber: string }> }) {
   const { trackingNumber } = await params;
   if (!/^\d{8,14}$/.test(trackingNumber)) notFound();
 
   const [navigation, settings, tracking] = await Promise.all([getNavigation(), getSiteSettings(), trackCached(trackingNumber)]);
-  const acsUrl = buildTrackingUrl(ACS_CARRIER_NAME) ?? "https://www.acscourier.net/el/track-and-trace";
 
   const state = !tracking || !tracking.known ? "pending" : tracking.delivered ? "delivered" : "moving";
   const Icon = state === "delivered" ? PackageCheck : state === "moving" ? Truck : PackageSearch;
@@ -51,17 +53,17 @@ export default async function TrackPage({ params }: { params: Promise<{ tracking
     state === "delivered" ? "Το δέμα σας παραδόθηκε" : state === "moving" ? "Το δέμα σας είναι καθ' οδόν" : "Το δέμα σας ετοιμάζεται";
   const body =
     state === "delivered"
-      ? "Η ACS Courier επιβεβαίωσε την παράδοση. Ελπίζουμε να τα χαρείτε."
+      ? "Ο διανομέας επιβεβαίωσε την παράδοση. Ελπίζουμε να τα χαρείτε."
       : state === "moving"
-        ? "Η ACS Courier παρέλαβε το δέμα από το κατάστημά μας. Παράδοση συνήθως σε 1–3 εργάσιμες ημέρες."
-        : "Η αποστολή έχει καταχωρηθεί στην ACS Courier και θα παραληφθεί από το κατάστημά μας στην επόμενη συλλογή. Μόλις σκαναριστεί, η πορεία της θα εμφανίζεται εδώ.";
+        ? "Ο διανομέας παρέλαβε το δέμα από το κατάστημά μας. Παράδοση συνήθως σε 1–3 εργάσιμες ημέρες."
+        : "Η αποστολή έχει καταχωρηθεί και θα παραληφθεί από το κατάστημά μας στην επόμενη συλλογή. Μόλις υπάρξει ενημέρωση, η πορεία της θα εμφανίζεται εδώ.";
 
   return (
     <>
       <Header navigation={navigation} siteName={settings.siteName} announcementMessages={settings.announcementMessages} />
       <main id="main" className="flex-1 pt-header">
         <div className="container-luxe max-w-2xl py-14 md:py-20">
-          <p className="text-eyebrow">ACS Courier · Αριθμός αποστολής</p>
+          <p className="text-eyebrow">Αριθμός αποστολής</p>
           <p className="mt-2 font-mono text-2xl tracking-[0.15em]">{trackingNumber}</p>
 
           <div className="mt-10 flex items-start gap-4 border border-border p-6">
@@ -86,13 +88,9 @@ export default async function TrackPage({ params }: { params: Promise<{ tracking
           ) : null}
 
           <p className="mt-10 text-xs text-luxe-gray-dark">
-            Για περισσότερες λεπτομέρειες, πληκτρολογήστε τον αριθμό στη σελίδα της ACS:{" "}
-            <a href={acsUrl} target="_blank" rel="noreferrer" className="underline underline-offset-4">
-              acscourier.net
-            </a>
-            . Για οτιδήποτε άλλο, καλέστε μας στο{" "}
-            <a href="tel:+302814001031" className="underline underline-offset-4">
-              2814 001 031
+            Για οτιδήποτε σχετικά με την αποστολή σας, καλέστε μας στο{" "}
+            <a href={`tel:${COMPANY.phoneE164}`} className="underline underline-offset-4">
+              {COMPANY.phone}
             </a>
             .
           </p>

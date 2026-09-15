@@ -1,8 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Menu, X } from "lucide-react";
+import { CategoryStories } from "@/components/layout/CategoryStories";
 import {
   Sheet,
   SheetClose,
@@ -19,26 +21,23 @@ import type { NavItem } from "@/types";
 
 interface MobileMenuProps {
   items: NavItem[];
-  /** The footer's Support column, so a phone user can reach Contact/FAQ/Size Guide from the menu. */
-  supportLinks?: { label: string; href: string }[];
+  /**
+   * Product Care specifically — everything else that used to live down here (Contact, Ask a
+   * Stylist, Shipping & Returns, Size Guide) is footer-only now, same as Blog and About: the
+   * menu is for getting into the catalogue, not a mirror of the footer. Product Care stays
+   * because it sits with Wishlist/Account as something a shopper reaches for mid-browse, not
+   * only at checkout time.
+   */
+  productCareLink?: { label: string; href: string };
   open: boolean;
   onOpenChange: (open: boolean) => void;
   triggerLight: boolean;
 }
 
-export function MobileMenu({ items, supportLinks = [], open, onOpenChange, triggerLight }: MobileMenuProps) {
+export function MobileMenu({ items, productCareLink, open, onOpenChange, triggerLight }: MobileMenuProps) {
   const tA11y = useTranslations("A11y");
   const t = useTranslations("MobileMenu");
   const close = () => onOpenChange(false);
-  // The catalogue in capitals up top; the editorial links (Journal, About — the ones the
-  // desktop header hides) down with Account and Wishlist, in the same quiet small type.
-  // A phone menu is the navigation, so they stay reachable; they just stop competing
-  // with the shop.
-  // Home is also mobile-only (the desktop header's logo is home) but it is not editorial:
-  // it stays in capitals at the top of the list, where a phone user expects it.
-  const isQuiet = (item: NavItem) => Boolean(item.mobileOnly) && item.href !== "/";
-  const catalogueItems = items.filter((item) => !isQuiet(item));
-  const quietItems = items.filter(isQuiet);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -46,26 +45,38 @@ export function MobileMenu({ items, supportLinks = [], open, onOpenChange, trigg
         type="button"
         aria-label={t("openMenu")}
         onClick={() => onOpenChange(true)}
-        className={triggerLight ? "text-luxe-white lg:hidden" : "text-luxe-black lg:hidden"}
+        className={triggerLight ? "text-luxe-white lg:hidden" : "text-luxe-purple lg:hidden"}
       >
         <Menu className="size-5" strokeWidth={1.5} />
       </button>
       <SheetContent
         side="left"
         showCloseButton={false}
-        className="w-full border-none bg-luxe-white p-0 sm:max-w-sm"
+        /**
+         * `!w-full` / `sm:!max-w-md`, not the plain (unimportant) versions: the base
+         * SheetContent already carries `data-[side=left]:w-3/4` and
+         * `data-[side=left]:sm:max-w-sm` (see components/ui/sheet.tsx). Those have an
+         * attribute-selector in them, which out-specifies a bare `w-full`/`sm:max-w-md`
+         * regardless of which comes later in the class list — the menu was rendering at 75%
+         * width on real phones (no `sm:` breakpoint to even reach the second override), with
+         * the story circles and everything else laid out for the full width it never
+         * actually got. `!` forces these to win outright instead of relitigating specificity.
+         */
+        className="!w-full flex flex-col border-none bg-luxe-white p-0 sm:!max-w-md"
       >
         <SheetTitle className="sr-only">{t("siteNavigation")}</SheetTitle>
-        <div className="flex h-16 items-center justify-between border-b border-border px-6">
+        <div className="flex h-16 shrink-0 items-center justify-between border-b border-luxe-purple/15 px-6">
           <span className="font-heading text-lg tracking-[0.15em] uppercase">{t("menu")}</span>
           <SheetClose aria-label={t("closeMenu")}>
             <X className="size-5" strokeWidth={1.5} />
           </SheetClose>
         </div>
 
+        <CategoryStories onNavigate={close} />
+
         <nav className="flex-1 overflow-y-auto px-6 py-4" aria-label={tA11y("mobileNav")}>
           <Accordion>
-            {catalogueItems.map((item) =>
+            {items.map((item) =>
               item.children?.length ? (
                 <AccordionItem key={item.id} value={item.id}>
                   <AccordionTrigger className="py-4 text-[13px] font-medium tracking-[0.08em] uppercase no-underline hover:no-underline">
@@ -87,10 +98,25 @@ export function MobileMenu({ items, supportLinks = [], open, onOpenChange, trigg
                           <Link
                             href={child.href}
                             onClick={close}
-                            className="font-heading block text-sm text-luxe-gray-dark no-underline"
+                            className="font-heading block text-sm font-medium text-luxe-black no-underline"
                           >
                             {child.label}
                           </Link>
+                          {child.children?.length ? (
+                            <ul className="mt-2.5 mb-1 space-y-2.5 pl-3">
+                              {child.children.map((grandchild) => (
+                                <li key={grandchild.id}>
+                                  <Link
+                                    href={grandchild.href}
+                                    onClick={close}
+                                    className="font-heading block text-sm text-luxe-gray-dark no-underline"
+                                  >
+                                    {grandchild.label}
+                                  </Link>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : null}
                         </li>
                       ))}
                     </ul>
@@ -111,15 +137,8 @@ export function MobileMenu({ items, supportLinks = [], open, onOpenChange, trigg
           </Accordion>
         </nav>
 
-        <div className="border-t border-border px-6 py-6">
-          <ul className="font-heading flex flex-col gap-3 text-sm text-luxe-gray-dark">
-            {quietItems.map((item) => (
-              <li key={item.id}>
-                <Link href={item.href} onClick={close} className="no-underline">
-                  {item.label}
-                </Link>
-              </li>
-            ))}
+        <div className="shrink-0 border-t border-border px-6 py-6">
+          <ul className="font-heading flex flex-col gap-3.5 text-[13px] text-luxe-gray-dark">
             <li>
               <Link href="/account" onClick={close} className="no-underline">
                 {t("account")}
@@ -130,19 +149,29 @@ export function MobileMenu({ items, supportLinks = [], open, onOpenChange, trigg
                 {t("wishlist")}
               </Link>
             </li>
+            {productCareLink ? (
+              <li>
+                <Link href={productCareLink.href} onClick={close} className="no-underline">
+                  {productCareLink.label}
+                </Link>
+              </li>
+            ) : null}
           </ul>
+        </div>
 
-          {supportLinks.length > 0 ? (
-            <ul className="font-heading mt-5 flex flex-col gap-3 border-t border-border pt-5 text-sm text-luxe-gray-dark">
-              {supportLinks.map((link) => (
-                <li key={link.href}>
-                  <Link href={link.href} onClick={close} className="no-underline">
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          ) : null}
+        {/* A quiet closing note rather than another link — everything actionable is already
+            above it, this is just the menu ending somewhere warmer than a plain edge. The
+            heart became the real badge (public/logo-badge.png), small, at a size where its
+            detail still reads instead of collapsing — unlike the header, this spot has never
+            needed to compete with icons or shrink to ~32px. */}
+        <div className="flex shrink-0 flex-col items-center gap-2 border-t border-luxe-purple/15 bg-luxe-gray-light py-5">
+          <Image src="/logo-badge.png" alt="" width={567} height={440} className="h-12 w-auto" />
+          {/* Was `text-eyebrow text-[10px]` — text-eyebrow's own text-xs won that fight, so
+              this rendered at 12px with 0.2em tracking instead of the intended 10px caption.
+              Written out explicitly here instead, so nothing outsizes it again. */}
+          <p className="text-[9px] font-medium tracking-[0.12em] uppercase text-luxe-gray-dark">
+            By Maria Gemitzaki
+          </p>
         </div>
       </SheetContent>
     </Sheet>

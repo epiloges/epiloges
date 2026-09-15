@@ -12,21 +12,21 @@ import { DEFAULT_LOCALE, type Locale } from "@/i18n/config";
  *
  * Three names, three jobs — the owner's rule (2026-09-14):
  *
- * - `brandName` — **ALEXANDRIS**, the wordmark. Header, footer mark, email masthead, the
+ * - `brandName` — **EPILOGES**, the wordmark. Header, footer mark, email masthead, the
  *   maintenance page, the admin chrome: anywhere it is set like a logo. Never in a sentence.
- * - `storeName` — **Καταστήματα Αλεξανδρής** / **Alexandris Stores**, what the business is
- *   *called*: page titles, running copy, the © line, email subjects, structured data, the
- *   legal pages' "who we are". Use `storeName(locale)`.
+ * - `storeName` — **Επιλογές Fashion Boutique** / **Epiloges Fashion Boutique**, what the
+ *   business is *called*: page titles, running copy, the © line, email subjects, structured
+ *   data, the legal pages' "who we are". Use `storeName(locale)`.
  * - `legalName` — the ΓΕΜΗ registration, which the legal documents must name as the data
  *   controller and contracting party; a trading name is not a legal person.
  */
 export const COMPANY = {
   /** As registered in ΓΕΜΗ. Greek convention is surname first. */
   legalName: "Alexandris Michail",
-  brandName: "ALEXANDRIS",
+  brandName: "EPILOGES",
   /** The shop opened in Heraklion in 1984 — the "© 1984" the old site carried, now a fact the structured data states. */
   foundingYear: 1984,
-  storeName: { el: "Καταστήματα Αλεξανδρής", en: "Alexandris Stores" } satisfies Record<Locale, string>,
+  storeName: { el: "Επιλογές Fashion Boutique", en: "Epiloges Fashion Boutique" } satisfies Record<Locale, string>,
 
   address: {
     street: "Arthur Evans 9",
@@ -74,11 +74,11 @@ export const COMPANY = {
    * which the product feeds must declare explicitly (Google's `identifier_exists=no`)
    * rather than leave blank.
    */
-  ownBrands: ["Alexandris Shoes", "ALEXANDRIS"],
+  ownBrands: ["Epiloges Fashion Boutique"],
 
   /**
-   * The physical shop, for the ShoeStore structured data (lib/seo.ts) and for local
-   * search: "παπούτσια Ηράκλειο" is answered by the store, not the website.
+   * The physical shop, for the ClothingStore structured data (lib/seo.ts) and for local
+   * search: "γυναικεία ρούχα Ηράκλειο" is answered by the store, not the website.
    *
    * Hours as given by the owner on 2026-09-14 — the classic Greek split week: Tue/Thu/Fri
    * in two shifts, Mon/Wed/Sat straight through, Sunday closed. dayOfWeek values are

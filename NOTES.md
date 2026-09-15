@@ -264,9 +264,9 @@ found on the way, both now handled in code: Vercel env values pasted with quotes
 (`EMAIL_PROVIDER="resend"` → dev provider; `8461bb0` strips them) and a Resend key scoped to
 another domain ("domain is not verified"). Local `.env` runs `EMAIL_PROVIDER=dev`.
 
-**Naming rule** (`0b8c2e5`): ALEXANDRIS in capitals is the wordmark and stays wherever it is
+**Naming rule** (`0b8c2e5`): EPILOGES in capitals is the wordmark and stays wherever it is
 set like a logo; in a sentence, a title, an email subject or the legal pages the business is
-Καταστήματα Αλεξανδρής / Alexandris Stores (`storeName(locale)`).
+Επιλογές Fashion Boutique / Epiloges Fashion Boutique (`storeName(locale)`).
 
 **SEO relaunch** (`5ee0d72`): buying-guide copy + FAQ (FAQPage schema) on every category,
 collection and brand page; every title/description rewritten (SEO-KEYWORDS.md is the map and
@@ -289,11 +289,11 @@ Where everything stands, so the next session does not re-derive it.
 
 **Hosting.** The project was TRANSFERRED to a new Vercel Pro team `alexandris-new-era`
 (project `my-eshop`, alias still `shopalexandris.vercel.app`; env vars, Blob store and domain
-alias moved with it; the old `ALEXANDRIS` hobby team is empty). Functions are pinned to
+alias moved with it; the old `EPILOGES` hobby team is empty). Functions are pinned to
 **Frankfurt** (`vercel.json` → `regions: ["fra1"]`) — they ran in Washington while the
 database is in Frankfurt, which is why a `SELECT 1` took 500 ms; warm health is ~30 ms now.
 Fluid Compute is on. The dashboard's Function Region shows "Overridden" — the file wins.
-Unused env vars were deleted (the two `ALEXANDRIS_*` leftovers, all `DATABASE_URL_UNPOOLED`,
+Unused env vars were deleted (the two `EPILOGES_*` leftovers, all `DATABASE_URL_UNPOOLED`,
 two branch-scoped Preview `DATABASE_URL`s). The team is on a **Pro Trial** — a card must be
 on file before it lapses or the project falls back to Hobby (non-commercial terms).
 

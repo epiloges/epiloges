@@ -1,34 +1,28 @@
 import "server-only";
 import { createManualCourierProvider } from "@/lib/courier/providers/manual";
-import { createAcsCourierProvider } from "@/lib/courier/providers/acs";
 import type { CourierProvider } from "@/lib/courier/types";
 
 export * from "@/lib/courier/types";
-export { buildTrackingUrl, ACS_CARRIER_NAME } from "@/lib/courier/tracking-url";
 
-/** Same single-switch-statement pattern as lib/commerce/index.ts / lib/email/index.ts. */
+/**
+ * No live courier integration configured for this deployment — the admin enters a
+ * tracking number and carrier name by hand (see the manual provider). A future
+ * client-specific integration (their own courier, their own account) registers
+ * here the same way the previous ACS integration did: implement `CourierProvider`,
+ * switch on `COURIER_PROVIDER`.
+ */
 export function getCourierProvider(): CourierProvider {
-  const providerName = process.env.COURIER_PROVIDER ?? "manual";
-  switch (providerName) {
-    case "acs": {
-      const apiKey = process.env.ACS_API_KEY;
-      const companyId = process.env.ACS_COMPANY_ID;
-      const companyPassword = process.env.ACS_COMPANY_PASSWORD;
-      const userId = process.env.ACS_USER_ID;
-      const userPassword = process.env.ACS_USER_PASSWORD;
-      const billingCode = process.env.ACS_BILLING_CODE;
-      if (!apiKey || !companyId || !companyPassword || !userId || !userPassword || !billingCode) {
-        console.warn("[courier] COURIER_PROVIDER=acs but ACS_* credentials are not fully set — falling back to manual provider.");
-        return createManualCourierProvider();
-      }
-      return createAcsCourierProvider({ apiKey, companyId, companyPassword, userId, userPassword, billingCode });
-    }
-    case "manual":
-    default:
-      return createManualCourierProvider();
-  }
+  return createManualCourierProvider();
 }
 
+/** No carrier-specific tracking page is wired up — every order is manual-carrier. */
+export function buildTrackingUrl(_carrier: string): string | undefined {
+  return undefined;
+}
+
+/** Placeholder carrier name a manually-entered tracking number is compared against. */
+export const MANUAL_CARRIER_NAME = "Courier";
+
 export function isAcsCourierConfigured(): boolean {
-  return process.env.COURIER_PROVIDER === "acs";
+  return false;
 }

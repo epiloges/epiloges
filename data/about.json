@@ -1,86 +1,30 @@
 {
-  "title": "Η ιστορία μας ξεκινά το 1984",
-  "eyebrow": "Ηράκλειο Κρήτης · από το 1984",
+  "title": "Our Story",
   "heroImage": {
-    "src": "https://266dzyztwtian1su.public.blob.vercel-storage.com/about/1984-founder-mYwc23eTuZLOdMGRIMjPrt9Gj5nBXC.jpg",
-    "alt": "Ο Μιχάλης Αλεξανδρής μπροστά στο πρώτο κατάστημα, με την επιγραφή «Υποδήματα Αλεξανδρής», 1984"
+    "src": "https://images.unsplash.com/photo-1699309325446-3561a7508d3c?auto=format&fit=crop&w=1600&q=80",
+    "alt": "Epiloges Fashion Boutique atelier"
   },
-  "intro": "Τα Καταστήματα Αλεξανδρής είναι μια οικογενειακή επιχείρηση με περισσότερα από 40 χρόνια παρουσίας στον χώρο του υποδήματος.",
-  "chapters": [
-    {
-      "eyebrow": "1984",
-      "heading": "Το πρώτο κατάστημα",
-      "body": "Η πορεία μας ξεκίνησε το 1984, όταν ο Μιχάλης Αλεξανδρής δημιούργησε το πρώτο κατάστημα, με βασικές αρχές την ποιότητα, την προσωπική εξυπηρέτηση και την επιλογή υποδημάτων που συνδυάζουν αισθητική, άνεση και διαχρονικότητα.",
-      "image": {
-        "src": "https://266dzyztwtian1su.public.blob.vercel-storage.com/about/1984-window-3CvULaCtFbFaLSOG88TYb5b1lRF6Ii.jpg",
-        "alt": "Η πρώτη βιτρίνα των Καταστημάτων Αλεξανδρής το 1984, με δερμάτινα μοκασίνια στα σκαλοπάτια"
-      },
-      "caption": "Η πρώτη βιτρίνα, 1984"
-    },
-    {
-      "eyebrow": "Σήμερα",
-      "heading": "Η δεύτερη γενιά",
-      "body": "Σήμερα, τη σκυτάλη έχει αναλάβει η δεύτερη γενιά της οικογένειας Αλεξανδρή. Ο Μιχάλης Αλεξανδρής, ο Γιάννης Αλεξανδρής και η Νατάσσα Αλεξανδρή συνεχίζουν και εξελίσσουν το όραμα της οικογένειας, διατηρώντας τις αξίες πάνω στις οποίες χτίστηκε η επιχείρηση, αλλά και προσαρμόζοντάς την στις απαιτήσεις της σύγχρονης εποχής.",
-      "image": {
-        "src": "https://266dzyztwtian1su.public.blob.vercel-storage.com/about/1984-mirror-VLvsv37Rh4FybYyIW3cgRaJ60KR4Ad.jpg",
-        "alt": "Η βιτρίνα του καταστήματος με δερμάτινα παπούτσια στα ράφια και τις τιμές σε δραχμές"
-      },
-      "caption": "Η βιτρίνα, τιμές ακόμη σε δραχμές"
-    }
-  ],
-  "statement": {
-    "line": "Μία οικογένεια. Δύο γενιές. Περισσότερα από 40 χρόνια εμπειρίας.",
-    "facts": [
-      {
-        "value": "1984",
-        "label": "Το πρώτο κατάστημα"
-      },
-      {
-        "value": "2",
-        "label": "Γενιές"
-      },
-      {
-        "value": "5",
-        "label": "Καταστήματα"
-      },
-      {
-        "value": "40+",
-        "label": "Χρόνια εμπειρίας"
-      }
-    ]
-  },
+  "intro": "Epiloges Fashion Boutique was founded on a simple idea: clothes built to be altered, not replaced.",
   "sections": [
     {
-      "heading": "Πέντε καταστήματα και ένα e-shop",
-      "body": "Με ένα δίκτυο πέντε φυσικών καταστημάτων και ένα σύγχρονο ηλεκτρονικό κατάστημα, βρισκόμαστε καθημερινά δίπλα στους πελάτες μας, προσφέροντας προσεκτικά επιλεγμένες συλλογές για άνδρες και γυναίκες και μια ολοκληρωμένη εμπειρία αγορών, τόσο στα καταστήματά μας όσο και online."
+      "heading": "Considered by Design",
+      "body": "Every piece starts with the fabric — natural fibres sourced from mills we've worked with for over a decade. We design in small batches, favouring longevity over trend cycles.",
+      "image": {
+        "src": "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&w=1200&q=80",
+        "alt": "Wool fabric detail"
+      }
     },
     {
-      "heading": "Το υπόδημα δεν είναι απλώς ένα προϊόν",
-      "body": "Είναι μέρος της προσωπικής έκφρασης, της καθημερινότητας και του τρόπου ζωής κάθε ανθρώπου. Για αυτό επενδύουμε διαρκώς στην ποιότητα, στη σωστή επιλογή προϊόντων και, πάνω απ' όλα, στη σχέση εμπιστοσύνης που έχουμε δημιουργήσει με τους πελάτες μας όλα αυτά τα χρόνια."
+      "heading": "Made to Last",
+      "body": "Our ateliers build with a hand-finished seam and a hem left generous enough to let out — construction more common in bespoke tailoring than mass production. It costs more to make. It shows.",
+      "image": {
+        "src": "https://images.unsplash.com/photo-1516762689617-e1cffcef479d?auto=format&fit=crop&w=1200&q=80",
+        "alt": "Atelier craftsmanship"
+      }
     },
     {
-      "heading": "Διαλεγμένα ένα ένα",
-      "body": "Δεν αγοράζουμε συλλογές ολόκληρες. Κάθε μοντέλο που θα βρείτε εδώ το έχουμε δει, το έχουμε πιάσει και το έχουμε επιλέξει επειδή θα το προτείναμε σε κάποιον που μπαίνει στο κατάστημα — για την καθημερινότητα και για τις πιο ιδιαίτερες μέρες. Στα ράφια μας συνυπάρχει η δική μας σειρά, Alexandris Shoes, με οίκους που εμπιστευόμαστε, και όλα τα είδη έρχονται απευθείας από τους κατασκευαστές ή τους επίσημους αντιπροσώπους τους."
+      "heading": "A Quieter Kind of Luxury",
+      "body": "No logos, no seasons that expire. Just clothes we'd wear ourselves, made the way we'd want them made."
     }
-  ],
-  "closing": {
-    "quote": "Από το 1984 μέχρι σήμερα, εξελισσόμαστε χωρίς να ξεχνάμε από πού ξεκινήσαμε.",
-    "signature": "Μια ιστορία που συνεχίζεται σε κάθε βήμα.",
-    "cta": {
-      "label": "Δείτε τη συλλογή",
-      "href": "/new-in"
-    },
-    "secondary": {
-      "label": "Το κατάστημα στην Έβανς 9",
-      "href": "/contact"
-    }
-  },
-  "heroCaption": "Ο Μιχάλης Αλεξανδρής μπροστά στο πρώτο κατάστημα, 1984",
-  "interlude": {
-    "image": {
-      "src": "https://266dzyztwtian1su.public.blob.vercel-storage.com/about/1984-shelf-XVlAtb1qCsGncWAkAiulbvKgg9tlRf.jpg",
-      "alt": "Η βιτρίνα των Καταστημάτων Αλεξανδρής τη δεκαετία του '80 — ανδρικά δερμάτινα παπούτσια με τις τιμές σε δραχμές"
-    },
-    "caption": "Το ράφι με τα ανδρικά — οι τιμές ακόμη σε δραχμές"
-  }
+  ]
 }

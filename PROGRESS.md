@@ -1,4 +1,4 @@
-# ALEXANDRIS — Progress Notes
+# EPILOGES — Progress Notes
 
 ## Desktop header slimmed, and a correction — `0c4818d`
 
@@ -60,7 +60,7 @@ Shoes", 128 other brands** (U.S Polo Assn., London, Verde, Mont Martre Paris). S
 was false for roughly three quarters of the shelf, and nothing in the data supports the
 tanneries. The hero carried "built on full-grain leather and honest construction" across a
 catalogue including synthetic athletic shoes, and a journal post described an in-house workshop
-where every ALEXANDRIS pair begins.
+where every EPILOGES pair begins.
 
 All rewritten to claim only what the data supports: a shoe shop in Heraklion, its own line
 alongside brands it selects, women's and men's. Nothing about manufacture, materials, tanneries
@@ -686,7 +686,7 @@ required `PAYMENTS_CONFIG_SECRET`.
 
 ## Real WooCommerce catalog migration + Blob image pipeline + menu polish — COMPLETE, verified clean (tsc + eslint + build + live browser + pixel-level image verification)
 
-The user provided a real product export from their actual live business (`alexandrisstores.gr`, a real multi-brand shoe retailer — U.S. Polo Assn., London, Mont Martre Paris, Alexandris' own house line, not a single in-house brand) and asked to bring real inventory into the app. No direct WooCommerce→ALEXANDRIS import path exists (different CSV shapes entirely, and WooCommerce splits variable products into parent+variation rows) — built a one-off converter instead of a reusable feature, since this was framed as a one-time catalog migration, not an ongoing sync.
+The user provided a real product export from their actual live business (`alexandrisstores.gr`, a real multi-brand shoe retailer — U.S. Polo Assn., London, Mont Martre Paris, Alexandris' own house line, not a single in-house brand) and asked to bring real inventory into the app. No direct WooCommerce→EPILOGES import path exists (different CSV shapes entirely, and WooCommerce splits variable products into parent+variation rows) — built a one-off converter instead of a reusable feature, since this was framed as a one-time catalog migration, not an ongoing sync.
 
 **Scope**, narrowed via conversation across a few iterations (started at "everything," ended at): the 115 most-recently-uploaded women's + 60 most-recent men's shoes = 175 products, out of 660 real parent products in the full export (561 shoes total; 91 bags/wallets/belts and 1 gift card deliberately excluded — this site is now footwear-only per the earlier clothing→shoes pivot). WooCommerce post ID stood in for "most recently uploaded" since the export has no creation-date column.
 
@@ -844,7 +844,7 @@ Walked the site page-by-page as a real shopper — homepage/nav, every PLP, PDP 
 
 ## Engineering audit + fix pass (2026-07-22, after Real Backend Phase 2) — COMPLETE, verified clean (tsc + eslint + build + live browser verification)
 
-Ran the previously-paused full audit (5 parallel research passes: bugs & dead code, performance, SEO & accessibility, security, dependencies & testing readiness), then applied the highest-value fixes directly rather than just reporting them. Full report published as an artifact (scorecard + fix log + open findings + a tiered "what ALEXANDRIS needs to be a €100M flagship" roadmap) — ask the user for the link if picking this up fresh, or re-derive from this entry.
+Ran the previously-paused full audit (5 parallel research passes: bugs & dead code, performance, SEO & accessibility, security, dependencies & testing readiness), then applied the highest-value fixes directly rather than just reporting them. Full report published as an artifact (scorecard + fix log + open findings + a tiered "what EPILOGES needs to be a €100M flagship" roadmap) — ask the user for the link if picking this up fresh, or re-derive from this entry.
 
 **Fixed and verified live against Neon Postgres:**
 - **Revenue bug**: `CartDiscount`/`CartGiftCard` amounts were computed once at apply-time and persisted — never recalculated as the cart changed, so emptying a cart after applying a code left the frozen discount/gift-card fully in place (clamped total, not re-percented). Rewrote `lib/commerce/postgres/cart-totals.ts`'s `resolveCartAmounts` (renamed from `computeTotals`) to recompute both fresh from the stored rule (type/value, balance) against the *current* cart on every read. Verified live: a 10% code on a €398 cart went from €19.90 → €39.80 automatically after doubling quantity.
@@ -861,7 +861,7 @@ Ran the previously-paused full audit (5 parallel research passes: bugs & dead co
 
 ## Completed Phases (1–4) — foundation, verified clean (tsc + eslint + build)
 
-- **Foundation**: Next.js 16 App Router, TS, Tailwind v4, shadcn/ui (Base UI), Framer Motion. Palette `#FFFFFF/#111111/#F5F5F5/#555555` as Tailwind tokens (`luxe-white/black/gray-light/gray-dark`). Playfair Display + Inter via `next/font`. Brand name: **ALEXANDRIS**.
+- **Foundation**: Next.js 16 App Router, TS, Tailwind v4, shadcn/ui (Base UI), Framer Motion. Palette `#FFFFFF/#111111/#F5F5F5/#555555` as Tailwind tokens (`luxe-white/black/gray-light/gray-dark`). Playfair Display + Inter via `next/font`. Brand name: **EPILOGES**.
 - **Architecture**: `data/*.json` (mock content) → `services/*.ts` (async CMS/content functions, the only things allowed to import `data/`) → components (prop-driven, never touch JSON directly).
 - **Layout**: announcement bar + transparent-over-hero header (`components/layout/Header.tsx`, fixed masthead pattern — see `.pt-header` utility class in `globals.css` for offsetting non-hero pages), mega menu, mobile sheet+accordion nav, footer.
 - **Homepage**: config-driven sections (`data/homepage.json`, discriminated union `HomepageSection` in `types/homepage.ts`) rendered by `components/sections/SectionRenderer.tsx`.
@@ -965,7 +965,7 @@ Split per the earlier plan: build the mock/local half for real, document the inf
 
 ## Real Backend — Phase 1 (Postgres/Prisma + real admin CRUD) — COMPLETE, verified clean (tsc + eslint + build + full browser walkthrough against the live Neon DB)
 
-User's new direction (2026-07-22, later in the day, after the audit request below was paused): turn ALEXANDRIS from a mock-commerce demo into a real operating eshop. Chose **custom Postgres (Neon) + Prisma + Stripe** (Stripe is a later phase) over Medusa/Shopify. This phase scoped deliberately to just the catalog + admin — see the plan's "Explicitly deferred" list below before assuming anything else is real.
+User's new direction (2026-07-22, later in the day, after the audit request below was paused): turn EPILOGES from a mock-commerce demo into a real operating eshop. Chose **custom Postgres (Neon) + Prisma + Stripe** (Stripe is a later phase) over Medusa/Shopify. This phase scoped deliberately to just the catalog + admin — see the plan's "Explicitly deferred" list below before assuming anything else is real.
 
 **Scope:** Postgres is now the source of truth for Products and Collections. Admin dashboard has real create/edit/delete for both, with real per-admin-user authentication. Everything else (customer accounts, cart, wishlist, checkout, orders, discounts, gift cards) is **still the original localStorage-backed mock** — that's the next phase, not done yet.
 
@@ -978,7 +978,7 @@ User's new direction (2026-07-22, later in the day, after the audit request belo
 - **Admin CRUD**: `app/admin/(dashboard)/products/actions.ts` (`createProduct`/`updateProduct`/`deleteProduct`) and the collections equivalent — Zod-validated, session-checked, `revalidatePath("/", "layout")` after every mutation (a deliberately blunt full-tree revalidation — nothing in this phase can compute the precise set of affected PLPs/related-product cross-links from an arbitrary catalog edit; a documented tradeoff, not an oversight). `components/admin/ProductForm.tsx` and `CollectionForm.tsx` are new RHF+Zod forms — the admin dashboard had **zero** form validation anywhere before this (every admin "form" was raw `useState`); these are the first. `ProductForm` folds in what `VariantEditor.tsx` used to do (colors/sizes) as `useFieldArray` sections rather than keeping it a separate bolted-on component. Wired the two long-dead "New Product"/"New Collection" buttons (no `href`, no `onClick`, ever) to real `/new` routes.
 - **`scripts/seed.ts`**: imports the existing `data/products.json`/`data/collections.json` into Postgres (all 12 products + 5 collections + 16 collection links survived the migration intact) and seeds one `AdminUser` from the pre-existing demo credentials (`admin@alexandris-demo.example` / `admin123` — still the documented login, now for real).
 - **Real bug found via the browser walkthrough, not code review**: see the `.optional()`-select gotcha in "Environment gotchas" above — it silently blocked **every** product/collection submission (client-side validation failure, no error shown, no network request, no console error) until caught by adding an `onInvalid` handler to `handleSubmit` and inspecting the actual `formState.errors` payload. Both `ProductForm`'s Season select and `CollectionForm`'s CTA-style select had it; fixed identically.
-- **Known minor gap, not fixed**: leaving a product's SEO meta title/description blank in the admin form stores empty strings rather than `undefined`, so `generateMetadata`'s `<title>` falls back incorrectly (renders `| ALEXANDRIS` instead of `Product Name | ALEXANDRIS`) when the optional field is empty. Low severity, flagged to the user, not silently patched — a small follow-up for whoever touches `toProductWriteData`/the SEO mapping next.
+- **Known minor gap, not fixed**: leaving a product's SEO meta title/description blank in the admin form stores empty strings rather than `undefined`, so `generateMetadata`'s `<title>` falls back incorrectly (renders `| EPILOGES` instead of `Product Name | EPILOGES`) when the optional field is empty. Low severity, flagged to the user, not silently patched — a small follow-up for whoever touches `toProductWriteData`/the SEO mapping next.
 - **Verified live end-to-end in the browser against the real Neon DB** (not just build-time checks): created a product → appeared in the admin list, the storefront PDP, and instant search (search literally found the just-created product by name). Edited an existing seeded product's price → persisted after a hard reload and updated live in an in-progress cart (proving the `RemoteProductService`/Route Handler split actually works, not just compiles). Created a collection, assigned a product, confirmed the relationship both directions (admin checkbox state + storefront collection page product count). Deleted a product that was assigned to a collection — the collection page degraded to "0 items" cleanly, no crash, confirming the join-table cascade delete. All test data created during verification was cleaned up afterward (test product/collection deleted, the edited seed product's price/quantity restored to its original seeded values) — the catalog is back to exactly its original 12 products / 5 collections.
 - **Credentials**: `.env` (gitignored, not committed) holds the real `DATABASE_URL` (Neon pooled connection string) and a generated `ADMIN_SESSION_SECRET`. `.env.example` documents the shape for anyone else setting this up. Don't regenerate `ADMIN_SESSION_SECRET` casually — it invalidates every existing admin session cookie.
 

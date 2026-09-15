@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { Inter, Playfair_Display } from "next/font/google";
+import { Nunito_Sans, Quicksand } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import { JsonLd } from "@/components/shared/JsonLd";
-import { organizationSchema, storeSchema, websiteSchema } from "@/lib/seo";
-import { getSeoDefaultsCached } from "@/services";
+import { organizationSchema, websiteSchema } from "@/lib/seo";
+import { getSeoDefaultsCached, getSiteSettings } from "@/services";
+import { TikTokLiveModal } from "@/components/shared/TikTokLiveModal";
 import { ToastProvider } from "@/components/providers/ToastProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { CartProvider } from "@/components/providers/CartProvider";
@@ -26,16 +27,13 @@ import "./globals.css";
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
 export const instant = false;
 
-const inter = Inter({
+const nunitoSans = Nunito_Sans({
   variable: "--font-body",
-  // Greek is the language of nearly every word on the page. With only the Latin subset
-  // loaded, every Greek glyph fell through to the system sans-serif — and swapped once the
-  // real font arrived, which Lighthouse measured as a layout shift on each page.
-  subsets: ["latin", "greek"],
+  subsets: ["latin"],
   display: "swap",
 });
 
-const playfairDisplay = Playfair_Display({
+const quicksand = Quicksand({
   variable: "--font-heading",
   subsets: ["latin"],
   display: "swap",
@@ -77,6 +75,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const seo = await getSeoDefaultsCached();
+  const settings = await getSiteSettings();
   const locale = await getLocale();
   const messages = await getMessages();
 
@@ -104,7 +103,7 @@ export default async function RootLayout({
   return (
     <html
       lang={locale}
-      className={`${inter.variable} ${playfairDisplay.variable} h-full antialiased`}
+      className={`${nunitoSans.variable} ${quicksand.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>
@@ -123,7 +122,6 @@ export default async function RootLayout({
       </head>
       <body className="min-h-full flex flex-col">
         <JsonLd data={organizationSchema(seo)} />
-        <JsonLd data={storeSchema(seo)} />
         <JsonLd data={websiteSchema(seo)} />
         <NextIntlClientProvider messages={messages}>
           {/*
@@ -169,6 +167,13 @@ export default async function RootLayout({
             </CartProvider>
           </ToastProvider>
           <ReferralCapture />
+          {/* Sibling to ReferralCapture, outside the cart/auth/toast providers on purpose —
+              it's a dashboard-toggled marketing takeover, not app state, and has nothing to
+              coordinate with any of them. */}
+          <TikTokLiveModal
+            enabled={settings.liveOnTikTok ?? false}
+            tiktokUrl={settings.tiktokLiveUrl ?? "https://www.tiktok.com/live"}
+          />
         </NextIntlClientProvider>
       </body>
     </html>

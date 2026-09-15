@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { auditPages, scoreFromIssues, type AuditablePage } from "@/lib/seo/audit-rules";
 
-const TEMPLATE = "%s | Alexandris Stores";
+const TEMPLATE = "%s | Epiloges Fashion Boutique";
 
 /** A page with nothing wrong with it, so each test can break exactly one thing. */
 function page(overrides: Partial<AuditablePage> = {}): AuditablePage {

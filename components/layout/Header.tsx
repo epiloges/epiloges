@@ -47,27 +47,43 @@ export function Header({
         <header
           className={cn(
             "transition-colors duration-300",
-            isLight ? "bg-transparent" : "border-b border-border bg-luxe-white"
+            // Transparent-over-hero is a mobile/tablet trick — at desktop width the logo and
+            // nav sit beside a much wider, busier row (six nav links, four icons), and the
+            // white patch of the header reads as an anchor for that row rather than clutter.
+            // `lg:` forces the solid look back on regardless of `isLight`/scroll.
+            isLight ? "bg-transparent lg:border-b lg:border-border lg:bg-luxe-white" : "border-b border-border bg-luxe-white"
           )}
         >
           <div className="container-luxe flex h-18 items-center justify-between md:h-20">
             <div className="flex items-center gap-4">
               <MobileMenu
                 items={navigation.primary}
-                // The Support column from the footer, reused rather than duplicated — a
-                // shopper on a phone had no route to Contact, FAQ, Size Guide or
-                // Shipping & Returns short of scrolling to the very bottom of the page.
-                supportLinks={navigation.footer.find((column) => column.title === "Support")?.links ?? []}
+                // Product Care specifically, from the footer's Support column — everything
+                // else there (Contact, Ask a Stylist, Shipping & Returns, Size Guide) is
+                // footer-only, same as Blog and About; see MobileMenuProps for why.
+                productCareLink={navigation.footer
+                  .flatMap((column) => column.links)
+                  .find((link) => link.label === "Φροντίδα Προϊόντων")}
                 open={mobileOpen}
                 onOpenChange={setMobileOpen}
                 triggerLight={isLight}
               />
-              <Logo siteName={siteName} className={isLight ? "text-luxe-white" : "text-luxe-black"} />
+              <Logo
+                siteName={siteName}
+                className={isLight ? "text-luxe-white lg:text-luxe-purple" : "text-luxe-purple"}
+              />
             </div>
 
-            <DesktopNav items={navigation.primary} transparentText={isLight} />
+            {/* DesktopNav only ever renders at lg+ (hidden below it), and the header is
+                always solid there now — so it's never in the transparent/white state. */}
+            <DesktopNav items={navigation.primary} transparentText={false} />
 
-            <div className={cn("flex items-center gap-5", isLight ? "text-luxe-white" : "text-luxe-black")}>
+            <div
+              className={cn(
+                "flex items-center gap-5",
+                isLight ? "text-luxe-white lg:text-luxe-purple" : "text-luxe-purple"
+              )}
+            >
               <IconButton label={t("search")} onClick={() => setSearchOpen(true)}>
                 <Search className="size-5" strokeWidth={1.5} />
               </IconButton>

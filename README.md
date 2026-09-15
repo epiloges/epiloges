@@ -1,4 +1,4 @@
-# ALEXANDRIS
+# EPILOGES
 
 A luxury footwear ecommerce shop — Zara/COS-inspired minimal editorial design — **live in production** at [shopalexandris.vercel.app](https://shopalexandris.vercel.app), selling a real catalogue and taking real orders.
 

@@ -119,7 +119,7 @@ export function organizationSchema(seo: SiteSeoDefaults) {
     description: seo.defaultDescription,
     url: seo.siteUrl,
     logo: seo.organization.logo,
-    // What an assistant answering "who is Alexandris Stores" needs and a listing cannot say:
+    // What an assistant answering "who is Epiloges Fashion Boutique" needs and a listing cannot say:
     // how long the shop has existed, where it sells, and in which languages it can be dealt with.
     foundingDate: String(COMPANY.foundingYear),
     foundingLocation: { "@type": "Place", name: `${COMPANY.address.city}, ${COMPANY.address.region}, Greece` },

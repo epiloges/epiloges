@@ -10,7 +10,6 @@ import { PaymentError } from "@/lib/payments/types";
 import { cashOnDeliveryProvider } from "@/lib/payments/providers/cash-on-delivery";
 import { bankTransferProvider } from "@/lib/payments/providers/bank-transfer";
 import { irisProvider } from "@/lib/payments/providers/iris";
-import { piraeusProvider } from "@/lib/payments/providers/piraeus";
 
 /**
  * The central provider registry (§28).
@@ -87,8 +86,8 @@ export const paymentProviderRegistry = new PaymentProviderRegistry();
 
 paymentProviderRegistry.register(cashOnDeliveryProvider);
 paymentProviderRegistry.register(bankTransferProvider);
-// Cards. Stripe was the card rail until 2026-09-13; it was removed in favour of the
-// bank the shop already has its acquiring contract with (Euronet / Piraeus epay), so
-// card settlements land in the same account as the POS terminal's.
-paymentProviderRegistry.register(piraeusProvider);
+// No card acquirer configured for this deployment — the previous card provider was
+// tied to the other shop's own bank contract, which doesn't carry over. Register a
+// real card provider here (implement `PaymentProvider`, one line) once this client
+// has their own acquiring account.
 paymentProviderRegistry.register(irisProvider);

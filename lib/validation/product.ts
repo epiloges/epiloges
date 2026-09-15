@@ -105,7 +105,7 @@ export type CategorySeoOverride = z.infer<typeof categorySeoOverrideSchema>;
  * product saved with the optional SEO block untouched stored empty strings. Every
  * consumer then read them with `product.seo?.title ?? product.name` — and `??` only
  * falls back on null/undefined, never on "". The result was a product page whose
- * `<title>` rendered as " | Alexandris Stores" with no meta description, appearing
+ * `<title>` rendered as " | Epiloges Fashion Boutique" with no meta description, appearing
  * one product at a time as the catalog got edited, with nothing in the UI to
  * indicate it had happened.
  *

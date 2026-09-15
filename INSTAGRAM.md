@@ -41,7 +41,7 @@ The API will not talk to a personal account, so nothing below works until this i
 
 1. Go to <https://developers.facebook.com/apps> and sign in with the Facebook account that
    administers the business. **Create app**.
-2. App name: anything (`Alexandris Stores Site`). Use `alexandrisstores@gmail.com` as the
+2. App name: anything (`Epiloges Fashion Boutique Site`). Use `alexandrisstores@gmail.com` as the
    contact email.
 3. For the use case, pick **Other** → **Business**.
 4. In the new app: **Add product → Instagram → Set up**, then open **API setup with

@@ -12,7 +12,7 @@ import type { FaqItem } from "@/types";
  * the page and emitted as FAQPage structured data, never one without the other.
  */
 export interface BrandContent {
-  /** Page title before the " | Alexandris Stores" suffix — under ~48 characters. */
+  /** Page title before the " | Epiloges Fashion Boutique" suffix — under ~48 characters. */
   title: string;
   /** Meta description, under ~155 characters. */
   description: string;

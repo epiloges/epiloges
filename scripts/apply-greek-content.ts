@@ -59,9 +59,9 @@ const COLLECTIONS: Record<string, { title: string; subtitle: string }> = {
   "new-arrivals": { title: "New Arrivals", subtitle: "Just landed" },
 };
 
-const SEO_TITLE = "ALEXANDRIS — Γυναικεία & ανδρικά παπούτσια";
+const SEO_TITLE = "EPILOGES — Γυναικεία & ανδρικά παπούτσια";
 const SEO_DESCRIPTION =
-  "Το ALEXANDRIS είναι κατάστημα υποδημάτων στο Ηράκλειο Κρήτης. Γυναικεία και ανδρικά παπούτσια, με προσοχή στη λεπτομέρεια και διαχρονικό σχεδιασμό.";
+  "Το EPILOGES είναι κατάστημα υποδημάτων στο Ηράκλειο Κρήτης. Γυναικεία και ανδρικά παπούτσια, με προσοχή στη λεπτομέρεια και διαχρονικό σχεδιασμό.";
 
 async function main() {
   let changed = 0;

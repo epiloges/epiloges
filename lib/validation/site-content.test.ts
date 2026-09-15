@@ -87,7 +87,7 @@ describe("navigationConfigSchema", () => {
 
 describe("siteSettingsSchema", () => {
   const settings = {
-    siteName: "ALEXANDRIS",
+    siteName: "EPILOGES",
     tagline: "",
     logo: "/logo.svg",
     favicon: "/favicon.ico",

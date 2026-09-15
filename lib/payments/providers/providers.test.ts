@@ -92,7 +92,7 @@ describe("Cash on Delivery provider", () => {
 describe("Bank Transfer provider", () => {
   const complete = config({
     bankName: "Test Bank",
-    accountHolder: "ALEXANDRIS",
+    accountHolder: "EPILOGES",
     iban: "GR9600000000000000000000000",
     useOrderNumberAsReference: "true",
   });

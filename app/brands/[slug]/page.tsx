@@ -14,7 +14,7 @@ import { storeName } from "@/constants/company";
 import { breadcrumbSchema, buildMetadata, faqSchema } from "@/lib/seo";
 import { brandContentFor } from "@/lib/seo/brand-content";
 import { getNavigation, getSeoDefaults, getSiteSettings } from "@/services";
-import { getAllBrands, getBrandBySlug } from "@/services/brands";
+import { getBrandBySlug } from "@/services/brands";
 import { ROUTES } from "@/constants/routes";
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
@@ -25,9 +25,10 @@ interface BrandPageProps extends ListingPageProps {
   params: Promise<{ slug: string }>;
 }
 
-export async function generateStaticParams() {
-  return (await getAllBrands()).map((brand) => ({ slug: brand.slug }));
-}
+// No generateStaticParams: this catalogue doesn't carry multiple resold brands the way
+// the shop this page was built for did, so there's no build-time list of slugs to pre-render
+// (Cache Components requires generateStaticParams to return at least one result if present
+// at all). The route still works — it renders per-request for whatever slug is requested.
 
 export async function generateMetadata({ params, searchParams }: BrandPageProps): Promise<Metadata> {
   const [{ slug }, page, seo, locale, t] = await Promise.all([

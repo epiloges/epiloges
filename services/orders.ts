@@ -12,7 +12,6 @@ import { orderLink } from "@/services/order-notifications";
 import { getPrimaryPaymentForOrder } from "@/services/payments";
 import { paymentProviderRegistry } from "@/lib/payments/registry";
 import { canTransitionOrder } from "@/lib/order-transitions";
-import { ACS_CARRIER_NAME } from "@/lib/courier/tracking-url";
 import { getSiteUrl } from "@/lib/site-url";
 
 export async function getOrderById(id: string): Promise<Order | null> {
@@ -263,10 +262,11 @@ export async function updateOrderStatus(id: string, status: Order["status"]): Pr
         lineItems: order.lineItems,
         trackingNumber: order.trackingNumber,
         carrier: order.carrier,
-        // An ACS voucher links to the shop's own tracking page — ACS's site has no address
-        // that opens on a number — so the customer sees the parcel's state in one tap.
+        // No courier-specific tracking page to link to (manual carrier entry) — fall back to
+        // the shop's own /track page whenever a tracking number exists but nothing more
+        // specific was entered, so the customer still has one tap to the parcel's state.
         trackingUrl:
-          order.carrier === ACS_CARRIER_NAME && order.trackingNumber
+          order.trackingNumber && !order.trackingUrl
             ? `${getSiteUrl().replace(/\/$/, "")}/track/${order.trackingNumber}`
             : order.trackingUrl,
         orderUrl: await orderLink(order.id),

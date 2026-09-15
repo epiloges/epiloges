@@ -1,7 +1,7 @@
 # SEO keyword map — alexandrisstores.gr
 
 Written 2026-09-14, launch week, after the move to the real domain and the naming rule
-(ALEXANDRIS = wordmark; Καταστήματα Αλεξανδρής / Alexandris Stores = the name). This is the
+(EPILOGES = wordmark; Επιλογές Fashion Boutique / Epiloges Fashion Boutique = the name). This is the
 *why* behind every title, description and block of copy on the site. Edit the copy on
 `/admin/categories`, `/admin/collections` and `/admin/seo`; edit brand copy in
 `lib/seo/brand-content.ts`; edit chrome-page titles in `messages/el.json` + `en.json` (`Pages`).
@@ -19,7 +19,7 @@ live catalogue on the day it was written — see `data/seo-content/*.json` `_rea
 
 ## Head terms → pages
 
-| Query cluster (Greek first) | Page | Title (before " \| Alexandris Stores") |
+| Query cluster (Greek first) | Page | Title (before " \| Epiloges Fashion Boutique") |
 |---|---|---|
 | παπούτσια Ηράκλειο · κατάστημα παπουτσιών Ηράκλειο · shoe store Heraklion · παπούτσια online | `/` | Παπούτσια Ηράκλειο & Online – Γυναικεία & Ανδρικά (brand in-line, no suffix) |
 | γυναικεία παπούτσια · γυναικεία παπούτσια online | `/women` | Γυναικεία Παπούτσια – Μπότες, Sneakers, Πέδιλα, Γόβες |
@@ -45,7 +45,7 @@ live catalogue on the day it was written — see `data/seo-content/*.json` `_rea
 
 ## Rules that keep it working
 
-- **Title budget**: ≤ 48 characters before the suffix; the suffix `| Alexandris Stores` is
+- **Title budget**: ≤ 48 characters before the suffix; the suffix `| Epiloges Fashion Boutique` is
   added by the layout template. Keyword first, brand last, so truncation never eats the query.
 - **Description budget**: ≤ 158 characters, one concrete promise (sizes / brands / delivery /
   returns), never a slogan.

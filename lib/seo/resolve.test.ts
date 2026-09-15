@@ -10,11 +10,11 @@ import {
 import type { Category, Collection, Product, SiteSeoDefaults } from "@/types";
 
 const seo: SiteSeoDefaults = {
-  titleTemplate: "%s | ALEXANDRIS",
-  defaultTitle: "ALEXANDRIS",
+  titleTemplate: "%s | EPILOGES",
+  defaultTitle: "EPILOGES",
   defaultDescription: "Παπούτσια στο Ηράκλειο Κρήτης.",
   siteUrl: "https://shopalexandris.vercel.app",
-  organization: { name: "ALEXANDRIS", logo: "/logo.svg", sameAs: [] },
+  organization: { name: "EPILOGES", logo: "/logo.svg", sameAs: [] },
 };
 
 function product(overrides: Partial<Product> = {}): Product {

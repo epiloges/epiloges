@@ -25,7 +25,7 @@ import { Prisma, PrismaClient } from "@/lib/generated/prisma/client";
  * seeded social profiles that earlier passes removed: copy that reads as fact and isn't. It
  * matters more here than in the journal, because it is the shop describing itself.
  *
- * WHAT THE NEW COPY CLAIMS, and why each is safe: that ALEXANDRIS is a shoe shop in Heraklion
+ * WHAT THE NEW COPY CLAIMS, and why each is safe: that EPILOGES is a shoe shop in Heraklion
  * (the registered address), that it carries its own line alongside brands it selects (47 vs
  * 128, both verifiable from product names), and that it sells women's and men's shoes. It
  * claims nothing about manufacture, materials, tanneries or batch sizes.
@@ -63,7 +63,7 @@ const SECTIONS: Record<string, Record<string, unknown>> = {
     eyebrow: "Ποιοι είμαστε",
     headline: "Διαλεγμένα ένα ένα.",
     body:
-      "Το ALEXANDRIS είναι κατάστημα υποδημάτων στο Ηράκλειο της Κρήτης. Στα ράφια μας θα βρείτε " +
+      "Το EPILOGES είναι κατάστημα υποδημάτων στο Ηράκλειο της Κρήτης. Στα ράφια μας θα βρείτε " +
       "τη δική μας σειρά, Alexandris Shoes, μαζί με μάρκες που επιλέγουμε ένα ζευγάρι τη φορά — " +
       "γυναικεία και ανδρικά, για την καθημερινότητα και για τις πιο ιδιαίτερες μέρες.",
   },

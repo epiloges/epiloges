@@ -1,22 +1,22 @@
 {
-  "title": "Βιωσιμότητα",
-  "intro": "Λιγότερα, καλύτερα πράγματα — παπούτσια που φοριούνται χρόνια, όχι μια σεζόν. Τι σημαίνει αυτό στην πράξη, και πού έχουμε ακόμη δρόμο.",
+  "title": "Sustainability",
+  "intro": "Fewer, better things — made to be worn for years, not seasons. Here's what that means in practice, and where we still have work to do.",
   "sections": [
     {
-      "heading": "Επιλογή αντί για όγκο",
-      "body": "Ένα μικρό κατάστημα δεν χρειάζεται να πουλήσει τα πάντα. Επιλέγουμε μοντέλα που πιστεύουμε ότι θα φορεθούν πολύ, και τα παραγγέλνουμε σε ποσότητες που μπορούμε να πουλήσουμε — όχι για να γεμίσουμε μια αποθήκη που στο τέλος της σεζόν αδειάζει στα σκουπίδια."
+      "heading": "Materials",
+      "body": "We build our collections around natural fibres — wool, cotton, linen and silk — sourced from mills we've worked with for years, chosen for durability first. We're moving toward certified low-impact and organic fibres across the line, season by season, rather than relabeling the whole catalog at once."
     },
     {
-      "heading": "Υλικά που αντέχουν",
-      "body": "Προτιμούμε δέρμα και σουέντ όπου έχει νόημα, γιατί ένα καλοφτιαγμένο δερμάτινο παπούτσι επισκευάζεται και αντέχει. Λέμε καθαρά σε κάθε προϊόν από τι είναι φτιαγμένο, ώστε να διαλέγετε εσείς."
+      "heading": "Small Batches",
+      "body": "Every style is produced in limited runs against forecasted demand, not speculative volume. It costs more per unit. It also means far less overproduction and far fewer markdowns driving unsold stock to landfill."
     },
     {
-      "heading": "Επισκευή πριν την αντικατάσταση",
-      "body": "Μια σόλα, ένα τακούνι ή ένα φερμουάρ δεν είναι λόγος να πετάξετε ένα ζευγάρι. Ρωτήστε μας — ξέρουμε ποιος στο Ηράκλειο θα το επισκευάσει σωστά."
+      "heading": "Built to Last",
+      "body": "Construction choices — half-canvas tailoring, hand-finished seams, a hem left generous enough to let out — are made so a piece survives years of wear and repair, not one season. The most sustainable garment is the one you don't replace, you take to a tailor."
     },
     {
-      "heading": "Πού έχουμε ακόμη δρόμο",
-      "body": "Δεν μπορούμε να ελέγξουμε πώς παράγει κάθε οίκος που πουλάμε, και δεν θα ισχυριστούμε ότι το κάνουμε. Αυτό που ελέγχουμε είναι τι επιλέγουμε να βάλουμε στα ράφια μας, πόσο το συσκευάζουμε και πόσο μακριά ταξιδεύει. Σε αυτά δουλεύουμε."
+      "heading": "Where We're Still Working",
+      "body": "We don't yet have a formal take-back or resale program, and our packaging isn't fully plastic-free. Both are on our roadmap — we'd rather say so plainly than overstate where we are today."
     }
   ]
 }

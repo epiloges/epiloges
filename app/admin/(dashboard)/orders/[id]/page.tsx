@@ -16,12 +16,8 @@ import {
   updateOrderStatusAction,
   updateOrderTrackingAction,
   updateOrderInternalNoteAction,
-  createAcsShipmentAction,
   updateOrderShippingAddressAction,
-  cancelAcsShipmentAction,
 } from "@/app/admin/(dashboard)/orders/actions";
-import { isAcsCourierConfigured, ACS_CARRIER_NAME } from "@/lib/courier";
-import { AcsVoucherActions } from "@/components/admin/AcsVoucherActions";
 import { OrderInternalNoteForm } from "@/components/admin/OrderInternalNoteForm";
 import { listAuditLogForTarget } from "@/services/audit-log";
 
@@ -62,12 +58,7 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderDetailP
   const boundUpdateNote = updateOrderInternalNoteAction.bind(null, order.id);
 
   const boundUpdateTracking = updateOrderTrackingAction.bind(null, order.id);
-  const boundCreateAcsShipment = createAcsShipmentAction.bind(null, order.id);
   const boundUpdateShippingAddress = updateOrderShippingAddressAction.bind(null, order.id);
-  const unitCount = order.lineItems.reduce((sum, item) => sum + item.quantity, 0);
-  const boundCancelAcsShipment = cancelAcsShipmentAction.bind(null, order.id);
-  const acsConfigured = isAcsCourierConfigured();
-  const hasAcsVoucher = acsConfigured && order.carrier === ACS_CARRIER_NAME && Boolean(order.trackingNumber);
 
   // The one thing to know before touching the box, as a colour rather than a word: green
   // means the money is in, amber means it is still owed (cash at the door, a transfer not
@@ -233,22 +224,8 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderDetailP
               defaultCarrier={order.carrier}
               defaultTrackingNumber={order.trackingNumber}
               defaultTrackingUrl={order.trackingUrl}
-              // Once a voucher exists the create button gives way to print/cancel below.
-              courierProviderIsAcs={acsConfigured && !hasAcsVoucher}
               onSave={boundUpdateTracking}
-              onCreateAcsShipment={boundCreateAcsShipment}
-              shippingAddress={order.shippingAddress}
-              unitCount={unitCount}
             />
-            {hasAcsVoucher && order.trackingNumber ? (
-              <AcsVoucherActions
-                orderId={order.id}
-                trackingNumber={order.trackingNumber}
-                printedAt={order.voucherPrintedAt ? formatDateTime(order.voucherPrintedAt) : null}
-                pickupListNo={order.pickupListNo ?? null}
-                onCancel={boundCancelAcsShipment}
-              />
-            ) : null}
           </div>
         </div>
 

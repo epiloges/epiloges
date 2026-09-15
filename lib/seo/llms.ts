@@ -54,7 +54,7 @@ export async function buildLlmsText(full: boolean): Promise<string> {
     "",
     `Τα ${storeName()} (${COMPANY.legalName}, ΑΦΜ ${COMPANY.vatNumber}) είναι κατάστημα υποδημάτων στο Ηράκλειο Κρήτης από το ${COMPANY.foundingYear}, με ηλεκτρονικό κατάστημα για όλη την Ελλάδα. Γυναικεία και ανδρικά παπούτσια και τσάντες: η δική μας σειρά ${COMPANY.ownBrands[0]} (γνήσιο δέρμα, ανατομικός πάτος) και επιλεγμένοι οίκοι (${otherBrands.join(", ")}).`,
     "",
-    `Alexandris Stores is an independent shoe shop in Heraklion, Crete, trading since ${COMPANY.foundingYear}, selling women's and men's shoes and bags online across Greece. Sizes 36–41 for women and 40–46 for men; courier delivery in 1–3 working days; free returns within ${RETURN_WINDOW_DAYS} days. The physical store is at ${formattedAddress()}.`,
+    `Epiloges Fashion Boutique is an independent shoe shop in Heraklion, Crete, trading since ${COMPANY.foundingYear}, selling women's and men's shoes and bags online across Greece. Sizes 36–41 for women and 40–46 for men; courier delivery in 1–3 working days; free returns within ${RETURN_WINDOW_DAYS} days. The physical store is at ${formattedAddress()}.`,
     "",
     "## Το κατάστημα",
     "",

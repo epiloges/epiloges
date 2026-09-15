@@ -76,7 +76,7 @@ const RATE: ShippingRate = {
   estimatedDelivery: "2–4 εργάσιμες ημέρες",
 };
 
-const SITE = "ALEXANDRIS";
+const SITE = "EPILOGES";
 const URL = "https://shopalexandris.vercel.app";
 
 const PAGES: { name: string; rendered: { subject: string; html: string; text: string } }[] = [
@@ -94,7 +94,7 @@ const PAGES: { name: string; rendered: { subject: string; html: string; text: st
       giftMessage: "Χρόνια πολλά! Με αγάπη, Μιχάλης",
       paymentInstructions: [
         { label: "Τράπεζα", value: "Piraeus Bank" },
-        { label: "Δικαιούχος", value: "MICHAIL ALEXANDRIS" },
+        { label: "Δικαιούχος", value: "MICHAIL EPILOGES" },
         { label: "IBAN", value: "GR16 0110 1250 0000 0001 2300 695" },
       ],
     }),

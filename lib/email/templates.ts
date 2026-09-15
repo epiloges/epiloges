@@ -9,7 +9,7 @@ interface RenderedEmail {
 }
 
 /**
- * `siteName` (ALEXANDRIS) is the wordmark: masthead, footer mark, `<title>`. In a sentence or a
+ * `siteName` (EPILOGES) is the wordmark: masthead, footer mark, `<title>`. In a sentence or a
  * subject line the business is called by its name — emails are Greek, so the Greek one.
  */
 const STORE = storeName("el");
@@ -922,7 +922,7 @@ export function newOrderAdminEmail(input: {
     </p>`;
 
   const html = layout(
-    "Alexandris Stores",
+    "Epiloges Fashion Boutique",
     `${banner.short} · ${units} τεμ. για ${shippingAddress.firstName} ${shippingAddress.lastName}, ${shippingAddress.city}`,
     `
     ${eyebrow(`Νέα παραγγελία · ${escapeHtml(when)}`)}

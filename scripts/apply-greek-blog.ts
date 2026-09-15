@@ -27,7 +27,7 @@ interface PostTranslation {
   tags: string[];
 }
 
-const AUTHOR = "Ομάδα ALEXANDRIS";
+const AUTHOR = "Ομάδα EPILOGES";
 
 const POSTS: Record<string, PostTranslation> = {
   "the-art-of-the-oxford": {
@@ -52,7 +52,7 @@ const POSTS: Record<string, PostTranslation> = {
     tags: ["στυλ", "μπότες"],
   },
   /**
-   * REWRITTEN, not just translated. This post used to say that every ALEXANDRIS pair is made
+   * REWRITTEN, not just translated. This post used to say that every EPILOGES pair is made
    * by a small in-house team, "from the first cut of leather to the final polish". The
    * catalogue is 175 products: 47 are the shop's own Alexandris Shoes line and 128 are other
    * brands, so the claim was false for roughly three quarters of the shelf — and nothing in

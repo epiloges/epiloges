@@ -84,7 +84,7 @@ describe("Skroutz feed", () => {
 });
 
 describe("Google Merchant feed", () => {
-  const options = { siteName: "ALEXANDRIS", siteUrl: "https://shop.example", ownBrands: ["Alexandris Shoes"], shipping: { country: "GR", price: 3.5, freeAbove: 150, currency: "EUR" } };
+  const options = { siteName: "EPILOGES", siteUrl: "https://shop.example", ownBrands: ["Alexandris Shoes"], shipping: { country: "GR", price: 3.5, freeAbove: 150, currency: "EUR" } };
 
   it("emits one item per size under one item_group_id, with per-size availability", () => {
     const xml = googleMerchantFeedXml([toFeedItem(product(), { siteUrl: "https://shop.example", categories })], options);
