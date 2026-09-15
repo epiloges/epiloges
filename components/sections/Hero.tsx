@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion, useScroll, useTransform } from "framer-motion";
 import { getExperimentVisitorId, getVariant, type Variant } from "@/lib/experiments";
 import { getCommerceProvider } from "@/lib/commerce";
 import type { HeroSection } from "@/types";
@@ -30,9 +29,6 @@ interface HeroProps {
 const VARIANT_PRIMARY_CTA_LABEL = "Δείτε τα γυναικεία";
 
 export function Hero({ data }: HeroProps) {
-  const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
-  const y = useTransform(scrollYProgress, [0, 1], ["0%", "18%"]);
   const [variant, setVariant] = useState<Variant>("control");
 
   useEffect(() => {
@@ -51,8 +47,10 @@ export function Hero({ data }: HeroProps) {
   const primaryCtaLabel = variant === "variant" ? VARIANT_PRIMARY_CTA_LABEL : data.primaryCta?.label;
 
   return (
-    <section ref={ref} className="relative h-[100dvh] min-h-[640px] w-full overflow-hidden bg-luxe-black">
-      <motion.div style={{ y }} className="absolute inset-0">
+    <section className="relative h-[100dvh] min-h-[640px] w-full overflow-hidden bg-luxe-black">
+      {/* The parallax is CSS (.hero-parallax in globals.css), driven by the document scroll —
+          what useScroll/useTransform computed, without the library on the critical path. */}
+      <div className="hero-parallax absolute inset-0">
         <Image
           src={data.image.src}
           alt={data.image.alt}
@@ -63,7 +61,7 @@ export function Hero({ data }: HeroProps) {
           className="object-cover"
         />
         <div className="absolute inset-0 bg-black/25" />
-      </motion.div>
+      </div>
 
       <div className="container-luxe relative flex h-full flex-col items-start justify-end pb-24 md:pb-32">
         {/* These four use the CSS `hero-rise` animation rather than Framer Motion. Framer

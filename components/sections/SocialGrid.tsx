@@ -1,8 +1,4 @@
-"use client";
-
 import Image from "next/image";
-import { motion } from "framer-motion";
-import { fadeUp, staggerContainer, viewportOnce } from "@/constants/animation";
 import type { InstagramPost, SocialGridSection } from "@/types";
 
 interface SocialGridProps {
@@ -81,14 +77,8 @@ export function SocialGrid({ data, profileUrl, posts }: SocialGridProps) {
         ) : null}
       </div>
 
-      <motion.div
-        variants={staggerContainer}
-        initial="hidden"
-        whileInView="visible"
-        viewport={viewportOnce}
-        className="grid grid-cols-2 gap-1 sm:grid-cols-3 md:grid-cols-6"
-      >
-        {tiles.map((tile) => {
+      <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 md:grid-cols-6">
+        {tiles.map((tile, index) => {
           const content = (
             <>
               <Image
@@ -101,29 +91,23 @@ export function SocialGrid({ data, profileUrl, posts }: SocialGridProps) {
               <div className="absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/20" />
             </>
           );
-          const className = "group relative block aspect-square overflow-hidden bg-luxe-gray-light";
+          const className = "reveal group relative block aspect-square overflow-hidden bg-luxe-gray-light";
+          const stagger = { "--reveal-i": index % 6 } as React.CSSProperties;
 
           // A tile with nowhere real to go is rendered as an image, not as a link. The
           // previous `href="#"` was worse than no link at all: it looked interactive,
           // took keyboard focus, and scrolled the visitor back to the top of the page.
           return tile.href ? (
-            <motion.a
-              key={tile.key}
-              href={tile.href}
-              target="_blank"
-              rel="noreferrer noopener"
-              variants={fadeUp}
-              className={className}
-            >
+            <a key={tile.key} href={tile.href} target="_blank" rel="noreferrer noopener" className={className} style={stagger}>
               {content}
-            </motion.a>
+            </a>
           ) : (
-            <motion.div key={tile.key} variants={fadeUp} className={className}>
+            <div key={tile.key} className={className} style={stagger}>
               {content}
-            </motion.div>
+            </div>
           );
         })}
-      </motion.div>
+      </div>
     </section>
   );
 }

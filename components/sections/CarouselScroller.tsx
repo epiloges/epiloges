@@ -2,9 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
-import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { fadeUp, viewportOnce } from "@/constants/animation";
 
 /**
  * A horizontally scrolling row with its own next/previous controls.
@@ -93,11 +91,7 @@ export function CarouselScroller({ children, label }: CarouselScrollerProps) {
 
   return (
     <div className="relative">
-      <motion.div
-        initial="hidden"
-        whileInView="visible"
-        viewport={viewportOnce}
-        variants={fadeUp}
+      <div
         ref={scrollerRef}
         // `scroll-p*`, not just `p*` — a snap container with `container-luxe`'s ordinary
         // padding rendered the first card flush against the browser's edge. CSS scroll
@@ -110,10 +104,10 @@ export function CarouselScroller({ children, label }: CarouselScrollerProps) {
         // reserve the inset, so the browser rests at scrollLeft 0 with the gutter intact
         // instead of scrolling past it. Same 24/40/64 scale as `container-luxe`, so this
         // row still lines up with the section heading above it.
-        className="container-luxe flex snap-x snap-mandatory gap-6 overflow-x-auto scroll-pl-6 scroll-pr-6 pb-4 md:scroll-pl-10 md:scroll-pr-10 lg:scroll-pl-16 lg:scroll-pr-16 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="reveal container-luxe flex snap-x snap-mandatory gap-6 overflow-x-auto scroll-pl-6 scroll-pr-6 pb-4 md:scroll-pl-10 md:scroll-pr-10 lg:scroll-pl-16 lg:scroll-pr-16 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {children}
-      </motion.div>
+      </div>
 
       {/*
         `container-luxe` on the overlay too, so its content box is exactly the scroller's and

@@ -5,10 +5,8 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
 import type { NavItem } from "@/types";
 import { cn } from "@/lib/utils";
-import { EASE } from "@/constants/animation";
 
 interface DesktopNavProps {
   items: NavItem[];
@@ -67,16 +65,11 @@ export function DesktopNav({ items, transparentText }: DesktopNavProps) {
         </div>
       ))}
 
-      <AnimatePresence>
-        {activeItem ? (
-          <motion.div
+      {activeItem ? (
+          <div
             key={activeItem.id}
-            initial={{ opacity: 0, y: -6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.3, ease: EASE }}
             onMouseEnter={() => open(activeItem.id)}
-            className="absolute inset-x-0 top-full border-t border-luxe-black bg-luxe-white shadow-[0_24px_48px_-28px_rgba(0,0,0,0.3)]"
+            className="animate-in fade-in slide-in-from-top-1 absolute inset-x-0 top-full border-t border-luxe-black bg-luxe-white shadow-[0_24px_48px_-28px_rgba(0,0,0,0.3)] duration-300"
           >
             <div className="container-luxe grid grid-cols-12 gap-x-10 py-14">
               <div className="col-span-3">
@@ -130,9 +123,8 @@ export function DesktopNav({ items, transparentText }: DesktopNavProps) {
                 ))}
               </div>
             </div>
-          </motion.div>
+          </div>
         ) : null}
-      </AnimatePresence>
     </nav>
   );
 }

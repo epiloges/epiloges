@@ -1,12 +1,10 @@
 "use client";
 import { useTranslations } from "next-intl";
 
-import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import { useToast } from "@/components/providers/ToastProvider";
 import { useCart } from "@/components/providers/CartProvider";
 import { cn } from "@/lib/utils";
-import { EASE } from "@/constants/animation";
 
 export function ToastViewport() {
   const tA11y = useTranslations("A11y");
@@ -24,16 +22,11 @@ export function ToastViewport() {
       className="pointer-events-none fixed inset-x-0 bottom-0 z-200 flex flex-col items-center gap-2 p-4 sm:items-end"
       style={{ transition: "padding 300ms cubic-bezier(0.32, 0.72, 0, 1)" }}
     >
-      <AnimatePresence>
-        {toasts.map((t) => (
-          <motion.div
+      {toasts.map((t) => (
+          <div
             key={t.id}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 16 }}
-            transition={{ duration: 0.25, ease: EASE }}
             className={cn(
-              "pointer-events-auto flex w-full max-w-sm items-start gap-3 border p-4 shadow-[0_16px_32px_-16px_rgba(0,0,0,0.25)]",
+              "animate-in fade-in slide-in-from-bottom-4 pointer-events-auto flex w-full max-w-sm items-start gap-3 border p-4 shadow-[0_16px_32px_-16px_rgba(0,0,0,0.25)] duration-250",
               t.tone === "error" ? "border-destructive bg-luxe-white" : "border-luxe-black bg-luxe-white"
             )}
           >
@@ -56,9 +49,8 @@ export function ToastViewport() {
             <button type="button" aria-label={tA11y("dismiss")} onClick={() => dismiss(t.id)} className="shrink-0">
               <X className="size-4" strokeWidth={1.5} />
             </button>
-          </motion.div>
+          </div>
         ))}
-      </AnimatePresence>
     </div>
   );
 }

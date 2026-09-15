@@ -1,10 +1,6 @@
-"use client";
-
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
-import { fadeUp, staggerContainer, viewportOnce } from "@/constants/animation";
 import type { Image as ImageData } from "@/types";
 
 /**
@@ -36,18 +32,12 @@ export function FeaturedCollections({ title, subtitle, tiles }: FeaturedCollecti
         {subtitle ? <p className="mt-2 text-luxe-gray-dark">{subtitle}</p> : null}
       </div>
 
-      <motion.div
-        variants={staggerContainer}
-        initial="hidden"
-        whileInView="visible"
-        viewport={viewportOnce}
-        className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4 md:auto-rows-[300px]"
-      >
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4 md:auto-rows-[300px]">
         {tiles.map((tile, index) => (
-          <motion.div
+          <div
             key={tile.id}
-            variants={fadeUp}
-            className={index === 0 ? "md:col-span-2 md:row-span-2" : ""}
+            className={index === 0 ? "reveal md:col-span-2 md:row-span-2" : "reveal"}
+            style={{ "--reveal-i": index } as React.CSSProperties}
           >
             <Link
               href={tile.href}
@@ -75,9 +65,9 @@ export function FeaturedCollections({ title, subtitle, tiles }: FeaturedCollecti
                 />
               </div>
             </Link>
-          </motion.div>
+          </div>
         ))}
-      </motion.div>
+      </div>
     </section>
   );
 }

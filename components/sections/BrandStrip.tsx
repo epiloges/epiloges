@@ -1,8 +1,5 @@
-"use client";
-
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { fadeUp, staggerContainer, viewportOnce } from "@/constants/animation";
+import { cn } from "@/lib/utils";
 import type { Brand, BrandStripSection } from "@/types";
 
 interface BrandStripProps {
@@ -23,7 +20,7 @@ interface BrandStripProps {
  * it is then normalised to the same optical height and the same muted treatment as the
  * wordmarks, so mixing the two does not break the row.
  */
-function BrandMark({ brand }: { brand: Brand }) {
+function BrandMark({ brand, index }: { brand: Brand; index: number }) {
   const content = brand.logo ? (
     // Plain <img>, not next/image: this renders whatever URL is in the CMS, and an
     // unconfigured host makes next/image throw fatally instead of degrading — it would take
@@ -46,15 +43,15 @@ function BrandMark({ brand }: { brand: Brand }) {
 
   // Same rule as the social tiles: no link at all beats a link that goes nowhere.
   return brand.href ? (
-    <motion.div variants={fadeUp}>
+    <div className="reveal" style={{ "--reveal-i": index % 6 } as React.CSSProperties}>
       <Link href={brand.href} className={className}>
         {content}
       </Link>
-    </motion.div>
+    </div>
   ) : (
-    <motion.div variants={fadeUp} className={className}>
+    <div className={cn("reveal", className)} style={{ "--reveal-i": index % 6 } as React.CSSProperties}>
       {content}
-    </motion.div>
+    </div>
   );
 }
 
@@ -78,17 +75,11 @@ export function BrandStrip({ data }: BrandStripProps) {
           layout has to stay balanced at seven brands or at nine — a `grid-cols-4` looks
           deliberate at eight and broken at five.
         */}
-        <motion.div
-          variants={staggerContainer}
-          initial="hidden"
-          whileInView="visible"
-          viewport={viewportOnce}
-          className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 md:gap-x-16 md:gap-y-8"
-        >
-          {data.brands.map((brand) => (
-            <BrandMark key={brand.name} brand={brand} />
+        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 md:gap-x-16 md:gap-y-8">
+          {data.brands.map((brand, index) => (
+            <BrandMark key={brand.name} brand={brand} index={index} />
           ))}
-        </motion.div>
+        </div>
       </div>
     </section>
   );

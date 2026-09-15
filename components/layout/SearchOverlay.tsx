@@ -3,12 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { AnimatePresence, motion } from "framer-motion";
 import { Clock3, Search, TrendingUp, X } from "lucide-react";
 import { useLockBodyScroll } from "@/hooks/use-lock-body-scroll";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useRecentSearches } from "@/hooks/use-recent-searches";
-import { EASE } from "@/constants/animation";
 import { getCommerceProvider } from "@/lib/commerce";
 import { getTrendingSearches } from "@/lib/trending-searches";
 import { SearchProductResult } from "@/components/layout/search/SearchProductResult";
@@ -175,14 +173,10 @@ export function SearchOverlay({ open, onOpenChange }: SearchOverlayProps) {
   const showNoResults = isQueryLongEnough && !isSearching && products.length === 0 && collections.length === 0;
 
   return (
-    <AnimatePresence>
+    <>
       {open ? (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.3, ease: EASE }}
-          className="fixed inset-0 z-100 overflow-y-auto bg-luxe-white"
+        <div
+          className="animate-in fade-in fixed inset-0 z-100 overflow-y-auto bg-luxe-white duration-300"
           role="dialog"
           aria-modal="true"
           aria-label={tA11y("search")}
@@ -194,12 +188,7 @@ export function SearchOverlay({ open, onOpenChange }: SearchOverlayProps) {
             </button>
           </div>
           <div className="container-luxe pb-16">
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.1, ease: EASE }}
-              className="flex items-center gap-4 border-b border-border py-8"
-            >
+            <div className="animate-in fade-in slide-in-from-bottom-4 fill-mode-both flex items-center gap-4 border-b border-border py-8 delay-100 duration-400">
               <Search className="size-6 text-luxe-gray-dark" strokeWidth={1.5} />
               <input
                 ref={inputRef}
@@ -214,7 +203,7 @@ export function SearchOverlay({ open, onOpenChange }: SearchOverlayProps) {
                 placeholder={t("placeholder")}
                 className="font-heading w-full bg-transparent text-2xl outline-none placeholder:text-luxe-gray-dark md:text-4xl"
               />
-            </motion.div>
+            </div>
 
             <div id="search-results-list" role="listbox" className="py-6">
               {showTermSections ? (
@@ -336,8 +325,8 @@ export function SearchOverlay({ open, onOpenChange }: SearchOverlayProps) {
               )}
             </div>
           </div>
-        </motion.div>
+        </div>
       ) : null}
-    </AnimatePresence>
+    </>
   );
 }

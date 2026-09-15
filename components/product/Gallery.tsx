@@ -3,10 +3,8 @@ import { useTranslations } from "next-intl";
 
 import { useRef, useState } from "react";
 import Image from "next/image";
-import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Play, X, ZoomIn } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { EASE } from "@/constants/animation";
 import type { ProductVideo, Image as ImageType } from "@/types";
 
 type GalleryMedia = { kind: "image"; image: ImageType } | { kind: "video"; video: ProductVideo };
@@ -139,17 +137,12 @@ export function Gallery({ images, videos = [], productName }: GalleryProps) {
         ) : null}
       </div>
 
-      <AnimatePresence>
-        {lightboxOpen ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25, ease: EASE }}
+      {lightboxOpen ? (
+          <div
             role="dialog"
             aria-modal="true"
             aria-label={`${productName} — fullscreen gallery`}
-            className="fixed inset-0 z-100 flex items-center justify-center bg-luxe-black/95"
+            className="animate-in fade-in fixed inset-0 z-100 flex items-center justify-center bg-luxe-black/95 duration-250"
           >
             <button
               type="button"
@@ -189,9 +182,8 @@ export function Gallery({ images, videos = [], productName }: GalleryProps) {
                 </video>
               )}
             </div>
-          </motion.div>
+          </div>
         ) : null}
-      </AnimatePresence>
     </div>
   );
 }

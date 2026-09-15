@@ -193,7 +193,7 @@
      locally, of which ~2.9s and ~4.2s respectively was pure render delay on a 50ms server
      response. A CSS animation starts at first paint with no JavaScript involved, so the
      element becomes visible a frame after the delay elapses. Same easing, durations and
-     stagger as the Framer version it replaces (EASE in constants/animation.ts).
+     stagger as the Framer version it replaces (cubic-bezier(0.22, 1, 0.36, 1) everywhere).
      Keep the LCP element's delay small — every ms of `animation-delay` here is a ms of LCP. */
   @keyframes hero-rise {
     from {
@@ -228,9 +228,51 @@
     animation: hero-lift var(--hero-rise-duration, 0.8s) cubic-bezier(0.22, 1, 0.36, 1)
       var(--hero-rise-delay, 0s) both;
   }
+  /* Scroll reveal without Framer Motion — the fade-up every section used to get from
+     `whileInView`. The animation is driven by the element's own position in the viewport
+     (a view() timeline), so it needs no JavaScript at all: no observer, no library, no
+     hydration before it runs. The @supports guard is the whole safety story: a browser
+     without scroll-driven animations never applies the hidden start state, so the content
+     is simply there, as it was server-rendered. Same curve and distance as the old
+     `fadeUp` preset (cubic-bezier(0.22, 1, 0.36, 1) everywhere). `--reveal-i` staggers siblings by
+     starting each one's range a little later, in place of Framer's staggerChildren. */
+  @supports (animation-timeline: view()) {
+    @keyframes reveal-up {
+      from {
+        opacity: 0;
+        transform: translateY(24px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .reveal {
+      animation: reveal-up cubic-bezier(0.22, 1, 0.36, 1) both;
+      animation-timeline: view();
+      animation-range: entry calc(8% + var(--reveal-i, 0) * 7%) entry calc(38% + var(--reveal-i, 0) * 7%);
+    }
+    /* The hero photograph's parallax: the picture drifts down at a fraction of the scroll
+       speed while the hero leaves the screen. Driven by the document scroll over the
+       first viewport-height, which is exactly what useScroll/useTransform computed. */
+    @keyframes hero-parallax {
+      to {
+        transform: translateY(18%);
+      }
+    }
+    .hero-parallax {
+      animation: hero-parallax linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 100dvh;
+    }
+  }
   /* Honours the OS "reduce motion" setting, which Framer did not do here. Content still
      ends up fully visible — it simply arrives without the movement. */
   @media (prefers-reduced-motion: reduce) {
+    .reveal,
+    .hero-parallax {
+      animation: none;
+    }
     .hero-rise,
     .hero-lift {
       animation: none;

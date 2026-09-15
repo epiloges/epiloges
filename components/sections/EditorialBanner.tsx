@@ -1,10 +1,6 @@
-"use client";
-
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { fadeUp, viewportOnce } from "@/constants/animation";
 import type { EditorialBannerSection } from "@/types";
 
 interface EditorialBannerProps {
@@ -25,13 +21,9 @@ export function EditorialBanner({ data }: EditorialBannerProps) {
           className="object-cover"
         />
       </div>
-      <motion.div
-        variants={fadeUp}
-        initial="hidden"
-        whileInView="visible"
-        viewport={viewportOnce}
+      <div
         className={cn(
-          "flex flex-col items-start justify-center bg-luxe-gray-light px-8 py-16 md:px-16 md:py-0",
+          "reveal flex flex-col items-start justify-center bg-luxe-gray-light px-8 py-16 md:px-16 md:py-0",
           imageRight ? "md:order-1" : "md:order-2"
         )}
       >
@@ -46,7 +38,7 @@ export function EditorialBanner({ data }: EditorialBannerProps) {
             {data.cta.label}
           </Link>
         ) : null}
-      </motion.div>
+      </div>
     </section>
   );
 }

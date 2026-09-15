@@ -1,8 +1,4 @@
-"use client";
-
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { fadeUp, viewportOnce } from "@/constants/animation";
 import type { BrandStorySection } from "@/types";
 
 interface BrandStoryProps {
@@ -12,13 +8,7 @@ interface BrandStoryProps {
 export function BrandStory({ data }: BrandStoryProps) {
   return (
     <section className="container-luxe py-24 md:py-32">
-      <motion.div
-        initial="hidden"
-        whileInView="visible"
-        viewport={viewportOnce}
-        variants={fadeUp}
-        className="mx-auto max-w-2xl text-center"
-      >
+      <div className="reveal mx-auto max-w-2xl text-center">
         {data.eyebrow ? <p className="text-eyebrow">{data.eyebrow}</p> : null}
         <h2 className="font-heading mt-4 text-4xl leading-tight md:text-6xl">{data.headline}</h2>
         <p className="mt-6 text-lg text-luxe-gray-dark">{data.body}</p>
@@ -30,7 +20,7 @@ export function BrandStory({ data }: BrandStoryProps) {
             {data.cta.label}
           </Link>
         ) : null}
-      </motion.div>
+      </div>
     </section>
   );
 }
