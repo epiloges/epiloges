@@ -28,8 +28,8 @@ interface CarouselScrollerProps {
   label?: string;
 }
 
-/** Matches the `gap-6` between cards, so one press advances by exactly one card. */
-const CARD_GAP = 24;
+/** Matches the `gap-3` between cards, so one press advances by exactly one card. */
+const CARD_GAP = 12;
 
 export function CarouselScroller({ children, label }: CarouselScrollerProps) {
   const tA11y = useTranslations("A11y");
@@ -104,7 +104,7 @@ export function CarouselScroller({ children, label }: CarouselScrollerProps) {
         // reserve the inset, so the browser rests at scrollLeft 0 with the gutter intact
         // instead of scrolling past it. Same 24/40/64 scale as `container-luxe`, so this
         // row still lines up with the section heading above it.
-        className="reveal container-luxe flex snap-x snap-mandatory gap-6 overflow-x-auto scroll-pl-6 scroll-pr-6 pb-4 md:scroll-pl-10 md:scroll-pr-10 lg:scroll-pl-16 lg:scroll-pr-16 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="reveal container-luxe flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-pl-6 scroll-pr-6 pb-4 md:scroll-pl-10 md:scroll-pr-10 lg:scroll-pl-16 lg:scroll-pr-16 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {children}
       </div>

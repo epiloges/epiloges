@@ -19,7 +19,7 @@
     "category": "blazers",
     "collectionIds": ["c4"],
     "tags": ["wool", "tailored", "handmade"],
-    "gender": "men",
+    "gender": "unisex",
     "materials": ["Italian wool", "Half-canvas construction", "Cupro lining"],
     "careInstructions": [
       "Dry clean only",
@@ -41,7 +41,7 @@
     "description": "An unstructured sport coat in a wool blend, slightly more relaxed than a suit jacket but built for the same distance.",
     "price": { "amount": 235, "currencyCode": "EUR" },
     "images": [
-      { "src": "https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&w=1200&q=80", "alt": "Brown wool-blend sport coat, street style" }
+      { "src": "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=1200&q=80", "alt": "Chestnut wool-blend sport coat on a hanger" }
     ],
     "colors": [{ "name": "Chestnut", "hex": "#6B4226" }],
     "sizes": [
@@ -54,7 +54,7 @@
     "category": "blazers",
     "collectionIds": ["c4"],
     "tags": ["wool", "tailored"],
-    "gender": "men",
+    "gender": "unisex",
     "materials": ["Wool-blend", "Half-canvas construction"],
     "careInstructions": [
       "Dry clean only",

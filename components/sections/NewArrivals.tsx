@@ -25,7 +25,7 @@ function ProductRow({ products }: { products: Product[] }) {
   return (
     <>
       {products.map((product) => (
-        <div key={product.id} data-carousel-item className="w-[75%] shrink-0 snap-start sm:w-[45%] lg:w-[23%]">
+        <div key={product.id} data-carousel-item className="w-[82%] shrink-0 snap-start sm:w-[48%] lg:w-[31%]">
           <ProductCard product={product} />
         </div>
       ))}
