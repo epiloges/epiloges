@@ -120,26 +120,16 @@ export async function Footer({ navigation, settings }: FooterProps) {
             </p>
             <LanguageSwitcher />
           </div>
-          {paymentMethods.length > 0 ? (
+          {paymentMethods.some((method) => method.schemes?.length) ? (
             <ul className="flex flex-wrap items-center gap-2">
-              {/* A method that takes card schemes shows their marks — the same official
-                  artwork as the checkout — and the others keep their word. */}
-              {paymentMethods.map((method) =>
-                method.schemes?.length ? (
-                  method.schemes.map((scheme) => (
-                    <li key={scheme}>
-                      <SchemeMark scheme={scheme} />
-                    </li>
-                  ))
-                ) : (
-                  <li
-                    key={method.name}
-                    className="inline-flex h-8 items-center rounded-none border border-border px-2.5 text-[10px] tracking-[0.05em] text-luxe-gray-dark uppercase"
-                  >
-                    {method.name}
-                  </li>
-                )
-              )}
+              {/* Only the marks — the official card, IRIS and wallet artwork, the same as the
+                  checkout. Cash on delivery and bank transfer are not shown here: a footer
+                  strip is for the marks people scan for, and a word in a box is not one. */}
+              {paymentMethods.flatMap((method) => method.schemes ?? []).map((scheme) => (
+                <li key={scheme}>
+                  <SchemeMark scheme={scheme} />
+                </li>
+              ))}
             </ul>
           ) : null}
         </div>
