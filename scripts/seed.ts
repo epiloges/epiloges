@@ -42,17 +42,26 @@ interface SeedGiftCard {
 // `ssl: { rejectUnauthorized: false }` alongside `connectionString` does NOT work because
 // `pg` merges a parsed connection string's own `ssl` (derived from Supabase's
 // `sslmode=require`) over it; only rewriting `sslmode` in the string itself sticks.
+// Detected from the resolved string's own host (see isSupabasePooler in lib/prisma.ts),
+// not from which env var carried it — DATABASE_URL can point at the pooler too.
 function withRelaxedSslForSupabasePooler(connectionString: string): string {
   const url = new URL(connectionString);
   url.searchParams.set("sslmode", "no-verify");
   return url.toString();
 }
 
-const usingSupabasePooler = !process.env.DATABASE_URL && !!process.env.POSTGRES_PRISMA_URL;
+function isSupabasePooler(connectionString: string): boolean {
+  try {
+    return /\bsupabase\.(co|com)$/.test(new URL(connectionString).hostname);
+  } catch {
+    return false;
+  }
+}
+
 const rawConnectionString = process.env.DATABASE_URL || process.env.POSTGRES_PRISMA_URL;
 const adapter = new PrismaPg({
   connectionString:
-    usingSupabasePooler && rawConnectionString
+    rawConnectionString && isSupabasePooler(rawConnectionString)
       ? withRelaxedSslForSupabasePooler(rawConnectionString)
       : rawConnectionString,
 });
