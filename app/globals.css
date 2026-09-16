@@ -146,12 +146,12 @@
   h2,
   h3,
   h4 {
-    @apply font-heading tracking-tight;
+    @apply font-heading font-bold tracking-tight;
   }
 }
 
 @layer utilities {
-  /* Editorial wordmark / display type — Quicksand at generous tracking. */
+  /* Editorial wordmark / display type — Comfortaa at generous tracking. */
   .text-display {
     @apply font-heading font-normal tracking-tight;
   }

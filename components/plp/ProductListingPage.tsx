@@ -402,10 +402,12 @@ export function ProductListingPage({
                 {/* Two columns all the way to `lg` (not just mobile) so cards stay large on
                     tablets and small laptops instead of cramming into three too early; three
                     from `lg`, four only from `xl` where there's finally room for it without
-                    shrinking the picture. Gaps tightened throughout to match — see
-                    ProductCard's CARD_SIZES, which must track these breakpoints or the image
-                    fetched is smaller than the box it renders into. */}
-                <div className="mt-6 grid grid-cols-2 gap-x-3 gap-y-6 lg:grid-cols-3 lg:gap-x-4 lg:gap-y-8 xl:grid-cols-4">
+                    shrinking the picture. Gaps tightened throughout — mobile's column gap
+                    back down to the 8px it was before (gap-x-3 briefly widened it), row gap
+                    cut further on top of that — see ProductCard's CARD_SIZES, which must
+                    track these breakpoints or the image fetched is smaller than the box it
+                    renders into. */}
+                <div className="mt-6 grid grid-cols-2 gap-x-2 gap-y-5 lg:grid-cols-3 lg:gap-x-4 lg:gap-y-8 xl:grid-cols-4">
                   {products.map((product, index) => (
                     <ProductCard key={product.id} product={product} loading={index < 2 ? "priority" : index < 4 ? "eager" : undefined} />
                   ))}

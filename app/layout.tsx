@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { Nunito_Sans, Quicksand } from "next/font/google";
+import { Comfortaa, Manrope } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import { JsonLd } from "@/components/shared/JsonLd";
@@ -27,15 +27,23 @@ import "./globals.css";
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
 export const instant = false;
 
-const nunitoSans = Nunito_Sans({
+/**
+ * Nunito Sans / Quicksand (the previous pair) only ship a `latin` subset in next/font's
+ * Google Fonts catalog — no `greek` option exists for either. On a site whose body copy is
+ * mostly Greek, that meant most of the text on every page was silently falling back to the
+ * browser's system font the whole time; only the (mostly English) product/brand names were
+ * ever actually rendering in the intended webfont. Manrope and Comfortaa both list `greek`
+ * as a valid subset, so this fixes that in addition to answering the "rounder, bolder" ask.
+ */
+const manrope = Manrope({
   variable: "--font-body",
-  subsets: ["latin"],
+  subsets: ["latin", "greek"],
   display: "swap",
 });
 
-const quicksand = Quicksand({
+const comfortaa = Comfortaa({
   variable: "--font-heading",
-  subsets: ["latin"],
+  subsets: ["latin", "greek"],
   display: "swap",
 });
 
@@ -103,7 +111,7 @@ export default async function RootLayout({
   return (
     <html
       lang={locale}
-      className={`${nunitoSans.variable} ${quicksand.variable} h-full antialiased`}
+      className={`${manrope.variable} ${comfortaa.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>
