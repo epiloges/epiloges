@@ -22,6 +22,12 @@ export interface RemoteImageHost {
 export const REMOTE_IMAGE_HOSTS: RemoteImageHost[] = [
   { protocol: "https", hostname: "images.unsplash.com" },
   {
+    // Pexels-sourced product photography (demo catalog images) — same free-stock role
+    // Unsplash already plays here.
+    protocol: "https",
+    hostname: "images.pexels.com",
+  },
+  {
     // Product photos for the WooCommerce-imported catalog batch, still hosted
     // on the original store's WordPress media library rather than re-uploaded.
     protocol: "https",
