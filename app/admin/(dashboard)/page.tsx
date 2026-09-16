@@ -13,7 +13,9 @@ import { getMaintenanceMode } from "@/services/maintenance";
 import { currentRoleHasCapability } from "@/lib/admin-session";
 import { MaintenanceModeToggle } from "@/components/admin/MaintenanceModeToggle";
 import { MaintenancePinField } from "@/components/admin/MaintenancePinField";
-import { setMaintenanceModeAction, setMaintenancePinAction } from "@/app/admin/(dashboard)/settings/actions";
+import { TikTokLiveToggle } from "@/components/admin/TikTokLiveToggle";
+import { setMaintenanceModeAction, setMaintenancePinAction, setTikTokLiveAction } from "@/app/admin/(dashboard)/settings/actions";
+import { getRawSiteSettings } from "@/services/settings";
 import type { Order } from "@/lib/commerce/types";
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
@@ -66,11 +68,12 @@ export default async function AdminDashboardPage() {
   // under `instant = false` — same as the blog editor's date field. A cached dashboard
   // would show yesterday's morning all day, so it is made per-request instead.
   await connection();
-  const [{ stats, todayOrders, awaitingShipment }, recentEmailFailures, maintenance, canToggleMaintenance] = await Promise.all([
+  const [{ stats, todayOrders, awaitingShipment }, recentEmailFailures, maintenance, canToggleMaintenance, settings] = await Promise.all([
     getDashboardSummary(),
     countRecentEmailFailures(),
     getMaintenanceMode(),
     currentRoleHasCapability("admin:settings"),
+    getRawSiteSettings(),
   ]);
   const emailHealth = getEmailHealth();
 
@@ -108,6 +111,18 @@ export default async function AdminDashboardPage() {
           </div>
         ) : null}
       </div>
+
+      {canToggleMaintenance ? (
+        <div className="mb-6 flex flex-col gap-3 border border-border bg-luxe-white p-4 text-sm sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="font-medium">&quot;We&apos;re Live on TikTok&quot; Popup</p>
+            <p className="mt-1 text-luxe-gray-dark">
+              Every storefront visitor gets an incoming-call-style popup inviting them to join. Switch it on right before you go live, off when the stream ends.
+            </p>
+          </div>
+          <TikTokLiveToggle defaultEnabled={settings.liveOnTikTok ?? false} onToggle={setTikTokLiveAction} />
+        </div>
+      ) : null}
 
       {/*
         The two ways email fails without anyone noticing: nothing is configured to send, or

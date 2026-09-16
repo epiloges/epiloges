@@ -4,7 +4,7 @@ import { revalidatePath, updateTag } from "next/cache";
 import { siteContentTag } from "@/lib/site-content";
 import { requireCapability } from "@/lib/admin-session";
 import { recordAdminAction } from "@/services/audit-log";
-import { saveSiteSettings } from "@/services/settings";
+import { getRawSiteSettings, saveSiteSettings } from "@/services/settings";
 import { setMaintenanceMode, setMaintenancePin } from "@/services/maintenance";
 import { firstIssueMessage, siteSettingsSchema } from "@/lib/validation/site-content";
 import type { SiteSettings } from "@/types";
@@ -45,6 +45,28 @@ export async function setMaintenanceModeAction(enabled: boolean): Promise<SiteCo
     summary: enabled ? "Closed the shop for maintenance" : "Reopened the shop",
     metadata: { enabled, changedAt: state.changedAt },
   });
+  revalidatePath("/admin");
+  return {};
+}
+
+/** The dashboard's quick switch for the TikTok Live popup — same one field the Site Settings
+ * form edits, just reachable without leaving the dashboard right before a merchant goes live. */
+export async function setTikTokLiveAction(enabled: boolean): Promise<SiteContentActionState> {
+  await requireCapability("admin:settings");
+  const current = await getRawSiteSettings();
+  const parsed = siteSettingsSchema.safeParse({ ...current, liveOnTikTok: enabled });
+  if (!parsed.success) return { error: firstIssueMessage(parsed.error) };
+
+  await saveSiteSettings(parsed.data);
+  updateTag(siteContentTag("settings"));
+  await recordAdminAction({
+    action: "settings.updated",
+    targetType: "settings",
+    targetId: "site",
+    summary: enabled ? "Turned on the TikTok Live popup" : "Turned off the TikTok Live popup",
+    metadata: { liveOnTikTok: enabled },
+  });
+  revalidatePath("/", "layout");
   revalidatePath("/admin");
   return {};
 }
