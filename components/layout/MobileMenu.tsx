@@ -137,8 +137,8 @@ export function MobileMenu({ items, productCareLink, open, onOpenChange, trigger
           </Accordion>
         </nav>
 
-        <div className="shrink-0 border-t border-border px-6 py-6">
-          <ul className="font-heading flex flex-col gap-3.5 text-[13px] text-luxe-gray-dark">
+        <div className="shrink-0 border-t border-border px-6 py-3">
+          <ul className="font-heading flex flex-col gap-2 text-[13px] text-luxe-gray-dark">
             <li>
               <Link href="/account" onClick={close} className="no-underline">
                 {t("account")}
@@ -161,11 +161,10 @@ export function MobileMenu({ items, productCareLink, open, onOpenChange, trigger
 
         {/* A quiet closing note rather than another link — everything actionable is already
             above it, this is just the menu ending somewhere warmer than a plain edge. The
-            heart became the real badge (public/logo-badge.png), small, at a size where its
-            detail still reads instead of collapsing — unlike the header, this spot has never
-            needed to compete with icons or shrink to ~32px. */}
-        <div className="flex shrink-0 flex-col items-center gap-2 border-t border-luxe-purple/15 bg-luxe-gray-light py-5">
-          <Image src="/logo-badge.png" alt="" width={567} height={440} className="h-12 w-auto" />
+            heart became the real badge (public/logo-badge.png), kept tight (32px, same as
+            the header's) so the full menu fits one phone screen without scrolling. */}
+        <div className="flex shrink-0 flex-col items-center gap-1 border-t border-luxe-purple/15 bg-luxe-gray-light py-2.5">
+          <Image src="/logo-badge.png" alt="" width={567} height={440} className="h-8 w-auto" />
           {/* Was `text-eyebrow text-[10px]` — text-eyebrow's own text-xs won that fight, so
               this rendered at 12px with 0.2em tracking instead of the intended 10px caption.
               Written out explicitly here instead, so nothing outsizes it again. */}
