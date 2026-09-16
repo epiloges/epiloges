@@ -19,7 +19,12 @@ import { IMAGE_WIDTHS } from "@/lib/image-sizes";
  */
 export default function imageLoader({ src, width, quality }: ImageLoaderProps): string {
   // Data URIs and SVGs are not worth a round trip; the optimizer would refuse them anyway.
-  if (src.startsWith("data:") || /\.svg(\?|$)/i.test(src)) return src;
+  // Local /public files (single leading slash, not the protocol-relative "//host/path" form)
+  // are already served straight from the CDN — routing them through /api/img just gets them
+  // rejected by its remote-host allowlist, since a root-relative path isn't a parseable URL.
+  if (src.startsWith("data:") || /\.svg(\?|$)/i.test(src) || (src.startsWith("/") && !src.startsWith("//"))) {
+    return src;
+  }
   const snapped = IMAGE_WIDTHS.find((step) => step >= width) ?? IMAGE_WIDTHS[IMAGE_WIDTHS.length - 1];
   const params = new URLSearchParams({ u: src, w: String(snapped) });
   if (quality && quality !== 75) params.set("q", String(quality));
