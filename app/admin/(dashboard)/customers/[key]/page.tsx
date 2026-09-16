@@ -9,6 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { getCustomerById, getCustomerForAdmin } from "@/services/customers";
 import { getOrdersForEmail } from "@/services/orders";
 import { getReturnsForEmail } from "@/services/returns";
+import { requireCapabilityOrRedirect } from "@/lib/admin-session";
 import type { Order, Return } from "@/lib/commerce/types";
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
@@ -26,6 +27,7 @@ interface CustomerDetailPageProps {
  * searching the orders list by hand.
  */
 export default async function CustomerDetailPage({ params }: CustomerDetailPageProps) {
+  await requireCapabilityOrRedirect("orders:view");
   const { key } = await params;
   await connection();
   const summary = await getCustomerForAdmin(decodeURIComponent(key));

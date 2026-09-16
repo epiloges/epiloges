@@ -57,11 +57,11 @@ export const ADMIN_NAV: AdminNavGroup[] = [
   {
     title: "Catalog",
     items: [
-      { label: "Products", href: "/admin/products", icon: Package },
-      { label: "Import Products", href: "/admin/products/import", icon: Upload },
-      { label: "Inventory", href: "/admin/inventory", icon: Boxes },
-      { label: "Collections", href: "/admin/collections", icon: Layers },
-      { label: "Categories", href: "/admin/categories", icon: Tags },
+      { label: "Products", href: "/admin/products", icon: Package, capability: "catalog:view" },
+      { label: "Import Products", href: "/admin/products/import", icon: Upload, capability: "catalog:view" },
+      { label: "Inventory", href: "/admin/inventory", icon: Boxes, capability: "catalog:view" },
+      { label: "Collections", href: "/admin/collections", icon: Layers, capability: "catalog:view" },
+      { label: "Categories", href: "/admin/categories", icon: Tags, capability: "catalog:view" },
       { label: "Discounts & Gift Cards", href: "/admin/discounts", icon: Percent, capability: "catalog:discounts" },
     ],
   },
@@ -70,18 +70,22 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     items: [
       { label: "Homepage Sections", href: "/admin/homepage", icon: LayoutTemplate, capability: "content:publish" },
       { label: "Hero Management", href: "/admin/homepage/hero", icon: ImageIcon, capability: "content:publish" },
-      { label: "Media Library", href: "/admin/media", icon: GalleryHorizontal },
+      { label: "Media Library", href: "/admin/media", icon: GalleryHorizontal, capability: "content:media" },
       { label: "Navigation Menu", href: "/admin/navigation", icon: MenuIcon, capability: "content:navigation" },
-      { label: "Blog Posts", href: "/admin/blog", icon: Newspaper },
+      { label: "Blog Posts", href: "/admin/blog", icon: Newspaper, capability: "content:blog" },
       { label: "Reviews", href: "/admin/reviews", icon: Star, capability: "content:reviews" },
     ],
   },
   {
     title: "Customers",
     items: [
-      { label: "Orders", href: "/admin/orders", icon: ShoppingBag },
+      { label: "Orders", href: "/admin/orders", icon: ShoppingBag, capability: "orders:view" },
       { label: "Payments", href: "/admin/payments", icon: CreditCard, capability: "payments:view" },
-      { label: "Customers", href: "/admin/customers", icon: Users },
+      // Reuses orders:view rather than a dedicated capability: this app has no standalone
+      // "view customers" concept, and anyone who can see order history already sees the
+      // same names/addresses on every order. Keeping it off product_manager (and any future
+      // catalog-only role) is the point — customer PII has nothing to do with the catalogue.
+      { label: "Customers", href: "/admin/customers", icon: Users, capability: "orders:view" },
       { label: "Returns", href: "/admin/returns", icon: PackageOpen, capability: "orders:returns" },
       { label: "ACS Courier", href: "/admin/courier", icon: Truck, capability: "orders:manage" },
       { label: "Newsletter", href: "/admin/newsletter", icon: Mail },

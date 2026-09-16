@@ -129,14 +129,30 @@ const EDITOR_CAPABILITIES: Capability[] = [
   "payments:view",
 ];
 
+/**
+ * Narrower than editor on purpose: this role exists for staff who only ever touch the
+ * catalogue and its imagery (e.g. a product manager keeping listings and photos current),
+ * so it withholds even the order/blog/review access editors get. No `catalog:delete` either
+ * — hard-deleting a product also strips it from customers' live carts and wishlists.
+ */
+const PRODUCT_MANAGER_CAPABILITIES: Capability[] = ["catalog:view", "catalog:edit", "content:media"];
+
 export const ROLE_CAPABILITIES: Record<AdminRole, Capability[]> = {
   admin: CAPABILITIES.map((c) => c.key),
   editor: EDITOR_CAPABILITIES,
+  product_manager: PRODUCT_MANAGER_CAPABILITIES,
 };
 
 export function roleHasCapability(role: AdminRole, capability: Capability): boolean {
   return ROLE_CAPABILITIES[role]?.includes(capability) ?? false;
 }
+
+/** Human-readable role names — the DB/type value is snake_case, this is what staff see. */
+export const ROLE_LABELS: Record<AdminRole, string> = {
+  admin: "Admin",
+  editor: "Editor",
+  product_manager: "Product Manager",
+};
 
 /** Capability definitions bucketed by group, preserving CAPABILITIES' order. */
 export function capabilitiesByGroup(): { title: string; capabilities: CapabilityDefinition[] }[] {

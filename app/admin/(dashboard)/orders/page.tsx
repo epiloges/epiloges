@@ -10,6 +10,7 @@ import { listOrdersForAdmin, ORDER_STATUS_FILTERS } from "@/services/orders";
 import { getPrimaryPaymentsForOrders } from "@/services/payments";
 import { PaymentStatusPill } from "@/components/admin/PaymentStatusPill";
 import { updateOrderStatusAction } from "@/app/admin/(dashboard)/orders/actions";
+import { requireCapabilityOrRedirect } from "@/lib/admin-session";
 import type { Order } from "@/lib/commerce/types";
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
@@ -26,6 +27,10 @@ const STATUS_OPTIONS = ORDER_STATUS_FILTERS.map((status) => ({
 }));
 
 export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageProps) {
+  // The nav link was already hidden without this, but hiding a link was never the actual
+  // gate (see requireCapabilityOrRedirect's own comment) — the URL is still typeable, and
+  // this page shows every customer's name, email and address.
+  await requireCapabilityOrRedirect("orders:view");
   const params = await searchParams;
   const search = parseSearch(params.q);
   const status = ORDER_STATUS_FILTERS.includes(params.status as (typeof ORDER_STATUS_FILTERS)[number])

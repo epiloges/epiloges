@@ -20,6 +20,7 @@ import {
 } from "@/app/admin/(dashboard)/orders/actions";
 import { OrderInternalNoteForm } from "@/components/admin/OrderInternalNoteForm";
 import { listAuditLogForTarget } from "@/services/audit-log";
+import { requireCapabilityOrRedirect } from "@/lib/admin-session";
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
@@ -42,6 +43,7 @@ function addressLines(address: { firstName: string; lastName: string; company?: 
 }
 
 export default async function AdminOrderDetailPage({ params }: AdminOrderDetailPageProps) {
+  await requireCapabilityOrRedirect("orders:view");
   const { id } = await params;
   // Binding a Server Action to this record encrypts the bound id with a fresh random IV,
   // which Cache Components flags during prerender ("1 Issue" in dev). The page is

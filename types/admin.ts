@@ -1,7 +1,7 @@
 /** What an admin account is allowed to do — see constants/permissions.ts for the mapping. */
-export type AdminRole = "admin" | "editor";
+export type AdminRole = "admin" | "editor" | "product_manager";
 
-export const ADMIN_ROLES: AdminRole[] = ["admin", "editor"];
+export const ADMIN_ROLES: AdminRole[] = ["admin", "editor", "product_manager"];
 
 export interface AdminUser {
   id: string;

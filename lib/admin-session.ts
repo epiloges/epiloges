@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { ADMIN_SESSION_COOKIE, verifyAdminSession, type AdminSessionPayload } from "@/lib/auth";
 import { roleHasCapability, type Capability } from "@/constants/permissions";
 import { isSessionStillValid } from "@/lib/session-validity";
-import type { AdminRole } from "@/types/admin";
+import { ADMIN_ROLES, type AdminRole } from "@/types/admin";
 
 export interface AdminSessionWithRole extends AdminSessionPayload {
   role: AdminRole;
@@ -45,8 +45,11 @@ export const getAdminSession = cache(async (): Promise<AdminSessionWithRole | nu
   if (!isSessionStillValid(payload.issuedAt, user.sessionsValidFrom)) return null;
 
   // Anything unrecognised in the column degrades to the least-privileged role rather than
-  // being trusted — a bad value must not become an accidental promotion.
-  const role: AdminRole = user.role === "admin" ? "admin" : "editor";
+  // being trusted — a bad value must not become an accidental promotion. This used to be
+  // `user.role === "admin" ? "admin" : "editor"`, which silently upgraded every other role
+  // (product_manager included) to a full editor the moment it was added — the fallback
+  // only ever anticipated two roles existing.
+  const role: AdminRole = ADMIN_ROLES.includes(user.role as AdminRole) ? (user.role as AdminRole) : "editor";
   return { ...payload, role };
 });
 

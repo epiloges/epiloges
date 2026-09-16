@@ -6,6 +6,7 @@ import { countsAsSale } from "@/lib/order-revenue";
 import { formatMoney } from "@/lib/format";
 import type { Order } from "@/lib/commerce/types";
 import type { AdminUser, DashboardStat } from "@/types";
+import { ADMIN_ROLES, type AdminRole } from "@/types/admin";
 
 /**
  * Orders/Customers/Discounts/GiftCards/Returns moved to services/orders.ts,
@@ -39,7 +40,10 @@ export async function getAdminUsers(): Promise<AdminUser[]> {
     id: row.id,
     name: row.name,
     email: row.email,
-    role: row.role === "editor" ? "editor" : "admin",
+    // Was `row.role === "editor" ? "editor" : "admin"` — collapsed every role but "editor"
+    // into "admin" for display, which would have shown a product_manager account as a full
+    // Admin on this very page the moment that role existed.
+    role: ADMIN_ROLES.includes(row.role as AdminRole) ? (row.role as AdminRole) : "editor",
   }));
 }
 

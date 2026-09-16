@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { ExternalLink, LogOut } from "lucide-react";
 import { AdminMobileNav } from "@/components/admin/AdminMobileNav";
 import { ADMIN_NAV } from "@/constants/admin-nav";
+import { ROLE_LABELS } from "@/constants/permissions";
 import { logoutAction } from "@/app/admin/actions";
 import type { AdminSession } from "@/lib/auth";
 
@@ -38,7 +39,7 @@ export function AdminTopbar({ session }: AdminTopbarProps) {
         </Link>
         <div className="hidden text-right sm:block">
           <p className="text-sm leading-tight">{session.name}</p>
-          <p className="text-xs leading-tight text-luxe-gray-dark">{session.role}</p>
+          <p className="text-xs leading-tight text-luxe-gray-dark">{ROLE_LABELS[session.role] ?? session.role}</p>
         </div>
         <form action={logoutAction}>
           <button

@@ -16,6 +16,12 @@ const INPUT = "h-10 w-full border border-border bg-transparent px-3 text-sm outl
 const LABEL = "mb-1.5 block text-xs font-medium tracking-[0.05em] text-luxe-gray-dark uppercase";
 const BUTTON = "h-10 border border-luxe-black px-5 text-xs font-medium tracking-[0.05em] uppercase disabled:opacity-50";
 
+const ROLE_OPTION_LABEL: Record<string, string> = {
+  admin: "Admin — full access",
+  editor: "Editor — catalog and orders",
+  product_manager: "Product Manager — products and media only",
+};
+
 function Feedback({ state }: { state: UserActionState }) {
   if (state.error) return <p className="text-xs text-destructive">{state.error}</p>;
   if (state.success) return <p className="text-xs text-green-700">{state.success}</p>;
@@ -70,7 +76,7 @@ export function CreateAdminUserForm() {
           <select id="au-role" name="role" defaultValue="editor" className={INPUT}>
             {ADMIN_ROLES.map((role) => (
               <option key={role} value={role}>
-                {role === "admin" ? "Admin — full access" : "Editor — catalog and orders"}
+                {ROLE_OPTION_LABEL[role] ?? role}
               </option>
             ))}
           </select>

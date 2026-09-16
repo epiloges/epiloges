@@ -1,7 +1,7 @@
 import { Check, X } from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { getAdminSession } from "@/lib/admin-session";
-import { capabilitiesByGroup, roleHasCapability } from "@/constants/permissions";
+import { capabilitiesByGroup, roleHasCapability, ROLE_LABELS } from "@/constants/permissions";
 import { ADMIN_ROLES } from "@/types/admin";
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
@@ -24,7 +24,7 @@ export default async function AdminRolesPage() {
         title="Roles & Permissions"
         description={
           session
-            ? `Enforced on the server for every action. You are signed in as ${session.name} (${session.role}).`
+            ? `Enforced on the server for every action. You are signed in as ${session.name} (${ROLE_LABELS[session.role]}).`
             : "Enforced on the server for every action."
         }
       />
@@ -32,18 +32,20 @@ export default async function AdminRolesPage() {
       <div className="space-y-8">
         {groups.map((group) => (
           <div key={group.title} className="border border-border bg-luxe-white">
-            <div className="grid grid-cols-[1fr_80px_80px] items-center gap-2 border-b border-border bg-luxe-gray-light/40 px-4 py-2.5">
+            {/* Fixed at three role columns plus the label — ADMIN_ROLES.length is a source
+                constant, not runtime data, so this stays in step with it by hand. */}
+            <div className="grid grid-cols-[1fr_90px_90px_100px] items-center gap-2 border-b border-border bg-luxe-gray-light/40 px-4 py-2.5">
               <span className="text-xs font-medium tracking-[0.05em] uppercase">{group.title}</span>
               {ADMIN_ROLES.map((role) => (
                 <span key={role} className="text-center text-xs font-medium tracking-[0.05em] uppercase">
-                  {role}
+                  {ROLE_LABELS[role]}
                 </span>
               ))}
             </div>
             {group.capabilities.map((capability) => (
               <div
                 key={capability.key}
-                className="grid grid-cols-[1fr_80px_80px] items-center gap-2 border-b border-border px-4 py-3 text-sm last:border-b-0"
+                className="grid grid-cols-[1fr_90px_90px_100px] items-center gap-2 border-b border-border px-4 py-3 text-sm last:border-b-0"
               >
                 <div>
                   <span>{capability.label}</span>

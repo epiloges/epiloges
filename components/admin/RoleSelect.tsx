@@ -38,6 +38,7 @@ export function RoleSelect({ userId, defaultRole, disabled }: { userId: string; 
       >
         <option value="admin">Admin</option>
         <option value="editor">Editor</option>
+        <option value="product_manager">Product Manager</option>
       </select>
       {error ? <p className="mt-1 max-w-xs text-xs text-destructive">{error}</p> : null}
     </div>

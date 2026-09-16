@@ -5,7 +5,7 @@ import { ListFilterBar } from "@/components/admin/ListFilterBar";
 import { Pagination } from "@/components/admin/Pagination";
 import { DEFAULT_PAGE_SIZE, parsePage, parseSearch } from "@/lib/pagination";
 import { EraseCustomerDataForm, ExportCustomerDataForm } from "@/components/admin/DataSubjectPanel";
-import { currentRoleHasCapability } from "@/lib/admin-session";
+import { currentRoleHasCapability, requireCapabilityOrRedirect } from "@/lib/admin-session";
 import { formatDate, formatMoney } from "@/lib/format";
 import { listCustomersForAdmin, type AdminCustomerRow } from "@/services/customers";
 
@@ -18,6 +18,11 @@ interface AdminCustomersPageProps {
 }
 
 export default async function AdminCustomersPage({ searchParams }: AdminCustomersPageProps) {
+  // The nav link was already hidden without this, but that was never the real gate — the
+  // URL is still typeable, and this page is customer names, emails, phone numbers and
+  // addresses. Reuses orders:view: this app has no separate "view customers" capability,
+  // and anyone who can see order history already sees the same PII on every order.
+  await requireCapabilityOrRedirect("orders:view");
   const params = await searchParams;
   const search = parseSearch(params.q);
   // Data-subject work sits with whoever owns the shop's legal obligations, not with whoever
