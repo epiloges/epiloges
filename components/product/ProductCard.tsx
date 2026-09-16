@@ -28,7 +28,7 @@ interface ProductCardProps {
   loading?: "priority" | "eager";
 }
 
-const CARD_SIZES = "(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw";
+const CARD_SIZES = "(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, 50vw";
 
 const BADGE_STYLES: Record<string, string> = {
   sale: "bg-luxe-black text-luxe-white",
@@ -58,8 +58,9 @@ export function ProductCard({ product, className, loading }: ProductCardProps) {
             src={primaryImage.src}
             alt={primaryImage.alt}
             fill
-            // Two columns on phones, three from `sm`, four from `lg` — the previous
-            // `100vw` fallback fetched a full-viewport image for a half-width card.
+            // Two columns up to `lg`, three from `lg`, four from `xl` — must track the
+            // listing grid's breakpoints (ProductListingPage) or the fetched image is
+            // smaller than the box it renders into.
             sizes={CARD_SIZES}
             preload={loading === "priority"}
             fetchPriority={loading === "priority" ? "high" : undefined}

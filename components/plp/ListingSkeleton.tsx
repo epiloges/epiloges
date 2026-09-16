@@ -22,7 +22,7 @@ export function ListingSkeleton({ cards = 8, withHeader = false }: { cards?: num
             <div className="h-4 w-24 bg-luxe-gray-light" />
             <div className="h-9 w-36 bg-luxe-gray-light" />
           </div>
-          <div className="mt-6 grid grid-cols-2 gap-x-2 gap-y-8 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-10 lg:grid-cols-4">
+          <div className="mt-6 grid grid-cols-2 gap-x-3 gap-y-6 lg:grid-cols-3 lg:gap-x-4 lg:gap-y-8 xl:grid-cols-4">
             {Array.from({ length: cards }, (_, index) => (
               <div key={index}>
                 <div className="aspect-3/4 bg-luxe-gray-light" />
