@@ -25,7 +25,9 @@ export function CartDrawer({ freeShippingThreshold = null }: { freeShippingThres
 
   return (
     <Sheet open={isDrawerOpen} onOpenChange={(open) => (open ? undefined : closeDrawer())}>
-      <SheetContent side="right" showCloseButton className="flex w-full flex-col border-none bg-luxe-white p-0 sm:max-w-md">
+      {/* Pale purple instead of plain white — a light wash of the brand color (luxe-purple),
+          not a flat tint value, so it stays legible next to product photography. */}
+      <SheetContent side="right" showCloseButton className="flex w-full flex-col border-none bg-[#f8f3fb] p-0 sm:max-w-md">
         <SheetTitle className="sr-only">{t("shoppingBag")}</SheetTitle>
         <div className="flex h-16 shrink-0 items-center border-b border-border px-6">
           <span className="font-heading text-lg tracking-[0.1em] uppercase">{t("yourBag")} ({itemCount})</span>
