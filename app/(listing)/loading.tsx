@@ -25,7 +25,7 @@ export default function ListingLoading() {
   return (
     <div className="container-luxe pt-header py-10">
       <Skeleton className="h-8 w-48" />
-      <div className="mt-8 grid grid-cols-2 gap-x-2 gap-y-5 lg:grid-cols-3 lg:gap-x-4 lg:gap-y-8 xl:grid-cols-4">
+      <div className="mt-8 grid grid-cols-2 gap-x-px gap-y-6 lg:grid-cols-3 lg:gap-y-8 xl:grid-cols-4">
         {Array.from({ length: 8 }).map((_, index) => (
           <div key={index} className="space-y-3">
             <Skeleton className="aspect-3/4 w-full" />

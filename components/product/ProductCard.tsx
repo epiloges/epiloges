@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
@@ -30,13 +30,17 @@ interface ProductCardProps {
 
 const CARD_SIZES = "(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, 50vw";
 
-const BADGE_STYLES: Record<string, string> = {
-  sale: "bg-luxe-black text-luxe-white",
-  new: "bg-luxe-white text-luxe-black",
-  preorder: "bg-luxe-white text-luxe-black",
-  backorder: "bg-luxe-white text-luxe-black",
-  "low-stock": "bg-destructive text-luxe-white",
-  bestseller: "bg-luxe-white text-luxe-black",
+/** Plain uppercase text, no coloured pill — the label row lives below the photo now (see
+ * the layout comment on the row itself), so a badge no longer has to read as a sticker
+ * fighting for attention against the image underneath it. Sale/low-stock stay in the
+ * destructive colour because that's information worth the emphasis; the rest are neutral. */
+const LABEL_STYLES: Record<string, string> = {
+  sale: "text-destructive",
+  "low-stock": "text-destructive",
+  new: "text-luxe-gray-dark",
+  preorder: "text-luxe-gray-dark",
+  backorder: "text-luxe-gray-dark",
+  bestseller: "text-luxe-gray-dark",
 };
 
 export function ProductCard({ product, className, loading }: ProductCardProps) {
@@ -46,14 +50,70 @@ export function ProductCard({ product, className, loading }: ProductCardProps) {
   const wishlisted = isInWishlist(product.id);
   const [quickViewOpen, setQuickViewOpen] = useState(false);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
+  const [activeImage, setActiveImage] = useState(0);
+  const stripRef = useRef<HTMLDivElement>(null);
   const [primaryImage, hoverImage] = product.images;
   const badges = getProductBadges(product);
   const effectivePrice = getEffectivePrice(product);
+  const productHref = `/products/${product.slug}`;
+
+  // Scroll-snap reports position as scroll offset, not an index; a product with one photo
+  // never fires this at all, which is exactly what we want (no dots to keep in sync).
+  function handleStripScroll() {
+    const el = stripRef.current;
+    if (!el || el.clientWidth === 0) return;
+    setActiveImage(Math.round(el.scrollLeft / el.clientWidth));
+  }
 
   return (
     <div className={cn("group relative", className)}>
       <div className="relative aspect-3/4 overflow-hidden bg-luxe-gray-light">
-        <Link href={`/products/${product.slug}`} aria-label={product.name} className="relative block size-full">
+        {/* Mobile: swipe through every photo on the card itself — no need to open the
+            product just to see the back or a detail shot. Desktop keeps the hover
+            crossfade below instead, since there's no swipe gesture to reach for with a
+            mouse and hover already does the job. */}
+        <div
+          ref={stripRef}
+          onScroll={handleStripScroll}
+          className="flex size-full snap-x snap-mandatory overflow-x-auto md:hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          {product.images.map((image, index) => (
+            <Link
+              key={image.src}
+              href={productHref}
+              aria-label={product.name}
+              className="relative block size-full shrink-0 snap-center"
+            >
+              <Image
+                src={image.src}
+                alt={image.alt}
+                fill
+                sizes={CARD_SIZES}
+                preload={loading === "priority" && index === 0}
+                fetchPriority={loading === "priority" && index === 0 ? "high" : undefined}
+                loading={loading === "eager" && index === 0 ? "eager" : undefined}
+                placeholder="blur"
+                blurDataURL={SHIMMER_BLUR_DATA_URL}
+                className="object-cover"
+              />
+            </Link>
+          ))}
+        </div>
+        {product.images.length > 1 ? (
+          <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-2 flex justify-center gap-1 md:hidden">
+            {product.images.map((image, index) => (
+              <span
+                key={image.src}
+                className={cn(
+                  "size-1.5 rounded-full shadow-[0_0_0_1px_rgba(0,0,0,0.15)] transition-colors",
+                  index === activeImage ? "bg-luxe-white" : "bg-luxe-white/50"
+                )}
+              />
+            ))}
+          </div>
+        ) : null}
+
+        <Link href={productHref} aria-label={product.name} className="relative hidden size-full md:block">
           <Image
             src={primaryImage.src}
             alt={primaryImage.alt}
@@ -85,34 +145,6 @@ export function ProductCard({ product, className, loading }: ProductCardProps) {
           ) : null}
         </Link>
 
-        {badges.length > 0 ? (
-          <div className="absolute top-3 left-3 flex flex-col gap-1">
-            {badges.map((badge) => (
-              <span
-                key={badge.tone}
-                className={cn(
-                  "px-2 py-1 text-[10px] font-medium tracking-[0.08em] uppercase",
-                  BADGE_STYLES[badge.tone]
-                )}
-              >
-                {tBadge(badge.key)}
-              </span>
-            ))}
-          </div>
-        ) : null}
-
-        <button
-          type="button"
-          aria-label={wishlisted ? tCard("removeFromWishlist") : tCard("addToWishlist")}
-          onClick={() => toggle(product.id)}
-          className="absolute top-3 right-3 flex size-8 items-center justify-center bg-luxe-white/90 transition-opacity md:opacity-0 md:group-hover:opacity-100"
-        >
-          <Heart
-            className={cn("size-4", wishlisted ? "fill-luxe-black" : "")}
-            strokeWidth={1.5}
-          />
-        </button>
-
         <button
           type="button"
           onClick={() => setQuickViewOpen(true)}
@@ -121,19 +153,42 @@ export function ProductCard({ product, className, loading }: ProductCardProps) {
           <Eye className="size-4" strokeWidth={1.5} />
           {tCard("quickView")}
         </button>
-
-        <button
-          type="button"
-          aria-label={tCard("quickAdd")}
-          onClick={() => setQuickAddOpen(true)}
-          className="absolute right-3 bottom-3 flex size-10 items-center justify-center bg-luxe-white/95 text-luxe-black shadow-sm md:hidden"
-        >
-          <Plus className="size-5" strokeWidth={1.5} />
-        </button>
       </div>
 
-      <div className="mt-3">
-        <Link href={`/products/${product.slug}`} className="block text-sm">
+      {/* Everything that used to sit on top of the photo — badges, wishlist, quick-add —
+          moved into this row underneath it instead: a clean image plus a compact label/
+          icon line, the shape a modern listing card reads as now rather than a photo with
+          stickers on it. */}
+      <div className="mt-2 flex items-start justify-between gap-2">
+        <div className="flex min-w-0 flex-wrap gap-x-2 gap-y-0.5">
+          {badges.map((badge) => (
+            <span key={badge.tone} className={cn("text-[10px] font-medium tracking-[0.1em] uppercase", LABEL_STYLES[badge.tone])}>
+              {tBadge(badge.key)}
+            </span>
+          ))}
+        </div>
+        <div className="flex shrink-0 items-center gap-2.5">
+          <button
+            type="button"
+            aria-label={wishlisted ? tCard("removeFromWishlist") : tCard("addToWishlist")}
+            onClick={() => toggle(product.id)}
+            className="flex size-6 items-center justify-center text-luxe-black"
+          >
+            <Heart className={cn("size-[18px]", wishlisted ? "fill-luxe-black" : "")} strokeWidth={1.5} />
+          </button>
+          <button
+            type="button"
+            aria-label={tCard("quickAdd")}
+            onClick={() => setQuickAddOpen(true)}
+            className="flex size-6 items-center justify-center text-luxe-black md:hidden"
+          >
+            <Plus className="size-[18px]" strokeWidth={1.5} />
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-1">
+        <Link href={productHref} className="block text-sm">
           {product.name}
         </Link>
         <div className="mt-1 flex items-center gap-2 text-sm">
