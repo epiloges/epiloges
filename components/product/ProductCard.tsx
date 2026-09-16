@@ -7,7 +7,7 @@ import Link from "next/link";
 import { Heart, Eye, Plus } from "lucide-react";
 import { ColorSwatches } from "@/components/product/ColorSwatches";
 import { QuickViewDialog } from "@/components/product/QuickViewDialog";
-import { QuickAddSheet } from "@/components/product/QuickAddSheet";
+import { QuickAddDialog } from "@/components/product/QuickAddDialog";
 import { formatMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { getEffectivePrice, getProductBadges, getListPrice, isOnSale } from "@/lib/product";
@@ -146,7 +146,7 @@ export function ProductCard({ product, className, loading }: ProductCardProps) {
       </div>
 
       <QuickViewDialog product={product} open={quickViewOpen} onOpenChange={setQuickViewOpen} />
-      <QuickAddSheet product={product} open={quickAddOpen} onOpenChange={setQuickAddOpen} />
+      <QuickAddDialog product={product} open={quickAddOpen} onOpenChange={setQuickAddOpen} />
     </div>
   );
 }
