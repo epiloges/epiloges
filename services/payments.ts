@@ -732,6 +732,24 @@ export async function confirmManualPayment(paymentId: string, adminId: string, n
   });
 }
 
+/**
+ * Bank transfers still awaited after `olderThan`, oldest first. Only these can expire: every
+ * other method either settles by itself or is collected on delivery.
+ */
+export async function listOverdueBankTransfers(olderThan: Date): Promise<PaymentRecord[]> {
+  const rows = await prisma.payment.findMany({
+    where: { provider: "bank-transfer", status: "awaiting_bank_transfer", createdAt: { lt: olderThan } },
+    orderBy: { createdAt: "asc" },
+  });
+  return rows.map(toPaymentRecord);
+}
+
+/** Marks an awaited payment expired on the shop's own authority — no admin, no provider call. */
+export async function expirePayment(paymentId: string, message: string): Promise<PaymentRecord> {
+  const record = await requirePayment(paymentId);
+  return applyStatus(record, { status: "expired" }, { actorType: "system", message });
+}
+
 export async function cancelPayment(paymentId: string, adminId: string, reason?: string): Promise<PaymentRecord> {
   const record = await requirePayment(paymentId);
   const provider = paymentProviderRegistry.require(record.providerId);

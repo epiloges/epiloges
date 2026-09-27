@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { runAbandonedCartRecovery, runReviewRequestFollowup } from "@/services/email-followups";
-import { cronTriggerFromRequest, runCron } from "@/services/cron-runs";
+import { cronTriggerFromRequest, runCron, isAuthorizedCronRequest } from "@/services/cron-runs";
 
 /**
  * Vercel automatically sends `Authorization: Bearer <CRON_SECRET>` to the path
@@ -9,10 +9,7 @@ import { cronTriggerFromRequest, runCron } from "@/services/cron-runs";
  * recovery/review emails on demand).
  */
 export async function GET(request: Request) {
-  const cronSecret = process.env.CRON_SECRET;
-  // An unset secret must never mean "open" — reject outright rather than matching
-  // literal "Bearer undefined".
-  if (!cronSecret || request.headers.get("authorization") !== `Bearer ${cronSecret}`) {
+  if (!isAuthorizedCronRequest(request, "email-followups")) {
     return new NextResponse("Unauthorized", { status: 401 });
   }
 

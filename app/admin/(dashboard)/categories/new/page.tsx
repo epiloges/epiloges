@@ -1,3 +1,4 @@
+import { requireCapabilityOrRedirect } from "@/lib/admin-session";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { CategoryForm } from "@/components/admin/CategoryForm";
 import { createCategory } from "@/app/admin/(dashboard)/categories/actions";
@@ -10,6 +11,7 @@ import { getSeoDefaults } from "@/services/seo";
 export const instant = false;
 
 export default async function NewCategoryPage() {
+  await requireCapabilityOrRedirect("catalog:edit");
   const [parentOptions, seo] = await Promise.all([getCategoryOptions(), getSeoDefaults()]);
 
   return (

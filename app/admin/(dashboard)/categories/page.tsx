@@ -1,3 +1,4 @@
+import { requireCapabilityOrRedirect } from "@/lib/admin-session";
 import Link from "next/link";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { CategoryTree } from "@/components/admin/CategoryTree";
@@ -8,6 +9,7 @@ import { getCategoryTree } from "@/services/categories";
 export const instant = false;
 
 export default async function AdminCategoriesPage() {
+  await requireCapabilityOrRedirect("catalog:view");
   const tree = await getCategoryTree();
   const total = countAll(tree);
 

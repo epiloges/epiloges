@@ -109,6 +109,17 @@ export default async function AdminDiscountsPage() {
               { header: "Expires", cell: (row) => (row.expiresAt ? formatDate(row.expiresAt) : "No expiry") },
               { header: "Used", cell: (row) => <UsageCell usage={usage.discounts.get(row.code.toUpperCase())} /> },
               {
+                header: "Limits",
+                cell: (row) => {
+                  const limits = [
+                    row.usageLimit != null ? `${row.timesUsed} / ${row.usageLimit} uses` : null,
+                    row.minimumSubtotal ? `min ${formatMoney({ amount: row.minimumSubtotal, currencyCode: "EUR" })}` : null,
+                    row.oncePerCustomer ? "1 per customer" : null,
+                  ].filter(Boolean);
+                  return limits.length ? <span className="text-xs">{limits.join(" · ")}</span> : <span className="text-luxe-gray-dark">None</span>;
+                },
+              },
+              {
                 header: "Status",
                 cell: (row) => <ActiveToggle id={row.id} defaultActive={row.active} onToggle={toggleDiscountActive} />,
               },

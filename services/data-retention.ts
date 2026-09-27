@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
+import { expireUnpaidBankTransfers } from "@/services/bank-transfer-expiry";
 import { claimCronRun, runCron } from "@/services/cron-runs";
 
 /**
@@ -47,6 +48,8 @@ export interface RetentionSummary {
   webhookPayloadsCleared: number;
   rateLimitRowsDeleted: number;
   emailBodiesCleared?: number;
+  /** Orders cancelled because their bank transfer never arrived (services/bank-transfer-expiry.ts). */
+  unpaidTransfersCancelled?: number;
 }
 
 function daysAgo(days: number): Date {
@@ -77,13 +80,18 @@ export async function runDataRetention(): Promise<RetentionSummary> {
     data: { html: "", text: "" },
   });
 
+  // Not personal-data retention, but the same "once a day, whatever happens" job — and this is
+  // the one that reliably runs, because request traffic triggers it when the scheduler doesn't.
+  const unpaidTransfersCancelled = await expireUnpaidBankTransfers();
+
   const summary = {
     webhookPayloadsCleared: cleared.count,
     rateLimitRowsDeleted: rateLimits.count,
     emailBodiesCleared: emails.count,
+    unpaidTransfersCancelled,
   };
 
-  if (summary.webhookPayloadsCleared > 0 || summary.rateLimitRowsDeleted > 0 || summary.emailBodiesCleared > 0) {
+  if (Object.values(summary).some((count) => count > 0)) {
     logger.info("Data retention pass completed", summary);
   }
   return summary;

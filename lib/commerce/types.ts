@@ -84,6 +84,8 @@ export interface CartLineItem {
   maxQuantity: number;
   savedForLater: boolean;
   addedAt: string;
+  /** Set when the product has since been unpublished or switched off for sale — checkout refuses the cart until it's removed. */
+  unavailable?: boolean;
 }
 
 export interface AppliedDiscount {
@@ -174,7 +176,12 @@ export class CommerceError extends Error {
     | "INVALID_CREDENTIALS"
     | "EMAIL_IN_USE"
     | "CHECKOUT_INCOMPLETE"
-    | "INVALID_STATUS_TRANSITION";
+    | "INVALID_STATUS_TRANSITION"
+    | "DISCOUNT_ONE_PER_ORDER"
+    | "DISCOUNT_NOT_ELIGIBLE"
+    | "DISCOUNT_MINIMUM_NOT_MET"
+    | "PRODUCT_UNAVAILABLE"
+    | "EMPTY_CART";
 
   constructor(code: CommerceError["code"], message: string) {
     super(message);

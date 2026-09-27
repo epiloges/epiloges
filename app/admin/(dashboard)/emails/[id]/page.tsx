@@ -1,3 +1,4 @@
+import { requireCapabilityOrRedirect } from "@/lib/admin-session";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
@@ -15,6 +16,7 @@ interface EmailDetailPageProps {
 }
 
 export default async function AdminEmailDetailPage({ params }: EmailDetailPageProps) {
+  await requireCapabilityOrRedirect("orders:view");
   const { id } = await params;
   const email = await getEmailLogById(id);
   if (!email) notFound();

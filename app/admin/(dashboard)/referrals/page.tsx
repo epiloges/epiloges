@@ -1,3 +1,4 @@
+import { requireCapabilityOrRedirect } from "@/lib/admin-session";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { DataTable } from "@/components/admin/DataTable";
 import { formatDate } from "@/lib/format";
@@ -8,6 +9,7 @@ import { getAllReferralsForAdmin, type AdminReferralRow } from "@/services/refer
 export const instant = false;
 
 export default async function AdminReferralsPage() {
+  await requireCapabilityOrRedirect("orders:view");
   const referrals = await getAllReferralsForAdmin();
 
   return (

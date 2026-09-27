@@ -1,3 +1,4 @@
+import { requireCapabilityOrRedirect } from "@/lib/admin-session";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { DataTable } from "@/components/admin/DataTable";
 import { ConciergeStatusSelect } from "@/components/admin/ConciergeStatusSelect";
@@ -10,6 +11,7 @@ import { updateConciergeStatusAction } from "@/app/admin/(dashboard)/concierge/a
 export const instant = false;
 
 export default async function AdminConciergePage() {
+  await requireCapabilityOrRedirect("orders:view");
   const requests = await getAllConciergeRequestsForAdmin();
 
   return (

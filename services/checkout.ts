@@ -2,7 +2,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
 import { Prisma } from "@/lib/generated/prisma/client";
-import { cartInclude, toCart, toCheckout, toJsonInput, toOrder } from "@/lib/commerce/postgres/mappers";
+import { cartInclude, isProductPurchasable, toCart, toCheckout, toJsonInput, toOrder } from "@/lib/commerce/postgres/mappers";
 import { resolveCartAmounts } from "@/lib/commerce/postgres/cart-totals";
 import { storedAddressSchema } from "@/lib/validation/checkout";
 import { shippingRateSchema } from "@/lib/validation/commerce";
@@ -25,26 +25,64 @@ import { getDefaultShippingRate } from "@/services/shipping";
  */
 export function filterValidDiscounts<T extends { code: string }>(
   applied: T[],
-  live: { code: string; active: boolean; expiresAt?: string | Date | null }[],
+  live: {
+    code: string;
+    active: boolean;
+    expiresAt?: string | Date | null;
+    usageLimit?: number | null;
+    timesUsed?: number;
+  }[],
   now: Date = new Date()
 ): T[] {
   const validCodes = new Set(
     live
       .filter((d) => d.active && (!d.expiresAt || new Date(d.expiresAt).getTime() >= now.getTime()))
+      .filter((d) => d.usageLimit == null || (d.timesUsed ?? 0) < d.usageLimit)
       .map((d) => d.code)
   );
   return applied.filter((d) => validCodes.has(d.code));
 }
 
+type DiscountRule = { code: string; type: "percentage" | "fixed"; value: number; minimumSubtotal?: number | null };
+
+/**
+ * Whether this shopper already has an order placed with `code`. Cancelled orders don't count —
+ * the customer never got the discount.
+ */
+async function hasUsedCode(code: string, who: { email: string | null; customerId: string | null }): Promise<boolean> {
+  const identity = [
+    ...(who.email ? [{ customerEmail: { equals: who.email, mode: "insensitive" as const } }] : []),
+    ...(who.customerId ? [{ customerId: who.customerId }] : []),
+  ];
+  if (identity.length === 0) return false;
+  const count = await prisma.order.count({
+    where: { OR: identity, status: { not: "cancelled" }, discounts: { array_contains: [{ code }] } },
+  });
+  return count > 0;
+}
+
+/**
+ * The cart's codes that are still redeemable right now, with their minimum re-read from the
+ * live row (an admin may have changed it since the code went on the cart). The totals
+ * formula then drops a code whose minimum the subtotal doesn't meet.
+ */
 async function resolveValidCartDiscounts(
-  discounts: { code: string; type: "percentage" | "fixed"; value: number }[]
-): Promise<{ code: string; type: "percentage" | "fixed"; value: number }[]> {
+  discounts: DiscountRule[],
+  who: { email: string | null; customerId: string | null }
+): Promise<DiscountRule[]> {
   if (discounts.length === 0) return [];
   const live = await prisma.discount.findMany({
     where: { code: { in: discounts.map((d) => d.code) } },
-    select: { code: true, active: true, expiresAt: true },
+    select: { code: true, active: true, expiresAt: true, usageLimit: true, timesUsed: true, minimumSubtotal: true, oncePerCustomer: true },
   });
-  return filterValidDiscounts(discounts, live);
+  const byCode = new Map(live.map((d) => [d.code, d]));
+  const valid: DiscountRule[] = [];
+  for (const discount of filterValidDiscounts(discounts, live)) {
+    const row = byCode.get(discount.code);
+    if (row?.oncePerCustomer && (await hasUsedCode(discount.code, who))) continue;
+    valid.push({ ...discount, minimumSubtotal: row?.minimumSubtotal ? row.minimumSubtotal.toNumber() : null });
+  }
+  return valid;
 }
 
 /**
@@ -243,7 +281,8 @@ export async function resolveCheckoutAmounts(checkoutId: string, paymentFeeOverr
     // at the payment step, and the two must not disagree: quoting a lapsed discount and
     // then charging without it is how a shopper is shown one price and billed another.
     discounts: await resolveValidCartDiscounts(
-      cart.discounts.map((d) => ({ code: d.code, type: d.type, value: d.value }))
+      cart.discounts.map((d) => ({ code: d.code, type: d.type, value: d.value })),
+      { email: checkoutRow.email, customerId: cartRow.customerId }
     ),
     giftCards: cart.giftCards.map((g) => ({ code: g.code, balanceAmount: g.balance.amount })),
     currencyCode: cart.currencyCode,
@@ -306,6 +345,13 @@ export async function completeCheckout(checkoutId: string): Promise<CompleteChec
   if (!cartRow) throw new CommerceError("CART_NOT_FOUND", "Cart not found.");
   const cart = toCart(cartRow, await getDefaultShippingRate());
 
+  // The checkout page redirects an empty cart away, but only in the browser: a cart emptied in
+  // another tab while this one sat on the review step still reached here, and produced an order
+  // with no items that charged the shipping.
+  if (cart.lineItems.length === 0) {
+    throw new CommerceError("EMPTY_CART", "Your bag is empty.");
+  }
+
   const lineItemsForTotals = cart.lineItems.map((item) => ({
     unitPriceAmount: item.unitPrice.amount,
     quantity: item.quantity,
@@ -325,7 +371,7 @@ export async function completeCheckout(checkoutId: string): Promise<CompleteChec
    * shoes, and refusing a purchase outright over a lapsed promo code is worse for both
    * sides than charging the correct price.
    */
-  const discountRules = await resolveValidCartDiscounts(cart.discounts);
+  const discountRules = await resolveValidCartDiscounts(cart.discounts, { email, customerId: cartRow.customerId });
   const giftCardRules = cart.giftCards.map((g) => ({ code: g.code, balanceAmount: g.balance.amount }));
 
   // Two passes, and the order matters. A percentage payment fee is a percentage OF
@@ -387,6 +433,15 @@ export async function completeCheckout(checkoutId: string): Promise<CompleteChec
        * single ProductSize row. Checking each line independently let both pass against the
        * same single unit.
        */
+      // Unpublished, archived or switched off for sale since it went in the cart. Refused rather
+      // than silently dropped: the shopper should see the order change, not find it in the email.
+      for (const item of cart.lineItems) {
+        const product = productById.get(item.productId);
+        if (!product || !isProductPurchasable(product)) {
+          throw new CommerceError("PRODUCT_UNAVAILABLE", `${item.name} is no longer available. Remove it from your bag to continue.`);
+        }
+      }
+
       const demandBySize = new Map<string, { sizeId: string; needed: number; canOversell: boolean; label: string }>();
       for (const item of cart.lineItems) {
         const sizeRow = sizeByKey.get(`${item.productId}:${item.size}`);
@@ -474,6 +529,20 @@ export async function completeCheckout(checkoutId: string): Promise<CompleteChec
         }
       }
 
+      /**
+       * A usage limit is taken the same way stock is: the check IS the write. Two shoppers
+       * racing for a code's last use both passed the read in resolveValidCartDiscounts; only
+       * one of them gets a row back here.
+       */
+      for (const applied of discounts) {
+        const taken = await tx.$executeRaw`
+          UPDATE "discounts" SET "timesUsed" = "timesUsed" + 1
+          WHERE "code" = ${applied.code} AND ("usageLimit" IS NULL OR "timesUsed" < "usageLimit")`;
+        if (taken === 0) {
+          throw new CommerceError("DISCOUNT_NOT_ELIGIBLE", `Code ${applied.code} has just reached its usage limit.`);
+        }
+      }
+
       const created = await tx.order.create({
         data: {
           checkoutId,
@@ -496,7 +565,8 @@ export async function completeCheckout(checkoutId: string): Promise<CompleteChec
 
       await Promise.all([
         tx.checkout.update({ where: { id: checkoutId }, data: { status: "completed" } }),
-        tx.cartLineItem.deleteMany({ where: { cartId: cartRow.id } }),
+        // Only what was bought. "Saved for later" items stay saved — they used to be wiped too.
+        tx.cartLineItem.deleteMany({ where: { cartId: cartRow.id, savedForLater: false } }),
         tx.cartDiscount.deleteMany({ where: { cartId: cartRow.id } }),
         tx.cartGiftCard.deleteMany({ where: { cartId: cartRow.id } }),
       ]);

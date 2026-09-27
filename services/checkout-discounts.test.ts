@@ -52,3 +52,21 @@ describe("filterValidDiscounts", () => {
     expect(filterValidDiscounts(many, live, NOW).map((d) => d.code)).toEqual(["GOOD"]);
   });
 });
+
+/** A leaked code used to be good for unlimited orders until it expired. */
+describe("filterValidDiscounts — usage limit", () => {
+  it("keeps a code with uses left", () => {
+    const live = [{ code: "SUMMER10", active: true, expiresAt: null, usageLimit: 100, timesUsed: 99 }];
+    expect(filterValidDiscounts(applied, live, NOW)).toHaveLength(1);
+  });
+
+  it("drops a code whose limit has been reached", () => {
+    const live = [{ code: "SUMMER10", active: true, expiresAt: null, usageLimit: 100, timesUsed: 100 }];
+    expect(filterValidDiscounts(applied, live, NOW)).toEqual([]);
+  });
+
+  it("treats no limit as unlimited", () => {
+    const live = [{ code: "SUMMER10", active: true, expiresAt: null, usageLimit: null, timesUsed: 5000 }];
+    expect(filterValidDiscounts(applied, live, NOW)).toHaveLength(1);
+  });
+});

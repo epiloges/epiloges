@@ -29,6 +29,8 @@ export interface CartDiscountRule {
   code: string;
   type: "percentage" | "fixed";
   value: number;
+  /** The subtotal the code needs; below it the code simply doesn't apply. */
+  minimumSubtotal?: number | null;
 }
 
 export interface CartGiftCardRule {
@@ -91,7 +93,10 @@ export function resolveCartAmounts(input: {
   const activeItems = lineItems.filter((item) => !item.savedForLater);
   const subtotalAmount = activeItems.reduce((sum, item) => sum + item.unitPriceAmount * item.quantity, 0);
 
-  const resolvedDiscounts: AppliedDiscount[] = discounts.map((d) => {
+  // One code per order. `applyDiscountCode` refuses a second one; this also covers carts that
+  // picked up two before that rule existed, which would otherwise stack (two 50% codes = free).
+  const eligibleDiscounts = discounts.filter((d) => !d.minimumSubtotal || subtotalAmount >= d.minimumSubtotal).slice(0, 1);
+  const resolvedDiscounts: AppliedDiscount[] = eligibleDiscounts.map((d) => {
     const amount = d.type === "percentage" ? (subtotalAmount * d.value) / 100 : Math.min(d.value, subtotalAmount);
     return { code: d.code, type: d.type, value: d.value, amount: money(amount, currencyCode) };
   });

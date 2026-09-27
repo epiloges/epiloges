@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { discountFormSchema } from "@/lib/validation/discount";
 
-const base = { code: "summer", type: "percentage" as const, value: 10, active: true };
+const base = { code: "summer", type: "percentage" as const, value: 10, active: true, oncePerCustomer: false };
 
 describe("discountFormSchema", () => {
   it("uppercases the code, because every lookup normalises that way", () => {

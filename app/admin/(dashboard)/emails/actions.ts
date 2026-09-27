@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { capabilityDenied } from "@/lib/admin-session";
 import { getEmailProvider } from "@/lib/email";
+import { REDACTED_TOKEN } from "@/lib/email/pipeline";
 import type { EmailTemplate } from "@/lib/email/types";
 import { recordAdminAction } from "@/services/audit-log";
 
@@ -23,6 +24,11 @@ export async function resendLoggedEmail(id: string): Promise<ResendEmailState> {
 
   const row = await prisma.emailLog.findUnique({ where: { id } });
   if (!row) return { error: "That email is no longer in the log." };
+  // The stored copy has its one-time link removed (lib/email/pipeline.ts), so resending it
+  // would deliver a dead link. The customer can request a fresh one themselves.
+  if (row.html.includes(`token=${REDACTED_TOKEN}`)) {
+    return { error: "This email contained a one-time link, which isn't kept. Ask the customer to request a new one from the site." };
+  }
 
   try {
     const outcome = await getEmailProvider().send({

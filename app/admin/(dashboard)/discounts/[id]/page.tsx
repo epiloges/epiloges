@@ -33,6 +33,9 @@ export default async function EditDiscountPage({ params }: EditDiscountPageProps
     // Back to the calendar date the admin chose, in the shop's zone — the stored instant is
     // the end of that day, which read back in UTC would show the same day, but only by luck.
     expiresAt: discount.expiresAt ? calendarDateIn(new Date(discount.expiresAt), SHOP_TIME_ZONE) : undefined,
+    usageLimit: discount.usageLimit,
+    minimumSubtotal: discount.minimumSubtotal,
+    oncePerCustomer: discount.oncePerCustomer,
   };
   const boundUpdate = updateDiscount.bind(null, discount.id);
 

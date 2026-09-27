@@ -110,6 +110,69 @@ export function DiscountForm({ defaultValues, onSubmit, submitLabel = "Save Disc
           </div>
         </div>
 
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className={labelClass} htmlFor="df-usageLimit">
+              Usage limit (optional)
+            </label>
+            <Controller
+              name="usageLimit"
+              control={control}
+              render={({ field }) => (
+                <input
+                  id="df-usageLimit"
+                  type="number"
+                  step="1"
+                  min="1"
+                  placeholder="Unlimited"
+                  className={inputClass}
+                  aria-invalid={Boolean(errors.usageLimit)}
+                  value={field.value ?? ""}
+                  onChange={(e) => field.onChange(e.target.value === "" ? undefined : Number(e.target.value))}
+                />
+              )}
+            />
+            {errors.usageLimit ? <p className={errorClass}>{errors.usageLimit.message}</p> : null}
+            <p className="mt-1.5 text-xs text-luxe-gray-dark">Total orders that can use this code, across all customers.</p>
+          </div>
+          <div>
+            <label className={labelClass} htmlFor="df-minimumSubtotal">
+              Minimum order € (optional)
+            </label>
+            <Controller
+              name="minimumSubtotal"
+              control={control}
+              render={({ field }) => (
+                <input
+                  id="df-minimumSubtotal"
+                  type="number"
+                  step="0.01"
+                  placeholder="No minimum"
+                  className={inputClass}
+                  aria-invalid={Boolean(errors.minimumSubtotal)}
+                  value={field.value ?? ""}
+                  onChange={(e) => field.onChange(e.target.value === "" ? undefined : Number(e.target.value))}
+                />
+              )}
+            />
+            {errors.minimumSubtotal ? <p className={errorClass}>{errors.minimumSubtotal.message}</p> : null}
+            <p className="mt-1.5 text-xs text-luxe-gray-dark">Products total before shipping.</p>
+          </div>
+        </div>
+
+        <Controller
+          name="oncePerCustomer"
+          control={control}
+          render={({ field }) => (
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={field.value} onChange={(e) => field.onChange(e.target.checked)} />
+              Once per customer (matched by email or account)
+            </label>
+          )}
+        />
+
+        <p className="text-xs text-luxe-gray-dark">Only one discount code can be used per order.</p>
+
         <Controller
           name="active"
           control={control}

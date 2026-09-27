@@ -15,6 +15,11 @@ export interface Discount {
   value: number;
   active: boolean;
   expiresAt?: string;
+  /** Total redemptions allowed; absent = unlimited. */
+  usageLimit?: number;
+  timesUsed: number;
+  minimumSubtotal?: number;
+  oncePerCustomer: boolean;
 }
 
 export interface GiftCard {

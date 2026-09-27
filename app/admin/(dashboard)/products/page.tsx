@@ -1,3 +1,4 @@
+import { requireCapabilityOrRedirect } from "@/lib/admin-session";
 import Link from "next/link";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { ProductsTable } from "@/components/admin/ProductsTable";
@@ -17,6 +18,7 @@ interface AdminProductsPageProps {
 }
 
 export default async function AdminProductsPage({ searchParams }: AdminProductsPageProps) {
+  await requireCapabilityOrRedirect("catalog:view");
   const params = await searchParams;
 
   // Every filter is read defensively — these arrive from a URL a human can type, and an

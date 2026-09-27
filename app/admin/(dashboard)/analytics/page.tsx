@@ -1,3 +1,4 @@
+import { requireCapabilityOrRedirect } from "@/lib/admin-session";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { StatCard } from "@/components/admin/StatCard";
 import { MiniBarChart } from "@/components/admin/MiniBarChart";
@@ -12,6 +13,7 @@ import { getAllCustomersForAdmin, type AdminCustomerRow } from "@/services/custo
 export const instant = false;
 
 export default async function AdminAnalyticsPage() {
+  await requireCapabilityOrRedirect("orders:view");
   const [orders, customers] = await Promise.all([getAllOrdersForAdmin(), getAllCustomersForAdmin()]);
 
   // Cancelled and refunded orders are not sales — see lib/order-revenue.ts. They still

@@ -191,13 +191,35 @@ export function toCollection(row: CollectionRow): Collection {
 // Cart
 // ---------------------------------------------------------------------------
 
+/**
+ * Each line item carries its product's LIVE price and publication state.
+ *
+ * `CartLineItem.unitPriceAmount` is the price at the moment the item was added, and carts
+ * live indefinitely. Charging that snapshot meant a sale that had ended, or a typo'd price
+ * the admin had since corrected, went on being charged to every cart that already held the
+ * item — weeks later, at checkout. Reading the product's current price on every cart read
+ * makes the cart, the checkout quote and the order all agree with the storefront.
+ */
 export const cartInclude = {
-  lineItems: { orderBy: { addedAt: "asc" } },
+  lineItems: {
+    orderBy: { addedAt: "asc" },
+    include: { product: { select: { priceAmount: true, salePriceAmount: true, status: true, availableForSale: true } } },
+  },
   discounts: { orderBy: { createdAt: "asc" } },
   giftCards: { orderBy: { createdAt: "asc" } },
 } satisfies Prisma.CartInclude;
 
 export type CartRow = Prisma.CartGetPayload<{ include: typeof cartInclude }>;
+
+/** The price a line item is charged at: the product's sale price if it has one, else its price. */
+export function liveUnitPrice(product: { priceAmount: Prisma.Decimal; salePriceAmount: Prisma.Decimal | null }): number {
+  return toNumber(product.salePriceAmount ?? product.priceAmount);
+}
+
+/** Published and switched on for sale — the server-side twin of the buy button's own check. */
+export function isProductPurchasable(product: { status: string; availableForSale: boolean }): boolean {
+  return product.status === "active" && product.availableForSale;
+}
 
 function toCartLineItem(row: CartRow["lineItems"][number], currencyCode: string): CartLineItem {
   return {
@@ -208,11 +230,12 @@ function toCartLineItem(row: CartRow["lineItems"][number], currencyCode: string)
     image: { src: row.imageSrc, alt: row.imageAlt },
     color: row.color,
     size: row.size,
-    unitPrice: { amount: toNumber(row.unitPriceAmount), currencyCode },
+    unitPrice: { amount: row.product ? liveUnitPrice(row.product) : toNumber(row.unitPriceAmount), currencyCode },
     quantity: row.quantity,
     maxQuantity: row.maxQuantity,
     savedForLater: row.savedForLater,
     addedAt: row.addedAt.toISOString(),
+    ...(row.product && !isProductPurchasable(row.product) ? { unavailable: true } : {}),
   };
 }
 
@@ -240,7 +263,12 @@ export function toCart(row: CartRow, shippingRate: ShippingRate | undefined): Ca
       quantity: li.quantity,
       savedForLater: li.savedForLater,
     })),
-    discounts: row.discounts.map((d) => ({ code: d.code, type: d.type as "percentage" | "fixed", value: toNumber(d.value) })),
+    discounts: row.discounts.map((d) => ({
+      code: d.code,
+      type: d.type as "percentage" | "fixed",
+      value: toNumber(d.value),
+      minimumSubtotal: d.minimumSubtotal ? toNumber(d.minimumSubtotal) : null,
+    })),
     giftCards: row.giftCards.map((g) => ({ code: g.code, balanceAmount: toNumber(g.balanceAmount) })),
     currencyCode,
     selectedShippingRate: shippingRate,
@@ -405,6 +433,10 @@ export function toDiscount(row: Prisma.DiscountGetPayload<object>): Discount {
     value: toNumber(row.value),
     active: row.active,
     expiresAt: row.expiresAt ? row.expiresAt.toISOString() : undefined,
+    usageLimit: row.usageLimit ?? undefined,
+    timesUsed: row.timesUsed,
+    minimumSubtotal: row.minimumSubtotal ? toNumber(row.minimumSubtotal) : undefined,
+    oncePerCustomer: row.oncePerCustomer,
   };
 }
 

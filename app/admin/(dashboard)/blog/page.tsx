@@ -1,3 +1,4 @@
+import { requireCapabilityOrRedirect } from "@/lib/admin-session";
 import Link from "next/link";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { DataTable } from "@/components/admin/DataTable";
@@ -10,6 +11,7 @@ import type { BlogPost } from "@/types";
 export const instant = false;
 
 export default async function AdminBlogPage() {
+  await requireCapabilityOrRedirect("content:blog");
   const posts = await getAllPosts();
 
   return (

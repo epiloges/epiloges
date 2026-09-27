@@ -1,3 +1,4 @@
+import { requireCapabilityOrRedirect } from "@/lib/admin-session";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { DataTable } from "@/components/admin/DataTable";
 import { DeleteRowButton } from "@/components/admin/DeleteRowButton";
@@ -11,6 +12,7 @@ import type { NewsletterSubscriber } from "@/types";
 export const instant = false;
 
 export default async function AdminNewsletterPage() {
+  await requireCapabilityOrRedirect("orders:view");
   const subscribers = await getNewsletterSubscribers();
 
   return (

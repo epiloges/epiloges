@@ -1,3 +1,4 @@
+import { requireCapabilityOrRedirect } from "@/lib/admin-session";
 import Link from "next/link";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { DataTable } from "@/components/admin/DataTable";
@@ -43,6 +44,7 @@ interface AdminEmailsPageProps {
 }
 
 export default async function AdminEmailsPage({ searchParams }: AdminEmailsPageProps) {
+  await requireCapabilityOrRedirect("orders:view");
   const params = await searchParams;
   const search = parseSearch(params.q);
   const template = params.template && TEMPLATE_LABELS[params.template] ? params.template : undefined;

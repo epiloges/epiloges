@@ -68,6 +68,14 @@ const CONFIG_FIELDS: readonly PaymentConfigField[] = [
   },
 ] as const;
 
+/**
+ * How long the shopper is told they have to pay. Unpaid orders are cancelled two days after
+ * that (services/bank-transfer-expiry.ts) — the grace covers transfers between banks that
+ * clear slowly. Both live here so the promise and its enforcement can't drift apart.
+ */
+export const BANK_TRANSFER_PAYMENT_DAYS = 5;
+export const BANK_TRANSFER_EXPIRY_DAYS = BANK_TRANSFER_PAYMENT_DAYS + 2;
+
 const BANK_TRANSFER_METHOD: PaymentMethodDefinition = {
   id: "bank-transfer",
   providerId: "bank-transfer",
@@ -153,6 +161,7 @@ export const bankTransferProvider: PaymentProvider = {
         value: `${ctx.payment.amount.amount.toFixed(2)} ${ctx.payment.amount.currencyCode}`,
       },
       ...(reference ? [{ label: "Αιτιολογία κατάθεσης", value: reference }] : []),
+      { label: "Προθεσμία πληρωμής", value: `${BANK_TRANSFER_PAYMENT_DAYS} ημέρες — μετά η παραγγελία ακυρώνεται αυτόματα` },
     ];
 
     return {

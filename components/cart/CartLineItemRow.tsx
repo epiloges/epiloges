@@ -32,6 +32,7 @@ export function CartLineItemRow({ item, compact = false }: CartLineItemRowProps)
             <p className="mt-0.5 text-xs text-luxe-gray-dark">
               {item.color} · {item.size}
             </p>
+            {item.unavailable ? <p className="mt-1 text-xs text-destructive">{t("itemUnavailable")}</p> : null}
           </div>
           <button type="button" aria-label={t("remove")} onClick={() => removeItem(item.id)} className="shrink-0 text-luxe-gray-dark hover:text-luxe-black">
             <X className="size-4" strokeWidth={1.5} />

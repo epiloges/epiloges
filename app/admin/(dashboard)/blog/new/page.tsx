@@ -1,3 +1,4 @@
+import { requireCapabilityOrRedirect } from "@/lib/admin-session";
 import { connection } from "next/server";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { BlogPostForm } from "@/components/admin/BlogPostForm";
@@ -9,6 +10,7 @@ import { emptyBlogFormValues } from "@/lib/validation/blog";
 export const instant = false;
 
 export default async function NewBlogPostPage() {
+  await requireCapabilityOrRedirect("content:blog");
   /**
    * PERF-002 tier 2 pre-step. `new Date()` below is unstable data, which Cache Components
    * refuses to prerender, and an `instant = false` opt-out does not suppress it.

@@ -1,3 +1,4 @@
+import { requireCapabilityOrRedirect } from "@/lib/admin-session";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { ProductsImportForm } from "@/components/admin/ProductsImportForm";
 
@@ -5,7 +6,8 @@ import { ProductsImportForm } from "@/components/admin/ProductsImportForm";
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
 export const instant = false;
 
-export default function ProductsImportPage() {
+export default async function ProductsImportPage() {
+  await requireCapabilityOrRedirect("catalog:edit");
   return (
     <div>
       <AdminPageHeader

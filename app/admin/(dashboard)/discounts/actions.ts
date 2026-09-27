@@ -35,6 +35,9 @@ export async function createDiscount(values: DiscountFormValues): Promise<Discou
       // The whole of the chosen day, in the shop's zone — not midnight UTC, which is 02:00 in
       // Athens and used to cut the last day off every expiry.
       expiresAt: data.expiresAt ? endOfDayIn(data.expiresAt, SHOP_TIME_ZONE) : null,
+      usageLimit: data.usageLimit ?? null,
+      minimumSubtotal: data.minimumSubtotal ?? null,
+      oncePerCustomer: data.oncePerCustomer,
     },
   });
 
@@ -78,6 +81,9 @@ export async function updateDiscount(id: string, values: DiscountFormValues): Pr
       value: data.value,
       active: data.active,
       expiresAt: data.expiresAt ? endOfDayIn(data.expiresAt, SHOP_TIME_ZONE) : null,
+      usageLimit: data.usageLimit ?? null,
+      minimumSubtotal: data.minimumSubtotal ?? null,
+      oncePerCustomer: data.oncePerCustomer,
     },
   });
 

@@ -33,6 +33,7 @@
     "viewBagAndCheckout": "View bag & checkout",
     "drawerFootnote": "Shipping and discounts are calculated in your bag.",
     "remove": "Remove",
+    "itemUnavailable": "No longer available — remove it to continue",
     "moveToBag": "Move to Bag",
     "saveForLater": "Save for later",
     "decreaseQuantity": "Decrease quantity",
@@ -91,7 +92,13 @@
     "INVALID_GIFT_CARD": "That gift card isn't valid, or is already applied.",
     "CART_NOT_FOUND": "We couldn't find your bag. Refresh the page.",
     "LINE_ITEM_NOT_FOUND": "That item is no longer in your bag.",
-    "INVALID_VARIANT": "That option isn't available."
+    "INVALID_VARIANT": "That option isn't available.",
+    "DISCOUNT_ONE_PER_ORDER": "One discount code per order. Remove the current one first.",
+    "DISCOUNT_NOT_ELIGIBLE": "That code can no longer be used.",
+    "DISCOUNT_MINIMUM_NOT_MET": "That code needs a higher order total.",
+    "PRODUCT_UNAVAILABLE": "An item in your bag is no longer available. Remove it to continue.",
+    "EMPTY_CART": "Your bag is empty.",
+    "CHECKOUT_INCOMPLETE": "Some order details are missing. Check the steps and try again."
   },
   "Checkout": {
     "pageTitle": "Checkout",

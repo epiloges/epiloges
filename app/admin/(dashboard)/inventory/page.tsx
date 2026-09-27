@@ -1,3 +1,4 @@
+import { requireCapabilityOrRedirect } from "@/lib/admin-session";
 import Link from "next/link";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { InventoryStockCell } from "@/components/admin/InventoryStockCell";
@@ -32,6 +33,7 @@ function isStockFilter(value: string | undefined): value is StockFilter {
 }
 
 export default async function AdminInventoryPage({ searchParams }: AdminInventoryPageProps) {
+  await requireCapabilityOrRedirect("catalog:view");
   const params = await searchParams;
   const search = parseSearch(params.q);
   const stock = isStockFilter(params.stock) ? params.stock : undefined;

@@ -1,3 +1,4 @@
+import { requireCapabilityOrRedirect } from "@/lib/admin-session";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { CollectionForm } from "@/components/admin/CollectionForm";
 import { createCollection } from "@/app/admin/(dashboard)/collections/actions";
@@ -10,6 +11,7 @@ import { getSeoDefaults } from "@/services/seo";
 export const instant = false;
 
 export default async function NewCollectionPage() {
+  await requireCapabilityOrRedirect("catalog:edit");
   const [products, seo] = await Promise.all([getAllProducts({ includeUnpublished: true }), getSeoDefaults()]);
 
   return (

@@ -487,6 +487,9 @@ model CartDiscount {
   type      String
   value     Decimal  @db.Decimal(10, 2)
   amount    Decimal  @db.Decimal(10, 2)
+  /// Snapshot of Discount.minimumSubtotal, so the cart drops the code the moment items are
+  /// removed below it. Re-read from the live Discount row at checkout.
+  minimumSubtotal Decimal? @db.Decimal(10, 2)
   createdAt DateTime @default(now())
 
   @@unique([cartId, code])
@@ -734,6 +737,17 @@ model Discount {
   active    Boolean   @default(true)
   expiresAt DateTime?
   createdAt DateTime  @default(now())
+
+  /// Total redemptions allowed; null = unlimited. Enforced by a conditional increment of
+  /// `timesUsed` inside the order transaction (services/checkout.ts), the same shape as the
+  /// gift-card balance guard, so two shoppers cannot both take the last use.
+  usageLimit      Int?
+  /// Orders placed with this code. Cancelled orders are not credited back.
+  timesUsed       Int      @default(0)
+  /// The cart subtotal the code requires. Codes do not stack, so this is the plain subtotal.
+  minimumSubtotal Decimal? @db.Decimal(10, 2)
+  /// One order per customer, matched on the order email or the signed-in account.
+  oncePerCustomer Boolean  @default(false)
 
   @@map("discounts")
 }

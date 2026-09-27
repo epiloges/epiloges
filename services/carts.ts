@@ -1,7 +1,7 @@
 import "server-only";
 import type { Prisma } from "@/lib/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
-import { cartInclude, toCart, toNumber, type CartRow } from "@/lib/commerce/postgres/mappers";
+import { cartInclude, isProductPurchasable, toCart, toNumber, type CartRow } from "@/lib/commerce/postgres/mappers";
 import { round2 } from "@/lib/commerce/postgres/cart-totals";
 import { findSizeVariant, isSizePurchasable } from "@/lib/product";
 import { getProductById, getRelatedProducts } from "@/services/products";
@@ -106,7 +106,10 @@ export async function addLineItem(cartId: string, input: AddLineItemInput): Prom
   // `Promise.all` still rejects on the first failure, so a missing cart raises CART_NOT_FOUND
   // exactly as before — the product read is a read, so there is nothing to undo if it loses.
   const [, product] = await Promise.all([requireCartExists(cartId), getProductById(input.productId)]);
-  if (!product) throw new CommerceError("OUT_OF_STOCK", "Product no longer available.");
+  // Publication and the "available for sale" switch were enforced only by the buy button, so a
+  // direct request could still add a draft, archived or withdrawn product. getProductById is
+  // deliberately status-blind (it backs existing carts), so the gate belongs here.
+  if (!product || !isProductPurchasable(product)) throw new CommerceError("OUT_OF_STOCK", "Product no longer available.");
   if (!isSizePurchasable(product, input.size)) {
     throw new CommerceError("OUT_OF_STOCK", `${product.name} (${input.size}) is out of stock.`);
   }
@@ -198,20 +201,36 @@ export async function applyDiscountCode(cartId: string, code: string): Promise<C
   if (row.discounts.some((d) => d.code === normalized)) {
     throw new CommerceError("DISCOUNT_ALREADY_APPLIED", "That code is already applied.");
   }
+  // Codes don't stack: two percentage codes used to add up, so two 50% codes made the order free.
+  if (row.discounts.length > 0) {
+    throw new CommerceError("DISCOUNT_ONE_PER_ORDER", "Only one discount code can be used per order.");
+  }
 
   const discount = await getDiscountByCode(normalized);
   const isExpired = discount?.expiresAt ? new Date(discount.expiresAt).getTime() < Date.now() : false;
   if (!discount || !discount.active || isExpired) {
     throw new CommerceError("INVALID_DISCOUNT_CODE", "That code isn't valid or has expired.");
   }
+  if (discount.usageLimit != null && discount.timesUsed >= discount.usageLimit) {
+    throw new CommerceError("DISCOUNT_NOT_ELIGIBLE", "That code has reached its usage limit.");
+  }
 
-  const subtotalAmount = row.lineItems
-    .filter((li) => !li.savedForLater)
-    .reduce((sum, li) => sum + toNumber(li.unitPriceAmount) * li.quantity, 0);
+  // Live prices, the same ones the cart and the order are priced at.
+  const subtotalAmount = toCart(row, undefined).totals.subtotal.amount;
+  if (discount.minimumSubtotal && subtotalAmount < discount.minimumSubtotal) {
+    throw new CommerceError("DISCOUNT_MINIMUM_NOT_MET", `That code needs an order of at least €${discount.minimumSubtotal.toFixed(2)}.`);
+  }
   const amount = discount.type === "percentage" ? (subtotalAmount * discount.value) / 100 : Math.min(discount.value, subtotalAmount);
 
   await prisma.cartDiscount.create({
-    data: { cartId, code: discount.code, type: discount.type, value: discount.value, amount: round2(amount) },
+    data: {
+      cartId,
+      code: discount.code,
+      type: discount.type,
+      value: discount.value,
+      amount: round2(amount),
+      minimumSubtotal: discount.minimumSubtotal ?? null,
+    },
   });
   return reloadCart(cartId);
 }

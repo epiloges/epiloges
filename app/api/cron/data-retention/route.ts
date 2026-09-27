@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { runDataRetention } from "@/services/data-retention";
-import { cronTriggerFromRequest, runCron } from "@/services/cron-runs";
+import { cronTriggerFromRequest, runCron, isAuthorizedCronRequest } from "@/services/cron-runs";
 import { logger } from "@/lib/logger";
 
 /**
@@ -12,8 +12,7 @@ import { logger } from "@/lib/logger";
  * record of every recent webhook.
  */
 export async function GET(request: Request) {
-  const cronSecret = process.env.CRON_SECRET;
-  if (!cronSecret || request.headers.get("authorization") !== `Bearer ${cronSecret}`) {
+  if (!isAuthorizedCronRequest(request, "data-retention")) {
     return new NextResponse("Unauthorized", { status: 401 });
   }
 

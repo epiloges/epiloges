@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
+import { logger } from "@/lib/logger";
 import { getSiteContent, setSiteContent } from "@/lib/site-content";
 
 /**
@@ -25,7 +26,7 @@ import { getSiteContent, setSiteContent } from "@/lib/site-content";
  */
 
 /** The three jobs declared in vercel.json. Kept here so health can report on all of them. */
-export const CRON_JOBS = ["data-retention", "email-followups", "instagram-token", "acs-delivery"] as const;
+export const CRON_JOBS = ["data-retention", "email-followups", "instagram-token"] as const;
 export type CronJob = (typeof CRON_JOBS)[number];
 
 /**
@@ -77,6 +78,28 @@ function documentKey(job: CronJob): string {
  * Neither can be forged from outside: the `x-vercel-*` prefix is reserved and inbound copies
  * are stripped at the edge, which is the same property `getClientIp` relies on.
  */
+/**
+ * Whether a request to a cron route carries the shared secret.
+ *
+ * An unset secret must never mean "open" — it rejects outright rather than matching a literal
+ * "Bearer undefined". And a rejected call from Vercel's own scheduler is logged as an error,
+ * because otherwise it is invisible: the route answers 401 before anything is recorded, so a
+ * blank or mismatched CRON_SECRET looked, for eleven days, exactly like a scheduler that never
+ * fired.
+ */
+export function isAuthorizedCronRequest(request: Request, job: CronJob): boolean {
+  const secret = process.env.CRON_SECRET;
+  const authorized = Boolean(secret) && request.headers.get("authorization") === `Bearer ${secret}`;
+  const fromScheduler = (request.headers.get("user-agent") ?? "").startsWith("vercel-cron");
+  if (!authorized && fromScheduler) {
+    logger.error("Vercel's cron scheduler was refused — CRON_SECRET is missing, blank or out of date", undefined, {
+      job,
+      secretConfigured: Boolean(secret),
+    });
+  }
+  return authorized;
+}
+
 export function cronTriggerFromRequest(request: Request): CronTrigger {
   const scheduled = request.headers.get("x-vercel-cron-schedule") ?? request.headers.get("x-vercel-cron");
   return scheduled ? "schedule" : "manual";

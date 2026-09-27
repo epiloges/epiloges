@@ -11,7 +11,7 @@ import {
   type ReactNode,
 } from "react";
 import { getCommerceProvider } from "@/lib/commerce";
-import type { Address, Checkout, CompleteCheckoutResult, ShippingRate } from "@/lib/commerce/types";
+import { CommerceError, type Address, type Checkout, type CompleteCheckoutResult, type ShippingRate } from "@/lib/commerce/types";
 import type { Money } from "@/types";
 import { useCart } from "@/components/providers/CartProvider";
 import { useToast } from "@/components/providers/ToastProvider";
@@ -101,6 +101,7 @@ export function CheckoutProvider({ children }: { children: ReactNode }) {
   const { cart, clearCart } = useCart();
   const { toast } = useToast();
   const t = useTranslations("Checkout");
+  const tError = useTranslations("CartError");
 
   const [checkout, setCheckout] = useState<Checkout | null>(null);
   const [step, setStep] = useState<CheckoutStep>("shipping");
@@ -344,16 +345,19 @@ export function CheckoutProvider({ children }: { children: ReactNode }) {
       }
       return result;
     } catch (error) {
+      // A known code gets the shopper's language; the server's own message is English.
       const description =
-        error instanceof Error && error.message
-          ? error.message
-          : "Please check your details and try again.";
+        error instanceof CommerceError && tError.has(error.code)
+          ? tError(error.code)
+          : error instanceof Error && error.message
+            ? error.message
+            : "Please check your details and try again.";
       toast({ title: t("couldNotPlaceOrder"), description, tone: "error" });
       return null;
     } finally {
       setIsPlacingOrder(false);
     }
-  }, [checkout, cart, sameBillingAsShipping, shippingAddress, billingAddress, commerce, clearCart, toast, t]);
+  }, [checkout, cart, sameBillingAsShipping, shippingAddress, billingAddress, commerce, clearCart, toast, t, tError]);
 
   const value: CheckoutContextValue = {
     step,

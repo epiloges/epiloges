@@ -58,7 +58,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     title: "Catalog",
     items: [
       { label: "Products", href: "/admin/products", icon: Package, capability: "catalog:view" },
-      { label: "Import Products", href: "/admin/products/import", icon: Upload, capability: "catalog:view" },
+      { label: "Import Products", href: "/admin/products/import", icon: Upload, capability: "catalog:edit" },
       { label: "Inventory", href: "/admin/inventory", icon: Boxes, capability: "catalog:view" },
       { label: "Collections", href: "/admin/collections", icon: Layers, capability: "catalog:view" },
       { label: "Categories", href: "/admin/categories", icon: Tags, capability: "catalog:view" },
@@ -87,19 +87,18 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       // catalog-only role) is the point — customer PII has nothing to do with the catalogue.
       { label: "Customers", href: "/admin/customers", icon: Users, capability: "orders:view" },
       { label: "Returns", href: "/admin/returns", icon: PackageOpen, capability: "orders:returns" },
-      { label: "ACS Courier", href: "/admin/courier", icon: Truck, capability: "orders:manage" },
-      { label: "Newsletter", href: "/admin/newsletter", icon: Mail },
-      { label: "Contact Messages", href: "/admin/messages", icon: MessageSquare },
-      { label: "Ask a Stylist", href: "/admin/concierge", icon: Sparkles },
-      { label: "Referrals", href: "/admin/referrals", icon: Users2 },
+      { label: "Newsletter", href: "/admin/newsletter", icon: Mail, capability: "orders:view" },
+      { label: "Contact Messages", href: "/admin/messages", icon: MessageSquare, capability: "orders:view" },
+      { label: "Ask a Stylist", href: "/admin/concierge", icon: Sparkles, capability: "orders:view" },
+      { label: "Referrals", href: "/admin/referrals", icon: Users2, capability: "orders:view" },
     ],
   },
   {
     title: "Insights",
     items: [
-      { label: "Analytics", href: "/admin/analytics", icon: BarChart3 },
+      { label: "Analytics", href: "/admin/analytics", icon: BarChart3, capability: "orders:view" },
       { label: "Activity", href: "/admin/activity", icon: ScrollText, capability: "admin:activity" },
-      { label: "Emails", href: "/admin/emails", icon: Send },
+      { label: "Emails", href: "/admin/emails", icon: Send, capability: "orders:view" },
     ],
   },
   {

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { refreshInstagramToken } from "@/services/instagram";
-import { cronTriggerFromRequest, runCron } from "@/services/cron-runs";
+import { cronTriggerFromRequest, runCron, isAuthorizedCronRequest } from "@/services/cron-runs";
 
 /**
  * Keeps the Instagram feed alive.
@@ -21,10 +21,7 @@ import { cronTriggerFromRequest, runCron } from "@/services/cron-runs";
  * the shop's credentials on demand.
  */
 export async function GET(request: Request) {
-  const cronSecret = process.env.CRON_SECRET;
-  // An unset secret must never mean "open" — reject outright rather than matching
-  // literal "Bearer undefined".
-  if (!cronSecret || request.headers.get("authorization") !== `Bearer ${cronSecret}`) {
+  if (!isAuthorizedCronRequest(request, "instagram-token")) {
     return new NextResponse("Unauthorized", { status: 401 });
   }
 

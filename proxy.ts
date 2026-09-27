@@ -4,6 +4,11 @@ import { CUSTOMER_SESSION_COOKIE, verifyCustomerSession } from "@/lib/customer-a
 import { prisma } from "@/lib/prisma";
 import { hasValidMaintenancePass, isMaintenanceModeOn, MAINTENANCE_PASS_COOKIE } from "@/services/maintenance";
 import legacyRedirects from "@/data/legacy-redirects.json";
+import legalData from "@/data/legal.json";
+import campaignsData from "@/data/campaigns.json";
+import lookbooksData from "@/data/lookbooks.json";
+import landingPagesData from "@/data/landing-pages.json";
+import { slugify } from "@/lib/slug";
 
 /**
  * A real HTTP 404, for the same reason the redirects below live here (`SEO-002`).
@@ -125,6 +130,48 @@ const RETIRED_COLLECTIONS: Record<string, string> = {
   "woman-sneakers-collection": "gynaikeia-sneakers",
 };
 
+/**
+ * The other detail pages that answered 200 for a slug that does not exist — the same soft-404
+ * the product, category and collection routes had (SEO-002), for the same reason: the root
+ * layout streams before the page can call `notFound()`, so the status is already committed.
+ * Each check mirrors its page's own lookup, so the two cannot disagree about what exists.
+ */
+const DETAIL_ROUTES: { prefix: string; exists: (slug: string) => Promise<boolean> | boolean }[] = [
+  { prefix: "/legal/", exists: (slug) => (legalData as { slug: string }[]).some((page) => page.slug === slug) },
+  { prefix: "/campaigns/", exists: (slug) => (campaignsData as { slug: string }[]).some((page) => page.slug === slug) },
+  { prefix: "/lookbooks/", exists: (slug) => (lookbooksData as { slug: string }[]).some((page) => page.slug === slug) },
+  { prefix: "/landing/", exists: (slug) => (landingPagesData as { slug: string }[]).some((page) => page.slug === slug) },
+  {
+    prefix: "/journal/",
+    exists: async (slug) =>
+      (await prisma.blogPost.findFirst({ where: { slug, publishedAt: { lte: new Date() } }, select: { id: true } })) !== null,
+  },
+  {
+    prefix: "/wishlist/shared/",
+    exists: async (token) => (await prisma.wishlist.findUnique({ where: { shareToken: token }, select: { id: true } })) !== null,
+  },
+  {
+    // Brands are derived from active products (services/brands.ts), matched on the slugified name.
+    prefix: "/brands/",
+    exists: async (slug) => {
+      const rows = await prisma.product.findMany({
+        where: { status: "active", brand: { not: null } },
+        distinct: ["brand"],
+        select: { brand: true },
+      });
+      return rows.some((row) => row.brand && slugify(row.brand) === slug);
+    },
+  },
+];
+
+function safeDecode(segment: string): string {
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    return segment;
+  }
+}
+
 async function missingCollection(request: NextRequest): Promise<NextResponse | null> {
   const slug = request.nextUrl.pathname.split("/")[2];
   if (!slug) return null;
@@ -207,19 +254,6 @@ async function maintenanceResponse(request: NextRequest, pathname: string): Prom
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // The old WooCommerce gateway endpoint. The bank's POS still carries it as the "back
-  // link" for a shopper who presses Cancel on the card form — the result URL was moved to
-  // /api/payments/webhooks/piraeus, the back link was not — and appends our ParamBackLink
-  // (`order=…`) as the query. Rewritten rather than redirected so a POST would arrive
-  // intact too, and before the maintenance check, because a payment callback is never a
-  // page. Stays after the bank updates its record: a shopper mid-payment during the
-  // switch-over still lands somewhere sensible.
-  if (pathname.replace(/\/$/, "") === "/wc-api/WC_Piraeusbank_Gateway") {
-    const url = request.nextUrl.clone();
-    url.pathname = "/api/payments/webhooks/piraeus";
-    return NextResponse.rewrite(url);
-  }
-
   // Before the maintenance check: a 301 sells nothing, and a crawler retrying the old URLs
   // while the shop is closed should still learn where they went. The target answers 503.
   if (LEGACY_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(prefix)) || /%[0-9A-Fa-f]{2}/.test(pathname)) {
@@ -247,6 +281,13 @@ export async function proxy(request: NextRequest) {
   if (pathname.startsWith("/collections/")) {
     const missing = await missingCollection(request);
     if (missing) return missing;
+    return NextResponse.next();
+  }
+
+  const detailExists = DETAIL_ROUTES.find((route) => pathname.startsWith(route.prefix));
+  if (detailExists) {
+    const slug = pathname.slice(detailExists.prefix.length).split("/")[0];
+    if (slug && !(await detailExists.exists(safeDecode(slug)))) return notFoundResponse(request);
     return NextResponse.next();
   }
 

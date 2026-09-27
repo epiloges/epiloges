@@ -1,3 +1,4 @@
+import { requireCapabilityOrRedirect } from "@/lib/admin-session";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
@@ -18,6 +19,7 @@ interface AdminCollectionDetailPageProps {
 }
 
 export default async function AdminCollectionDetailPage({ params }: AdminCollectionDetailPageProps) {
+  await requireCapabilityOrRedirect("catalog:view");
   const { id } = await params;
   // Binding a Server Action to this record encrypts the bound id with a fresh random IV,
   // which Cache Components flags during prerender ("1 Issue" in dev). The page is

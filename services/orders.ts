@@ -325,57 +325,6 @@ export async function updateOrderTracking(id: string, input: OrderTrackingInput)
   return toOrder(row);
 }
 
-/**
- * Orders holding a courier voucher that has not yet been closed into a pickup list —
- * the day's work for the courier page, oldest first so the sheet prints in order.
- */
-export async function getOrdersAwaitingPickup(carrier: string): Promise<Order[]> {
-  const rows = await prisma.order.findMany({
-    where: { carrier, trackingNumber: { not: null }, pickupListNo: null },
-    orderBy: { createdAt: "asc" },
-  });
-  return rows.map(toOrder);
-}
-
-export async function markVouchersPrinted(orderIds: string[]): Promise<void> {
-  if (orderIds.length === 0) return;
-  await prisma.order.updateMany({ where: { id: { in: orderIds } }, data: { voucherPrintedAt: new Date() } });
-}
-
-/** Stamps the pickup list onto every order whose voucher the courier reports as being on it. */
-export async function markVouchersListed(trackingNumbers: string[], pickupListNo: string): Promise<number> {
-  if (trackingNumbers.length === 0) return 0;
-  const { count } = await prisma.order.updateMany({
-    where: { trackingNumber: { in: trackingNumbers }, pickupListNo: null },
-    data: { pickupListNo },
-  });
-  return count;
-}
-
-/**
- * The day is closed and the driver has the parcels: every order whose voucher went onto
- * the pickup list is shipped, in the shop's own words — "when he comes and picks them up,
- * I change the orders to shipped". Done here so the shipping email, with the tracking
- * link, goes out for each one without a second round of clicks. Only orders still before
- * "shipped" move; one cancelled meanwhile stays cancelled.
- */
-export async function markListedOrdersShipped(pickupListNo: string): Promise<string[]> {
-  const rows = await prisma.order.findMany({
-    where: { pickupListNo, status: { in: ["confirmed", "processing"] } },
-    select: { id: true },
-  });
-  const shipped: string[] = [];
-  for (const row of rows) {
-    try {
-      await updateOrderStatus(row.id, "shipped");
-      shipped.push(row.id);
-    } catch (error) {
-      logger.error("Could not mark a listed order shipped", error, { orderId: row.id, pickupListNo });
-    }
-  }
-  return shipped;
-}
-
 /** Every order placed under an email address, newest first — the customer detail page history. */
 export async function getOrdersForEmail(email: string): Promise<Order[]> {
   const rows = await prisma.order.findMany({

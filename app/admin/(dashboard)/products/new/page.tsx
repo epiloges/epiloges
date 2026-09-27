@@ -1,3 +1,4 @@
+import { requireCapabilityOrRedirect } from "@/lib/admin-session";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { ProductForm } from "@/components/admin/ProductForm";
 import { createProduct } from "@/app/admin/(dashboard)/products/actions";
@@ -11,6 +12,7 @@ import { getSeoDefaults } from "@/services/seo";
 export const instant = false;
 
 export default async function NewProductPage() {
+  await requireCapabilityOrRedirect("catalog:edit");
   const [collections, categories, seo] = await Promise.all([
     getAllCollections(),
     getCategoryOptions(),

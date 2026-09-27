@@ -1,3 +1,4 @@
+import { requireCapabilityOrRedirect } from "@/lib/admin-session";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { DataTable } from "@/components/admin/DataTable";
 import { formatDate } from "@/lib/format";
@@ -8,6 +9,7 @@ import { getAllContactMessagesForAdmin, type ContactMessage } from "@/services/c
 export const instant = false;
 
 export default async function AdminMessagesPage() {
+  await requireCapabilityOrRedirect("orders:view");
   const messages = await getAllContactMessagesForAdmin();
 
   return (

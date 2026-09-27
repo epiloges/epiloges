@@ -1,8 +1,6 @@
 import "server-only";
-import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { round2 } from "@/lib/commerce/postgres/cart-totals";
-import { appliedDiscountSchema, appliedGiftCardSchema } from "@/lib/validation/commerce";
 
 export interface CodeUsage {
   /** Orders the code was applied to. */
@@ -26,29 +24,35 @@ export interface CodeUsageReport {
  *
  * Cancelled and refunded orders still count: the code WAS used, and a "1 use per customer"
  * decision should see it.
+ *
+ * Aggregated in SQL. It used to load every order ever placed into memory on each visit to
+ * the discounts page, which grows without bound as the shop does.
  */
 export async function getCodeUsageReport(): Promise<CodeUsageReport> {
-  const rows = await prisma.order.findMany({ select: { discounts: true, giftCards: true, totals: true } });
+  const [rows, untrackedRows] = await Promise.all([
+    prisma.$queryRaw<{ kind: "discount" | "giftCard"; code: string; orders: number; amount: string | null }[]>`
+      SELECT 'discount' AS kind, upper(e->>'code') AS code, count(*)::int AS orders,
+             sum((e->'amount'->>'amount')::numeric)::text AS amount
+      FROM "orders" o, jsonb_array_elements(o."discounts") e
+      WHERE jsonb_typeof(o."discounts") = 'array'
+      GROUP BY 2
+      UNION ALL
+      SELECT 'giftCard' AS kind, upper(e->>'code') AS code, count(*)::int AS orders,
+             sum((e->'amountApplied'->>'amount')::numeric)::text AS amount
+      FROM "orders" o, jsonb_array_elements(o."giftCards") e
+      WHERE jsonb_typeof(o."giftCards") = 'array'
+      GROUP BY 2`,
+    prisma.$queryRaw<{ untracked: number }[]>`
+      SELECT count(*)::int AS untracked FROM "orders"
+      WHERE "discounts" IS NULL
+        AND (coalesce(("totals"->'discountTotal'->>'amount')::numeric, 0) > 0
+          OR coalesce(("totals"->'giftCardTotal'->>'amount')::numeric, 0) > 0)`,
+  ]);
 
   const discounts = new Map<string, CodeUsage>();
   const giftCards = new Map<string, CodeUsage>();
-  let untracked = 0;
-
-  const bump = (map: Map<string, CodeUsage>, code: string, amount: number) => {
-    const key = code.toUpperCase();
-    const current = map.get(key) ?? { orders: 0, amount: 0 };
-    map.set(key, { orders: current.orders + 1, amount: round2(current.amount + amount) });
-  };
-
   for (const row of rows) {
-    if (row.discounts === null) {
-      const totals = row.totals as { discountTotal?: { amount?: number }; giftCardTotal?: { amount?: number } };
-      if ((totals.discountTotal?.amount ?? 0) > 0 || (totals.giftCardTotal?.amount ?? 0) > 0) untracked += 1;
-      continue;
-    }
-    for (const d of z.array(appliedDiscountSchema).parse(row.discounts)) bump(discounts, d.code, d.amount.amount);
-    for (const g of z.array(appliedGiftCardSchema).parse(row.giftCards ?? [])) bump(giftCards, g.code, g.amountApplied.amount);
+    (row.kind === "discount" ? discounts : giftCards).set(row.code, { orders: row.orders, amount: round2(Number(row.amount ?? 0)) });
   }
-
-  return { discounts, giftCards, untracked };
+  return { discounts, giftCards, untracked: untrackedRows[0]?.untracked ?? 0 };
 }

@@ -1,3 +1,4 @@
+import { requireCapabilityOrRedirect } from "@/lib/admin-session";
 import Image from "next/image";
 import Link from "next/link";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
@@ -10,6 +11,7 @@ import type { Collection } from "@/types";
 export const instant = false;
 
 export default async function AdminCollectionsPage() {
+  await requireCapabilityOrRedirect("catalog:view");
   const collections = await getAllCollections();
 
   return (

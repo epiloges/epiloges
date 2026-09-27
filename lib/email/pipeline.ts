@@ -31,6 +31,21 @@ function isTransient(error: unknown): boolean {
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+export const REDACTED_TOKEN = "REDACTED";
+
+/**
+ * Strips one-time secrets (password-reset and email-verification tokens) out of a body before
+ * it is written to the log.
+ *
+ * The admin email log renders every stored body, so a live reset link in it let any admin
+ * account — including roles with no business near customer accounts — request a reset for a
+ * customer, open the log, and click through within the 30 minutes the link is valid. The
+ * delivered email is untouched; only the copy the shop keeps loses the token.
+ */
+export function redactSecrets(body: string): string {
+  return body.replace(/([?&](?:amp;)?token=)[^&"'\s<>]+/g, `$1${REDACTED_TOKEN}`);
+}
+
 async function logOutcome(
   message: EmailMessage,
   outcome: { status: "sent" | "failed" | "skipped"; error?: string; providerMessageId?: string; attempts: number }
@@ -40,8 +55,8 @@ async function logOutcome(
       data: {
         to: message.to,
         subject: message.subject,
-        html: message.html,
-        text: message.text,
+        html: redactSecrets(message.html),
+        text: message.text ? redactSecrets(message.text) : message.text,
         template: message.template,
         status: outcome.status,
         error: outcome.error ?? null,

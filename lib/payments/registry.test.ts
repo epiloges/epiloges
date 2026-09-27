@@ -7,13 +7,10 @@ import { paymentProviderRegistry } from "./registry";
  * — which is exactly when they earn their keep.
  */
 describe("payment provider registry", () => {
-  it("registers the four providers the shop supports", () => {
-    expect(paymentProviderRegistry.list().map((p) => p.id).sort()).toEqual([
-      "bank-transfer",
-      "cash-on-delivery",
-      "iris",
-      "piraeus",
-    ]);
+  it("registers the three providers this shop supports", () => {
+    // No card acquirer yet — the Piraeus provider belonged to the other shop's bank contract.
+    // Adding one should change this list on purpose, not by accident.
+    expect(paymentProviderRegistry.list().map((p) => p.id).sort()).toEqual(["bank-transfer", "cash-on-delivery", "iris"]);
   });
 
   it("gives every method a unique id owned by exactly one provider", () => {
@@ -34,7 +31,7 @@ describe("payment provider registry", () => {
   });
 
   it("refuses to register the same provider twice", () => {
-    const existing = paymentProviderRegistry.require("piraeus");
+    const existing = paymentProviderRegistry.require("bank-transfer");
     expect(() => paymentProviderRegistry.register(existing)).toThrow(/already registered/);
   });
 
@@ -77,13 +74,6 @@ describe("payment provider registry", () => {
     }
   });
 
-  it("keeps Piraeus a real, connectable provider rather than a boundary", () => {
-    const piraeus = paymentProviderRegistry.require("piraeus");
-    expect(piraeus.integrationPending).toBeFalsy();
-    // Its result arrives through the shopper's browser, and the webhook route has to
-    // know that to send a person on rather than answer them with JSON.
-    expect(piraeus.webhookDelivery).toBe("browser");
-  });
 
   it("declares a webhook parser for exactly the providers that claim webhook support", () => {
     for (const provider of paymentProviderRegistry.list()) {

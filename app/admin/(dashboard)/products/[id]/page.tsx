@@ -10,7 +10,7 @@ import { getProductById } from "@/services/products";
 import { getAllCollections } from "@/services/collections";
 import { getCategoryOptions } from "@/services/categories";
 import { getSeoDefaults } from "@/services/seo";
-import { requireAdminSessionOrRedirect } from "@/lib/admin-session";
+import { requireAdminSessionOrRedirect, requireCapabilityOrRedirect } from "@/lib/admin-session";
 import { roleHasCapability } from "@/constants/permissions";
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
@@ -22,6 +22,7 @@ interface AdminProductDetailPageProps {
 }
 
 export default async function AdminProductDetailPage({ params }: AdminProductDetailPageProps) {
+  await requireCapabilityOrRedirect("catalog:view");
   const { id } = await params;
   // Binding a Server Action to this record encrypts the bound id with a fresh random IV,
   // which Cache Components flags during prerender ("1 Issue" in dev). The page is
