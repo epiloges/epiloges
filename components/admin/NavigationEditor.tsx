@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { Check, Plus, X, AlertTriangle } from "lucide-react";
 import { REMOTE_IMAGE_HOSTS, isOptimizableImageUrl } from "@/lib/image-hosts";
+import { ImageFieldTools } from "@/components/admin/ImageFieldTools";
 import type { NavigationConfig, NavItem } from "@/types";
 
 /** One entry in a header item's dropdown promo panel. */
@@ -240,6 +241,7 @@ export function NavigationEditor({ initialNavigation, onSave }: NavigationEditor
                           aria-invalid={!usable}
                           className={inputClass}
                         />
+                        <ImageFieldTools value={feature.image} onChange={(url) => updateFeatured(item.id, index, { image: url })} />
                         {!usable ? (
                           <p className="flex items-start gap-1.5 text-xs text-destructive">
                             <AlertTriangle className="mt-0.5 size-3.5 shrink-0" strokeWidth={1.5} />

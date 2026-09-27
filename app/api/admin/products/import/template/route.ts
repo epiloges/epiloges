@@ -14,7 +14,7 @@ export async function GET() {
     return new Response(`\uFEFF${buildImportTemplateCsv()}`, {
       headers: {
         "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": 'attachment; filename="alexandris-product-import-template.csv"',
+        "Content-Disposition": 'attachment; filename="epiloges-product-import-template.csv"',
       },
     });
   } catch (error) {

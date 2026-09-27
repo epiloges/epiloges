@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ImageFieldTools } from "@/components/admin/ImageFieldTools";
+import { slugify } from "@/lib/slug";
 import { blogFormSchema, type BlogFormValues } from "@/lib/validation/blog";
 import type { BlogActionState } from "@/app/admin/(dashboard)/blog/actions";
 
@@ -23,12 +25,24 @@ export function BlogPostForm({ defaultValues, onSubmit, submitLabel = "Save Post
   const [serverError, setServerError] = useState<string | null>(null);
   const {
     register,
+    control,
+    setValue,
+    getValues,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<BlogFormValues>({
     resolver: zodResolver(blogFormSchema),
     defaultValues,
   });
+
+  const [title, coverSrc] = useWatch({ control, name: ["title", "coverImage.src"] });
+  // A new post's slug writes itself from the title until someone types in the slug field.
+  const [isNew] = useState(() => !defaultValues.slug);
+  const [slugEdited, setSlugEdited] = useState(false);
+  useEffect(() => {
+    if (!isNew || slugEdited) return;
+    setValue("slug", slugify(title ?? ""), { shouldValidate: false });
+  }, [title, isNew, slugEdited, setValue]);
 
   const submit = handleSubmit(async (values) => {
     setServerError(null);
@@ -52,7 +66,7 @@ export function BlogPostForm({ defaultValues, onSubmit, submitLabel = "Save Post
           </div>
           <div>
             <label className={labelClass} htmlFor="bf-slug">Slug</label>
-            <input id="bf-slug" className={inputClass} aria-invalid={Boolean(errors.slug)} {...register("slug")} />
+            <input id="bf-slug" className={inputClass} aria-invalid={Boolean(errors.slug)} {...register("slug", { onChange: () => setSlugEdited(true) })} />
             {errors.slug ? <p className={errorClass}>{errors.slug.message}</p> : null}
           </div>
         </div>
@@ -107,6 +121,13 @@ export function BlogPostForm({ defaultValues, onSubmit, submitLabel = "Save Post
           <div>
             <label className={labelClass} htmlFor="bf-image-src">Image URL</label>
             <input id="bf-image-src" className={inputClass} aria-invalid={Boolean(errors.coverImage?.src)} {...register("coverImage.src")} />
+            <ImageFieldTools
+              value={coverSrc}
+              onChange={(url) => {
+                setValue("coverImage.src", url, { shouldDirty: true, shouldValidate: true });
+                if (url && !getValues("coverImage.alt")?.trim()) setValue("coverImage.alt", getValues("title") || "", { shouldDirty: true });
+              }}
+            />
             {errors.coverImage?.src ? <p className={errorClass}>{errors.coverImage.src.message}</p> : null}
           </div>
           <div>

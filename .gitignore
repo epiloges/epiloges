@@ -70,3 +70,6 @@ playwright-report/
 
 # PDFs produced by `npm run acs:test` for ACS's activation check
 acs-test/
+
+# Local-dev image uploads (lib/blob.ts, only without BLOB_READ_WRITE_TOKEN)
+/public/uploads/

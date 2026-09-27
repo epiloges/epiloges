@@ -11,7 +11,7 @@ import {
   type UseFormSetValue,
 } from "react-hook-form";
 import { AlignVerticalSpaceAround, ImageUp, Link2, Star, X } from "lucide-react";
-import { uploadMediaFiles } from "@/components/admin/MediaUploadButton";
+import { uploadMediaFiles } from "@/components/admin/upload-images";
 import { MediaLibraryPicker } from "@/components/admin/MediaLibraryPicker";
 import { alignProductImages } from "@/app/admin/(dashboard)/products/image-actions";
 import { composeIdentifierAlt } from "@/lib/seo/product-content";
@@ -109,6 +109,7 @@ export function ProductImageManager({ control, register, setValue, errors }: Pro
   const inputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [showUrlField, setShowUrlField] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -212,15 +213,19 @@ export function ProductImageManager({ control, register, setValue, errors }: Pro
 
   async function handleFiles(fileList: FileList | File[] | null) {
     const files = fileList ? Array.from(fileList) : [];
+    // Reset first, so re-choosing the same file after a failure still fires onChange.
+    if (inputRef.current) inputRef.current.value = "";
     if (files.length === 0) return;
 
     setIsUploading(true);
     setUploadError(null);
-    const result = await uploadMediaFiles(files);
-
-    if (!result.ok) {
+    setUploadProgress({ done: 0, total: files.length });
+    const result = await uploadMediaFiles(files, { onProgress: (done, total) => setUploadProgress({ done, total }) });
+    setUploadProgress(null);
+    // The files that made it are attached even when others didn't; the rest are listed.
+    if (result.errors.length > 0) setUploadError(result.errors.join(" "));
+    if (result.media.length === 0) {
       setIsUploading(false);
-      setUploadError(result.error);
       return;
     }
 
@@ -302,7 +307,13 @@ export function ProductImageManager({ control, register, setValue, errors }: Pro
           </button>
         </p>
         <p className="text-xs text-luxe-gray-dark">
-          {isUploading ? "Uploading…" : isAssigning ? "Attaching…" : "JPEG, PNG, WebP or AVIF · up to 12 MB each"}
+          {uploadProgress
+            ? `Uploading ${uploadProgress.done} of ${uploadProgress.total}…`
+            : isUploading
+              ? "Attaching…"
+              : isAssigning
+                ? "Attaching…"
+                : "JPEG, PNG or WebP — phone photos are fine, they are resized automatically"}
         </p>
         <input
           ref={inputRef}

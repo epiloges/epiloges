@@ -9,7 +9,7 @@ import { Check, Copy, Lock, Upload } from "lucide-react";
 import { ListFilterBar } from "@/components/admin/ListFilterBar";
 import { Pagination } from "@/components/admin/Pagination";
 import { bulkOrganiseMedia, deleteMediaAssets, updateMediaDetails } from "@/app/admin/(dashboard)/media/actions";
-import { uploadMediaFiles } from "@/components/admin/MediaUploadButton";
+import { uploadMediaFiles } from "@/components/admin/upload-images";
 import type { MediaAssetWithUsage } from "@/types/media";
 
 export interface MediaLibraryFilter {
@@ -60,15 +60,13 @@ export function MediaLibrary({ assets, total, page, pageCount, filter, folders, 
       return;
     }
     setIsUploading(true);
-    const result = await uploadMediaFiles(files);
+    setNotice(`Uploading 0/${files.length}…`);
+    const result = await uploadMediaFiles(files, { onProgress: (done, total) => setNotice(`Uploading ${done}/${total}…`) });
     setIsUploading(false);
-    if (result.ok) {
-      setError(null);
-      setNotice(`Uploaded ${files.length} image${files.length === 1 ? "" : "s"}.`);
-      router.refresh();
-    } else {
-      setError(result.error ?? "Upload failed.");
-    }
+    const uploaded = result.media.length;
+    setNotice(uploaded > 0 ? `Uploaded ${uploaded} image${uploaded === 1 ? "" : "s"}.` : null);
+    setError(result.errors.length > 0 ? result.errors.join(" ") : null);
+    if (uploaded > 0) router.refresh();
   }
 
   const isFiltered = Boolean(filter.q || filter.folder || filter.usage !== "all");

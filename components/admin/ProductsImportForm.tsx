@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ImportRowResult, CommitRowResult } from "@/lib/products-import/types";
 import { IMPORT_COLUMNS } from "@/lib/products-import/columns";
+import { uploadMediaFiles } from "@/components/admin/upload-images";
 
 const inputClass = "block w-full text-sm";
 const sectionClass = "border border-border p-6";
@@ -19,6 +20,7 @@ export function ProductsImportForm() {
   const [rows, setRows] = useState<ImportRowResult[]>([]);
   const [commitResults, setCommitResults] = useState<CommitRowResult[]>([]);
   const [formError, setFormError] = useState<string | null>(null);
+  const [imageProgress, setImageProgress] = useState<{ done: number; total: number } | null>(null);
 
   const hasBlockingErrors = rows.some((row) => row.errors.length > 0);
 
@@ -32,9 +34,27 @@ export function ProductsImportForm() {
 
     setStage("previewing");
     try {
+      // Images go up first, one at a time and resized, through the same uploader as the product
+      // form. They used to ride in the same request as the CSV, and any real batch of photos is
+      // far past Vercel's 4.5 MB request limit — so the import could never work with images.
+      const imageFiles = Array.from(imagesInputRef.current?.files ?? []);
+      const imageUrls: Record<string, string> = {};
+      if (imageFiles.length > 0) {
+        setImageProgress({ done: 0, total: imageFiles.length });
+        const uploaded = await uploadMediaFiles(imageFiles, {
+          folder: "imports",
+          onProgress: (done, total) => setImageProgress({ done, total }),
+        });
+        setImageProgress(null);
+        for (const media of uploaded.media) imageUrls[media.filename.toLowerCase()] = media.url;
+        if (uploaded.errors.length > 0) {
+          throw new Error(`Some images didn't upload, so nothing was imported: ${uploaded.errors.join(" ")}`);
+        }
+      }
+
       const form = new FormData();
       form.append("csv", csvFile);
-      for (const file of Array.from(imagesInputRef.current?.files ?? [])) form.append("images", file);
+      form.append("imageUrls", JSON.stringify(imageUrls));
 
       const res = await fetch("/api/admin/products/import/preview", { method: "POST", body: form });
       const body = await res.json();
@@ -43,6 +63,7 @@ export function ProductsImportForm() {
       setRows(body.results as ImportRowResult[]);
       setStage("previewed");
     } catch (error) {
+      setImageProgress(null);
       setFormError(error instanceof Error ? error.message : "Preview failed.");
       setStage("idle");
     }
@@ -94,6 +115,12 @@ export function ProductsImportForm() {
           — it has every column and one example row. Rows import as <strong>draft</strong> unless{" "}
           <code>status</code> says <code>active</code>; a row whose slug already exists updates that product.
         </p>
+        <p className="mt-2 text-sm text-luxe-gray-dark">
+          The only columns you need are <code>name</code>, <code>price</code>, <code>category</code>, <code>sizes</code> and a
+          photo (<code>imageFilenames</code> plus the files, or links in <code>images</code>). Everything else is optional —
+          slug, SKU and description are written for you. A sheet saved from Excel works as-is, Greek included, and prices
+          like <code>59,90</code> and sizes like <code>36:1, 37:2</code> or <code>36-41</code> are understood.
+        </p>
         <details className="mt-3 text-sm">
           <summary className="cursor-pointer text-xs tracking-[0.05em] uppercase text-luxe-gray-dark">Column reference</summary>
           <div className="mt-3 overflow-x-auto">
@@ -139,7 +166,11 @@ export function ProductsImportForm() {
             Preview
           </button>
         ) : null}
-        {stage === "previewing" ? <p className="mt-4 text-sm text-luxe-gray-dark">Parsing and validating…</p> : null}
+        {stage === "previewing" ? (
+          <p className="mt-4 text-sm text-luxe-gray-dark">
+            {imageProgress ? `Uploading images ${imageProgress.done} of ${imageProgress.total}…` : "Parsing and validating…"}
+          </p>
+        ) : null}
         {formError ? <p className="mt-3 text-sm text-destructive">{formError}</p> : null}
       </div>
 

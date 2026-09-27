@@ -7,7 +7,7 @@ import { Plus, X } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { formatMoney } from "@/lib/format";
 import { slugify } from "@/lib/slug";
-import { deriveSizeSku, isDerivedSizeSku } from "@/lib/sku";
+import { deriveSizeSku, generateSku, isDerivedSizeSku } from "@/lib/sku";
 import { extractHeel, generateProductDescription, generateProductSeo } from "@/lib/seo/product-content";
 import { detectBrand } from "@/lib/seo/brands";
 import { SIZE_RUNS, expandSizeRun } from "@/constants/size-runs";
@@ -131,6 +131,7 @@ export function ProductForm({ defaultValues, collections, categories, seoDefault
     register,
     control,
     setValue,
+    getValues,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<ProductFormValues>({
@@ -199,7 +200,7 @@ export function ProductForm({ defaultValues, collections, categories, seoDefault
 
   const [blockedBy, setBlockedBy] = useState<string[]>([]);
 
-  const submit = handleSubmit(
+  const validateAndSave = handleSubmit(
     async (values) => {
       setServerError(null);
       setBlockedBy([]);
@@ -209,6 +210,44 @@ export function ProductForm({ defaultValues, collections, categories, seoDefault
     // Validation failed, so the save never runs. Say what is missing.
     (formErrors) => setBlockedBy(describeFormErrors(formErrors))
   );
+
+  /**
+   * The two required fields a new product can fill for itself, filled just before validation.
+   *
+   * SKU and description were the steps that turned "name, price, photo, sizes" into a form
+   * that refused to save. A small shop rarely has a code ready, and the description generator
+   * was one button away but only helped someone who knew to press it first. Both are written
+   * only when left blank, so a supplier code or real copy is never replaced — and both stay
+   * editable afterwards, like anything else on the form.
+   */
+  const submit = (event: React.FormEvent<HTMLFormElement>) => {
+    const name = getValues("name")?.trim();
+    if (isNewProduct && name) {
+      if (!getValues("sku")?.trim()) {
+        const sku = generateSku(getValues("slug") || slugify(name));
+        setValue("sku", sku);
+        // The per-size effect above derives from the product SKU on the next render, which is
+        // after this submit — so derive the blank ones here, the same way it would.
+        (getValues("sizes") ?? []).forEach((size, index) => {
+          const derived = deriveSizeSku(sku, size.name);
+          if (!size.sku?.trim() && derived) setValue(`sizes.${index}.sku`, derived);
+        });
+      }
+      if (!getValues("description")?.trim()) {
+        setValue(
+          "description",
+          generateProductDescription({
+            name,
+            brand: detectBrand(name) ?? undefined,
+            heel: undefined,
+            sizes: (getValues("sizes") ?? []).map((size) => size.name ?? ""),
+            categorySlug,
+          })
+        );
+      }
+    }
+    return validateAndSave(event);
+  };
 
   return (
     <form onSubmit={submit} noValidate className="space-y-6">
@@ -241,7 +280,11 @@ export function ProductForm({ defaultValues, collections, categories, seoDefault
           <div>
             <label className={labelClass} htmlFor="pf-sku">SKU</label>
             <input id="pf-sku" className={inputClass} aria-invalid={Boolean(errors.sku)} {...register("sku")} />
-            {errors.sku ? <p className={errorClass}>{errors.sku.message}</p> : null}
+            {errors.sku ? (
+              <p className={errorClass}>{errors.sku.message}</p>
+            ) : isNewProduct ? (
+              <p className="mt-1.5 text-xs text-luxe-gray-dark">Leave blank and one is made for you.</p>
+            ) : null}
           </div>
           <div>
             <label className={labelClass} htmlFor="pf-barcode">Barcode (optional)</label>
@@ -286,7 +329,7 @@ export function ProductForm({ defaultValues, collections, categories, seoDefault
             <p className={errorClass}>{errors.description.message}</p>
           ) : (
             <p className="mt-1.5 text-xs text-luxe-gray-dark">
-              Generate SEO below reads this, so write or generate it first.
+              {isNewProduct ? "Leave blank and one is written from the name when you save. " : ""}Generate SEO below reads this.
             </p>
           )}
         </div>
@@ -744,14 +787,37 @@ export function ProductForm({ defaultValues, collections, categories, seoDefault
         </div>
       ) : null}
 
-      <div className="flex justify-end gap-3">
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="flex h-11 items-center justify-center bg-luxe-black px-8 text-sm font-medium tracking-[0.05em] text-luxe-white uppercase transition-opacity hover:opacity-90 disabled:opacity-50"
-        >
-          {isSubmitting ? "Saving…" : submitLabel}
-        </button>
+      <div className="flex flex-wrap items-center justify-end gap-3">
+        {isNewProduct ? (
+          <>
+            <p className="mr-auto text-xs text-luxe-gray-dark">Only name, price, category, a photo and sizes are needed.</p>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              onClick={() => setValue("status", "draft")}
+              className="flex h-11 items-center justify-center border border-luxe-black px-6 text-sm font-medium tracking-[0.05em] uppercase transition-opacity hover:opacity-70 disabled:opacity-50"
+            >
+              {isSubmitting ? "Saving…" : "Save as draft"}
+            </button>
+            {/* Sets the status as part of the same submit, so a finished product goes live in one step. */}
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              onClick={() => setValue("status", "active")}
+              className="flex h-11 items-center justify-center bg-luxe-black px-8 text-sm font-medium tracking-[0.05em] text-luxe-white uppercase transition-opacity hover:opacity-90 disabled:opacity-50"
+            >
+              {isSubmitting ? "Saving…" : "Create & publish"}
+            </button>
+          </>
+        ) : (
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="flex h-11 items-center justify-center bg-luxe-black px-8 text-sm font-medium tracking-[0.05em] text-luxe-white uppercase transition-opacity hover:opacity-90 disabled:opacity-50"
+          >
+            {isSubmitting ? "Saving…" : submitLabel}
+          </button>
+        )}
       </div>
     </form>
   );

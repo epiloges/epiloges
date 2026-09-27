@@ -44,17 +44,19 @@ export default async function AdminProductDetailPage({ params }: AdminProductDet
       <AdminPageHeader
         title={product.name}
         description={
-          `SKU ${product.sku} · ${product.category} · ${product.status}` +
+          `SKU ${product.sku} · ${product.category} · ${product.status === "draft" ? "Draft — not on the shop yet" : product.status === "active" ? "Live on the shop" : "Archived"}` +
           (product.archivedAt ? ` since ${formatDate(product.archivedAt)}` : "")
         }
-        actions={<ProductLifecycleActions id={id} name={product.name} status={product.status} canDelete={roleHasCapability(session.role, "catalog:delete")} />}
+        actions={<ProductLifecycleActions id={id} name={product.name} slug={product.slug} status={product.status} canDelete={roleHasCapability(session.role, "catalog:delete")} />}
       />
       {/*
         Keyed by id for the reason the new-product page gives: without it, navigating from one
         record's edit form to another shows the FIRST record's values, and saving writes them
-        onto the second.
+        onto the second. The status is in the key for the same reason: Publish/Archive in the
+        header change it server-side, and a form still holding "draft" would un-publish the
+        product on the next ordinary Save.
       */}
-      <ProductForm key={id}
+      <ProductForm key={`${id}:${product.status}`}
         defaultValues={productToFormValues(product)}
         collections={collections.map((c) => ({ id: c.id, title: c.title }))}
         categories={categories}

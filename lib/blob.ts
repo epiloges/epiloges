@@ -48,6 +48,12 @@ function ascii(bytes: Uint8Array, offset: number, length: number): string {
  *
  * Reads only the first 16 bytes rather than buffering the whole file to inspect it.
  */
+/** HEIC/HEIF: an ISO box header with one of Apple's brands. Only used to explain a rejection. */
+async function isHeic(file: File): Promise<boolean> {
+  const header = new Uint8Array(await file.slice(0, 16).arrayBuffer());
+  return ascii(header, 4, 4) === "ftyp" && ["heic", "heix", "hevc", "heif", "mif1", "msf1"].includes(ascii(header, 8, 4));
+}
+
 async function sniffImageType(file: File): Promise<string | null> {
   const header = new Uint8Array(await file.slice(0, 16).arrayBuffer());
   return IMAGE_SIGNATURES.find((signature) => signature.matches(header))?.type ?? null;
@@ -140,8 +146,28 @@ export class UploadRejectedError extends Error {}
  * Returns `pathname` as well as `url` because deletion targets the store by key, and the
  * caller records both so an asset can be removed later.
  */
+/**
+ * Local development without a Blob token: uploads land in `public/uploads/` (gitignored) and
+ * are served by `next dev` from there, so the whole upload → product → storefront flow can be
+ * exercised on a laptop. Never in production — there a missing token is a misconfiguration
+ * that must fail loudly, not quietly write to a read-only, ephemeral filesystem.
+ */
+function localUploadsEnabled(): boolean {
+  return !isBlobConfigured() && process.env.NODE_ENV !== "production";
+}
+
+async function writeLocalUpload(file: File, contentType: string): Promise<UploadedBlob> {
+  const { mkdir, writeFile } = await import("node:fs/promises");
+  const path = await import("node:path");
+  const name = `${crypto.randomUUID()}-${safeUploadFilename(file.name)}`;
+  const directory = path.join(process.cwd(), "public", "uploads");
+  await mkdir(directory, { recursive: true });
+  await writeFile(path.join(directory, name), Buffer.from(await file.arrayBuffer()));
+  return { url: `/uploads/${name}`, pathname: `uploads/${name}`, contentType };
+}
+
 export async function uploadImageToBlob(file: File): Promise<UploadedBlob> {
-  if (!isBlobConfigured()) throw new Error(NOT_CONFIGURED);
+  if (!isBlobConfigured() && !localUploadsEnabled()) throw new Error(NOT_CONFIGURED);
 
   if (file.size === 0) {
     throw new UploadRejectedError(`"${file.name}" is empty.`);
@@ -156,9 +182,16 @@ export async function uploadImageToBlob(file: File): Promise<UploadedBlob> {
   // through — and the same upload path is reachable by the `content:media` capability,
   // which editors hold.
   const contentType = await sniffImageType(file);
+  if (!contentType && (await isHeic(file))) {
+    throw new UploadRejectedError(
+      `"${file.name}" is an iPhone HEIC photo, which browsers can't display. Export it as JPEG (or set the iPhone camera to "Most Compatible") and upload again.`
+    );
+  }
   if (!contentType) {
     throw new UploadRejectedError(`"${file.name}" isn't a JPEG, PNG, WebP, AVIF or GIF image.`);
   }
+
+  if (localUploadsEnabled()) return writeLocalUpload(file, contentType);
 
   const blob = await put(`products/${crypto.randomUUID()}-${safeUploadFilename(file.name)}`, file, {
     access: "public",

@@ -1,4 +1,5 @@
 import type { RawCsvRow } from "@/lib/products-import/csv";
+import { slugify } from "@/lib/slug";
 
 /**
  * CSV v1 delimiter conventions — one row per product, flat columns with delimited
@@ -27,15 +28,83 @@ function splitGroups(value: string | undefined): string[] {
   return value.split(GROUP_SEP).map((s) => s.trim()).filter(Boolean);
 }
 
+/** "true", "yes", "1", "x", "ναι" — whatever a person typed into a yes/no column in Excel. */
 function parseBool(value: string | undefined, fallback: boolean): boolean {
   if (value === undefined || value.trim() === "") return fallback;
-  return value.trim().toLowerCase() === "true";
+  return ["true", "yes", "y", "1", "x", "ναι", "ν", "✓"].includes(value.trim().toLowerCase());
 }
 
-function parseNumber(value: string | undefined): number | undefined {
-  if (value === undefined || value.trim() === "") return undefined;
-  const n = Number(value);
+/**
+ * A number as Greek Excel writes it: "89,90" as well as "89.90", with an optional € and
+ * thousands separators ("1.250,00"). `Number("89,90")` is NaN, so every comma-decimal price
+ * used to fail the row as "price is required".
+ */
+export function parseNumber(value: string | undefined): number | undefined {
+  if (value === undefined) return undefined;
+  let text = value.replace(/[€\s\u00a0]/g, "");
+  if (text === "") return undefined;
+  if (text.includes(",") && text.includes(".")) {
+    // Whichever separator comes last is the decimal one.
+    text = text.lastIndexOf(",") > text.lastIndexOf(".") ? text.replace(/\./g, "").replace(",", ".") : text.replace(/,/g, "");
+  } else if (text.includes(",")) {
+    text = text.replace(",", ".");
+  }
+  const n = Number(text);
   return Number.isFinite(n) ? n : undefined;
+}
+
+/**
+ * Sizes in any of the shapes a person writes them, one quantity per size:
+ *
+ *   "36:true:1;;37:true:2"   the original name:sellable:quantity[:sku] groups
+ *   "36:1;;37:2" / "36=1, 37=2" / "36x1 | 37x2"   size and quantity
+ *   "36, 37, 38" / "36-41"    sizes (or a range) with one pair each
+ *
+ * "36:2" used to be read as name "36", sellable "2", quantity missing — so it imported with
+ * no stock at all and nothing said so.
+ */
+export function parseSizes(value: string | undefined): { name: string; inStock: boolean; quantity: number; sku?: string }[] {
+  if (!value?.trim()) return [];
+  const groups = value.includes(GROUP_SEP) ? splitGroups(value) : value.split(/[,|;\n]/).map((g) => g.trim()).filter(Boolean);
+  const sizes: { name: string; inStock: boolean; quantity: number; sku?: string }[] = [];
+  for (const group of groups) {
+    const range = group.match(/^(\d{1,2})\s*-\s*(\d{1,2})$/);
+    if (range && Number(range[2]) > Number(range[1]) && Number(range[2]) - Number(range[1]) <= 20) {
+      for (let size = Number(range[1]); size <= Number(range[2]); size++) sizes.push({ name: String(size), inStock: true, quantity: 1 });
+      continue;
+    }
+    // "x" only between digits ("36x2"), so a size named "XL" survives.
+    const parts = group.split(/\s*[:=×]\s*|(?<=\d)\s*x\s*(?=\d)/i).map((p) => p.trim());
+    const [name, second, third, sku] = parts;
+    if (!name) continue;
+    if (parts.length >= 3 || (second !== undefined && /^(true|false)$/i.test(second))) {
+      // The original four-part form.
+      sizes.push({ name, inStock: (second ?? "true").toLowerCase() !== "false", quantity: parseNumber(third) ?? 0, sku: sku || undefined });
+    } else {
+      const quantity = second === undefined ? 1 : (parseNumber(second) ?? 0);
+      sizes.push({ name, inStock: true, quantity });
+    }
+  }
+  return sizes;
+}
+
+/** "active", "live", "published", "ενεργό" → active; "πρόχειρο" → draft; and so on. */
+function statusAlias(value: string): string {
+  const aliases: Record<string, string> = {
+    live: "active", published: "active", publish: "active", "ενεργό": "active", "ενεργο": "active", "δημοσιευμένο": "active",
+    "πρόχειρο": "draft", "προχειρο": "draft", "αρχειοθετημένο": "archived",
+  };
+  return aliases[value] ?? value;
+}
+
+/** "Γυναικεία", "ανδρικά", "παιδικά" as well as the English values. */
+function genderAlias(value: string | undefined): string {
+  const v = value?.trim().toLowerCase() ?? "";
+  if (!v) return "unisex";
+  if (/^(women|woman|female|γυναικ)/.test(v)) return "women";
+  if (/^(men|man|male|ανδρ)/.test(v)) return "men";
+  if (/^(kids|kid|child|παιδ)/.test(v)) return "kids";
+  return v;
 }
 
 /**
@@ -46,7 +115,7 @@ function parseNumber(value: string | undefined): number | undefined {
  * to be exactly the thing that put a row live.
  */
 function normalizeStatus(value: string | undefined): { status: "draft" | "active" | "archived"; error?: string } {
-  const normalized = value?.trim().toLowerCase();
+  const normalized = value ? statusAlias(value.trim().toLowerCase()) : undefined;
   if (!normalized) return { status: "draft" };
   if (normalized === "draft" || normalized === "active" || normalized === "archived") return { status: normalized };
   return { status: "draft", error: `status: "${value}" isn't one of draft, active or archived.` };
@@ -86,21 +155,14 @@ export function mapCsvRowToProductForm(row: RawCsvRow, resolvedImageUrls: Map<st
     return { name: (name ?? "").trim(), hex: hex ? `#${hex.trim()}` : "" };
   });
 
-  const sizes = splitGroups(row.sizes).map((entry) => {
-    const [name, inStock, quantity, sku] = entry.split(":");
-    return {
-      name: (name ?? "").trim(),
-      inStock: (inStock ?? "true").trim().toLowerCase() !== "false",
-      quantity: parseNumber(quantity) ?? 0,
-      sku: sku?.trim() || undefined,
-    };
-  });
+  const sizes = parseSizes(row.sizes);
 
   const status = normalizeStatus(row.status);
   if (status.error) errors.push(status.error);
 
   const values: Record<string, unknown> = {
-    slug: row.slug?.trim() ?? "",
+    // Optional now, like on the product form: written from the name when blank.
+    slug: row.slug?.trim() || slugify(row.name ?? ""),
     name: row.name?.trim() ?? "",
     description: row.description?.trim() ?? "",
     price: parseNumber(row.price),
@@ -114,7 +176,7 @@ export function mapCsvRowToProductForm(row: RawCsvRow, resolvedImageUrls: Map<st
     category: row.category?.trim() ?? "",
     collectionIds: splitList(row.collectionIds),
     tags: splitList(row.tags),
-    gender: row.gender?.trim() || "unisex",
+    gender: genderAlias(row.gender),
     season: row.season?.trim() || undefined,
     materials: splitList(row.materials),
     careInstructions: splitList(row.careInstructions),

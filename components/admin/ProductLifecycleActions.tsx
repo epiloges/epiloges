@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { archiveProduct, restoreProduct, deleteProduct } from "@/app/admin/(dashboard)/products/actions";
+import { archiveProduct, restoreProduct, deleteProduct, publishProduct } from "@/app/admin/(dashboard)/products/actions";
 import type { ProductStatus } from "@/types";
 
 /**
@@ -13,11 +13,13 @@ import type { ProductStatus } from "@/types";
 export function ProductLifecycleActions({
   id,
   name,
+  slug,
   status,
   canDelete,
 }: {
   id: string;
   name: string;
+  slug: string;
   status: ProductStatus;
   /** catalog:delete — editors can archive but not hard-delete; rendering the button for them crashed the page. */
   canDelete: boolean;
@@ -36,6 +38,26 @@ export function ProductLifecycleActions({
   return (
     <div className="flex flex-col items-end gap-2">
       <div className="flex flex-wrap justify-end gap-2">
+        {status === "draft" ? (
+          <button
+            type="button"
+            disabled={isPending}
+            onClick={() => run(() => publishProduct(id))}
+            className="h-9 bg-luxe-black px-4 text-xs font-medium tracking-[0.05em] text-luxe-white uppercase disabled:opacity-50"
+          >
+            {isPending ? "Publishing…" : "Publish"}
+          </button>
+        ) : null}
+        {status === "active" ? (
+          <a
+            href={`/products/${slug}`}
+            target="_blank"
+            rel="noreferrer"
+            className="flex h-9 items-center border border-luxe-black px-4 text-xs font-medium tracking-[0.05em] uppercase"
+          >
+            View on shop ↗
+          </a>
+        ) : null}
         {status === "archived" ? (
           <button
             type="button"

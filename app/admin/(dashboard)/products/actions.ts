@@ -156,6 +156,33 @@ export async function archiveProduct(id: string): Promise<ProductActionState> {
   return {};
 }
 
+/**
+ * Draft → live in one click, from the product's own page.
+ *
+ * New products save as drafts, and the only way to publish used to be finding the Status
+ * dropdown in the middle of the form, changing it and saving again. "I added it but it isn't
+ * on the site" was the predictable result. A product with no photo or no size is refused: it
+ * would go live as a broken card nobody can buy.
+ */
+export async function publishProduct(id: string): Promise<ProductActionState> {
+  const denied = await capabilityDenied("catalog:edit");
+  if (denied) return { error: denied };
+  const product = await prisma.product.findUnique({
+    where: { id },
+    select: { sku: true, slug: true, images: true, _count: { select: { sizes: true } } },
+  });
+  if (!product) return { error: "That product no longer exists." };
+  if (!Array.isArray(product.images) || product.images.length === 0) return { error: "Add at least one photo before publishing." };
+  if (product._count.sizes === 0) return { error: "Add at least one size before publishing." };
+
+  await prisma.product.update({ where: { id }, data: { status: "active", archivedAt: null } });
+  await recordAdminAction({ action: "product.published", targetType: "product", targetId: id, summary: `Published ${product.sku}` });
+  revalidateStorefront([product.slug]);
+  revalidatePath("/admin/products");
+  revalidatePath(`/admin/products/${id}`);
+  return {};
+}
+
 export async function restoreProduct(id: string): Promise<ProductActionState> {
   const denied = await capabilityDenied("catalog:edit");
   if (denied) return { error: denied };

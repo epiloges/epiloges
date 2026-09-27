@@ -48,3 +48,15 @@ export function isDerivedSizeSku(
   const sku = productSku?.trim();
   return Boolean(sku && current.startsWith(`${sku}-`));
 }
+
+/**
+ * A product SKU for when the form is saved without one: the first letters of the slug plus a
+ * random suffix — `dermatino-mpotaki` → `DER-7K2QM`. Short enough to read off a label, and
+ * random enough that two products created the same minute don't collide (the column is
+ * unique, and a collision is reported as a readable error rather than lost).
+ */
+export function generateSku(slug: string): string {
+  const prefix = (slug.replace(/[^a-z0-9]/gi, "").slice(0, 3) || "EP").toUpperCase();
+  const suffix = Array.from(crypto.getRandomValues(new Uint8Array(5)), (byte) => "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[byte % 32]).join("");
+  return `${prefix}-${suffix}`;
+}

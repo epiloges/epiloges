@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { ImageFieldTools } from "@/components/admin/ImageFieldTools";
 import { IdChipList } from "@/components/admin/homepage-editor/IdChipList";
 import type { HomepageSection } from "@/types";
 
@@ -269,21 +269,17 @@ function TextAreaField({ label, value, onChange }: { label: string; value: strin
   );
 }
 
-function ImageField({ src, alt, onChangeSrc }: { src: string; alt: string; onChangeSrc: (v: string) => void }) {
+/**
+ * The preview used to be a next/image, which throws on an empty src or on any host missing from
+ * the image allowlist — clearing the box or pasting a link from elsewhere took the whole editor
+ * down. ImageFieldTools previews with a plain <img> and adds Upload / Choose from library.
+ */
+function ImageField({ src, onChangeSrc }: { src: string; alt: string; onChangeSrc: (v: string) => void }) {
   return (
     <div>
       <label className={labelClass}>Image</label>
-      <div className="flex items-center gap-3">
-        <div className="relative size-16 shrink-0 overflow-hidden border border-border bg-luxe-gray-light">
-          <Image src={src} alt={alt} fill sizes="64px" className="object-cover" />
-        </div>
-        <input
-          value={src}
-          onChange={(e) => onChangeSrc(e.target.value)}
-          placeholder="Image URL"
-          className={inputClass}
-        />
-      </div>
+      <input value={src} onChange={(e) => onChangeSrc(e.target.value)} placeholder="Image URL" className={inputClass} />
+      <ImageFieldTools value={src} onChange={onChangeSrc} />
     </div>
   );
 }

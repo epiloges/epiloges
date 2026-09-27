@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Phone, PhoneOff } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 /**
  * sessionStorage, not a client-only useState flag: a shopper who answers or declines once
@@ -30,9 +31,13 @@ interface TikTokLiveModalProps {
  */
 export function TikTokLiveModal({ enabled, tiktokUrl }: TikTokLiveModalProps) {
   const [visible, setVisible] = useState(false);
+  // Never over the admin (it covered the sign-in form) or mid-purchase — a full-screen takeover
+  // during checkout is the most expensive place for one.
+  const pathname = usePathname();
+  const suppressed = /^\/(admin|checkout|maintenance)(\/|$)/.test(pathname);
 
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled || suppressed) return;
     try {
       if (sessionStorage.getItem(DISMISSED_KEY) === "true") return;
     } catch {
@@ -42,7 +47,7 @@ export function TikTokLiveModal({ enabled, tiktokUrl }: TikTokLiveModalProps) {
     // now (SSR has no sessionStorage), same pattern as CookieConsentBanner.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setVisible(true);
-  }, [enabled]);
+  }, [enabled, suppressed]);
 
   const dismiss = () => {
     setVisible(false);
@@ -69,7 +74,7 @@ export function TikTokLiveModal({ enabled, tiktokUrl }: TikTokLiveModalProps) {
 
   return (
     <AnimatePresence>
-      {visible ? (
+      {visible && !suppressed ? (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

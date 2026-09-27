@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm, useWatch, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { collectionFormSchema, type CollectionFormValues } from "@/lib/validation/collection";
 import type { CollectionActionState } from "@/app/admin/(dashboard)/collections/actions";
 import { SeoFieldset } from "@/components/admin/SeoFieldset";
+import { ImageFieldTools } from "@/components/admin/ImageFieldTools";
+import { slugify } from "@/lib/slug";
 
 const inputClass =
   "h-10 w-full border border-border bg-transparent px-3 text-sm outline-none focus:border-luxe-black aria-invalid:border-destructive";
@@ -28,6 +30,8 @@ export function CollectionForm({ defaultValues, products, seoDefaults, onSubmit,
   const {
     register,
     control,
+    setValue,
+    getValues,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<CollectionFormValues>({
@@ -36,10 +40,19 @@ export function CollectionForm({ defaultValues, products, seoDefaults, onSubmit,
   });
 
   // See ProductForm — `watch()` is not safely memoizable, `useWatch` is.
-  const [seoTitle, seoDescription, seoSubtitle, seoSlug] = useWatch({
+  const [seoTitle, seoDescription, seoSubtitle, seoSlug, imageSrc] = useWatch({
     control,
-    name: ["title", "description", "subtitle", "slug"],
+    name: ["title", "description", "subtitle", "slug", "image.src"],
   });
+
+  // Same as the product form: a new collection's slug writes itself from the (Greek) title
+  // until someone types in the slug field. Never on an existing collection — that would move its URL.
+  const [isNew] = useState(() => !defaultValues.slug);
+  const [slugEdited, setSlugEdited] = useState(false);
+  useEffect(() => {
+    if (!isNew || slugEdited) return;
+    setValue("slug", slugify(seoTitle ?? ""), { shouldValidate: false });
+  }, [seoTitle, isNew, slugEdited, setValue]);
 
   const submit = handleSubmit(async (values) => {
     setServerError(null);
@@ -63,7 +76,7 @@ export function CollectionForm({ defaultValues, products, seoDefaults, onSubmit,
           </div>
           <div>
             <label className={labelClass} htmlFor="cf-slug">Slug</label>
-            <input id="cf-slug" className={inputClass} aria-invalid={Boolean(errors.slug)} {...register("slug")} />
+            <input id="cf-slug" className={inputClass} aria-invalid={Boolean(errors.slug)} {...register("slug", { onChange: () => setSlugEdited(true) })} />
             {errors.slug ? <p className={errorClass}>{errors.slug.message}</p> : null}
           </div>
         </div>
@@ -83,6 +96,13 @@ export function CollectionForm({ defaultValues, products, seoDefaults, onSubmit,
           <div>
             <label className={labelClass} htmlFor="cf-image-src">Image URL</label>
             <input id="cf-image-src" className={inputClass} aria-invalid={Boolean(errors.image?.src)} {...register("image.src")} />
+            <ImageFieldTools
+              value={imageSrc}
+              onChange={(url) => {
+                setValue("image.src", url, { shouldDirty: true, shouldValidate: true });
+                if (url && !getValues("image.alt")?.trim()) setValue("image.alt", getValues("title") || "", { shouldDirty: true });
+              }}
+            />
             {errors.image?.src ? <p className={errorClass}>{errors.image.src.message}</p> : null}
           </div>
           <div>

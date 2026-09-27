@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm, useWatch, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Switch } from "@/components/ui/switch";
@@ -8,6 +8,8 @@ import { categoryFormSchema, type CategoryFormValues } from "@/lib/validation/ca
 import type { CategoryActionState } from "@/app/admin/(dashboard)/categories/actions";
 import type { CategoryOption } from "@/types/category";
 import { SeoFieldset } from "@/components/admin/SeoFieldset";
+import { ImageFieldTools } from "@/components/admin/ImageFieldTools";
+import { slugify } from "@/lib/slug";
 
 const inputClass =
   "h-10 w-full border border-border bg-transparent px-3 text-sm outline-none focus:border-luxe-black aria-invalid:border-destructive";
@@ -32,6 +34,8 @@ export function CategoryForm({ defaultValues, parentOptions, seoDefaults, onSubm
   const {
     register,
     control,
+    setValue,
+    getValues,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<CategoryFormValues>({
@@ -41,6 +45,17 @@ export function CategoryForm({ defaultValues, parentOptions, seoDefaults, onSubm
 
   // See ProductForm — `watch()` is not safely memoizable, `useWatch` is.
   const [seoName, seoDescription, seoSlug] = useWatch({ control, name: ["name", "description", "slug"] });
+  const [imageSrc, bannerSrc, nameEl] = useWatch({ control, name: ["image.src", "bannerImage.src", "nameEl"] });
+
+  // A new category's slug writes itself — from the Greek name when there is one, which is what
+  // the storefront shows — until someone types in the slug field. Never on an existing one:
+  // that moves its URL.
+  const [isNew] = useState(() => !defaultValues.slug);
+  const [slugEdited, setSlugEdited] = useState(false);
+  useEffect(() => {
+    if (!isNew || slugEdited) return;
+    setValue("slug", slugify(nameEl || seoName || ""), { shouldValidate: false });
+  }, [seoName, nameEl, isNew, slugEdited, setValue]);
 
   const submit = handleSubmit(async (values) => {
     setServerError(null);
@@ -64,7 +79,7 @@ export function CategoryForm({ defaultValues, parentOptions, seoDefaults, onSubm
           </div>
           <div>
             <label className={labelClass} htmlFor="cgf-slug">Slug</label>
-            <input id="cgf-slug" className={inputClass} aria-invalid={Boolean(errors.slug)} {...register("slug")} />
+            <input id="cgf-slug" className={inputClass} aria-invalid={Boolean(errors.slug)} {...register("slug", { onChange: () => setSlugEdited(true) })} />
             {errors.slug ? <p className={errorClass}>{errors.slug.message}</p> : null}
           </div>
           <div>
@@ -101,6 +116,13 @@ export function CategoryForm({ defaultValues, parentOptions, seoDefaults, onSubm
           <div>
             <label className={labelClass} htmlFor="cgf-image-src">Card image URL (optional)</label>
             <input id="cgf-image-src" className={inputClass} aria-invalid={Boolean(errors.image?.src)} {...register("image.src")} />
+            <ImageFieldTools
+              value={imageSrc}
+              onChange={(url) => {
+                setValue("image.src", url, { shouldDirty: true, shouldValidate: true });
+                if (url && !getValues("image.alt")?.trim()) setValue("image.alt", getValues("nameEl") || getValues("name") || "", { shouldDirty: true });
+              }}
+            />
             {errors.image?.src ? <p className={errorClass}>{errors.image.src.message}</p> : null}
           </div>
           <div>
@@ -111,6 +133,13 @@ export function CategoryForm({ defaultValues, parentOptions, seoDefaults, onSubm
           <div>
             <label className={labelClass} htmlFor="cgf-banner-src">Banner image URL (optional)</label>
             <input id="cgf-banner-src" className={inputClass} aria-invalid={Boolean(errors.bannerImage?.src)} {...register("bannerImage.src")} />
+            <ImageFieldTools
+              value={bannerSrc}
+              onChange={(url) => {
+                setValue("bannerImage.src", url, { shouldDirty: true, shouldValidate: true });
+                if (url && !getValues("bannerImage.alt")?.trim()) setValue("bannerImage.alt", getValues("nameEl") || getValues("name") || "", { shouldDirty: true });
+              }}
+            />
             {errors.bannerImage?.src ? <p className={errorClass}>{errors.bannerImage.src.message}</p> : null}
           </div>
           <div>

@@ -3,11 +3,14 @@ import { prisma } from "@/lib/prisma";
 import { requireCapability } from "@/lib/admin-session";
 import { commerceErrorResponse, invalidInputResponse } from "@/lib/commerce/http-errors";
 import { productFormSchema } from "@/lib/validation/product";
-import { parseProductsCsv } from "@/lib/products-import/csv";
+import { decodeCsvBytes, parseProductsCsv } from "@/lib/products-import/csv";
 import { mapCsvRowToProductForm } from "@/lib/products-import/mapper";
 import { uploadImageToBlob } from "@/lib/blob";
 import { categorySlugFor } from "@/services/categories";
 import { createMediaAsset } from "@/services/media";
+import { deriveSizeSku, generateSku } from "@/lib/sku";
+import { generateProductDescription } from "@/lib/seo/product-content";
+import { detectBrand } from "@/lib/seo/brands";
 import type { ImportRowResult } from "@/lib/products-import/types";
 
 /**
@@ -27,8 +30,28 @@ export async function POST(request: Request) {
     const csvFile = form.get("csv");
     if (!(csvFile instanceof File)) return invalidInputResponse("No CSV file was provided.");
 
-    const imageFiles = form.getAll("images").filter((value): value is File => value instanceof File);
     const resolvedImageUrls = new Map<string, string>();
+
+    // The form uploads images first, one per request (components/admin/upload-images.ts), and
+    // sends only the filename → URL map here. Files in this request are still accepted below,
+    // but any real batch of them exceeds Vercel's 4.5 MB request limit.
+    const imageUrlsField = form.get("imageUrls");
+    if (typeof imageUrlsField === "string" && imageUrlsField.trim()) {
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(imageUrlsField);
+      } catch {
+        return invalidInputResponse("The image list was malformed.");
+      }
+      if (parsed && typeof parsed === "object") {
+        for (const [name, url] of Object.entries(parsed as Record<string, unknown>)) {
+          // https for Blob storage; a site-relative /uploads path is the local-dev fallback (lib/blob.ts).
+          if (typeof url === "string" && (url.startsWith("https://") || url.startsWith("/uploads/"))) resolvedImageUrls.set(name.toLowerCase(), url);
+        }
+      }
+    }
+
+    const imageFiles = form.getAll("images").filter((value): value is File => value instanceof File);
     for (const file of imageFiles) {
       const blob = await uploadImageToBlob(file);
       // Recorded in the Media Library too, so images arriving via a bulk import are
@@ -44,7 +67,7 @@ export async function POST(request: Request) {
       resolvedImageUrls.set(file.name.toLowerCase(), blob.url);
     }
 
-    const csvText = await csvFile.text();
+    const csvText = decodeCsvBytes(await csvFile.arrayBuffer());
     const { rows, parseErrors } = parseProductsCsv(csvText);
     if (rows.length === 0) {
       return invalidInputResponse(parseErrors[0] ?? "The CSV file has no data rows.");
@@ -55,6 +78,27 @@ export async function POST(request: Request) {
       const rowNumber = index + 2; // +1 for 1-indexing, +1 for the header row
       const rowParseErrors = index === 0 ? parseErrors : [];
       const { values: mapped, errors: mapErrors } = mapCsvRowToProductForm(row, resolvedImageUrls);
+
+      // SKU and description are optional in the sheet, as on the product form. A row that
+      // updates an existing product keeps that product's SKU rather than being given a new one.
+      if (!mapped.sku && typeof mapped.slug === "string" && mapped.slug) {
+        const existingSku = await prisma.product.findUnique({ where: { slug: mapped.slug }, select: { sku: true } });
+        mapped.sku = existingSku?.sku ?? generateSku(mapped.slug);
+      }
+      // Per-size codes the same way the product form writes them: SKU-36, SKU-37 …
+      if (typeof mapped.sku === "string" && mapped.sku && Array.isArray(mapped.sizes)) {
+        for (const size of mapped.sizes as { name: string; sku?: string }[]) {
+          if (!size.sku) size.sku = deriveSizeSku(mapped.sku as string, size.name) ?? undefined;
+        }
+      }
+      if (!mapped.description && typeof mapped.name === "string" && mapped.name) {
+        mapped.description = generateProductDescription({
+          name: mapped.name,
+          brand: detectBrand(mapped.name) ?? undefined,
+          sizes: (mapped.sizes as { name: string }[]).map((size) => size.name),
+          categorySlug: typeof mapped.category === "string" ? categorySlugFor(mapped.category) : undefined,
+        });
+      }
 
       const parsed = productFormSchema.safeParse(mapped);
       const schemaErrors = parsed.success ? [] : parsed.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`);
