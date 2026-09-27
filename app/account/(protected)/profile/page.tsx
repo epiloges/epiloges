@@ -2,6 +2,7 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { localizedResolver } from "@/lib/validation/localized-resolver";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useToast } from "@/components/providers/ToastProvider";
 import { getCommerceProvider } from "@/lib/commerce";
@@ -12,6 +13,7 @@ const inputClass =
   "h-11 w-full border border-border bg-transparent px-3 text-sm outline-none focus:border-luxe-black aria-invalid:border-destructive";
 
 export default function AccountProfilePage() {
+  const tValidation = useTranslations("Validation");
   const t = useTranslations("Account");
   const { customer, refreshCustomer } = useAuth();
   const { toast } = useToast();
@@ -20,7 +22,7 @@ export default function AccountProfilePage() {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<ProfileFormValues>({
-    resolver: zodResolver(profileSchema),
+    resolver: localizedResolver(zodResolver(profileSchema), tValidation),
     defaultValues: {
       firstName: customer?.firstName ?? "",
       lastName: customer?.lastName ?? "",

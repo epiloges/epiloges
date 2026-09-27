@@ -36,7 +36,7 @@ export function ShippingAddressEditor({
     return (
       <div className="mt-3">
         {lockedBy ? (
-          <p className="text-[11px] text-luxe-gray-dark">Locked by voucher {lockedBy} — cancel it to change the address.</p>
+          <p className="text-[11px] text-luxe-gray-dark">Locked while tracking number {lockedBy} is set (the label carries this address). Clear the tracking number under Shipment &amp; tracking to edit it.</p>
         ) : (
           <button
             type="button"

@@ -30,7 +30,7 @@ export function CartLineItemRow({ item, compact = false }: CartLineItemRowProps)
               {item.name}
             </Link>
             <p className="mt-0.5 text-xs text-luxe-gray-dark">
-              {item.color} · {item.size}
+              {[item.color, item.size].filter(Boolean).join(" · ")}
             </p>
             {item.unavailable ? <p className="mt-1 text-xs text-destructive">{t("itemUnavailable")}</p> : null}
           </div>

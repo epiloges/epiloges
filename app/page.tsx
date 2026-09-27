@@ -4,8 +4,6 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { SectionRenderer } from "@/components/sections/SectionRenderer";
 import { SplitHero } from "@/components/sections/SplitHero";
-import { BigCategoryGrid } from "@/components/sections/BigCategoryGrid";
-import { VideoMoment } from "@/components/sections/VideoMoment";
 import { CategorySpotlight } from "@/components/sections/CategorySpotlight";
 import { buildMetadata } from "@/lib/seo";
 import { getNavigation, getPublishedProductsByIds, getSeoDefaults, getSiteSettings, getVisibleHomepageSections } from "@/services";
@@ -35,16 +33,14 @@ export default async function HomePage() {
   ]);
 
   /**
-   * Minimal-grid concept under client review: SplitHero and BigCategoryGrid stand in for
-   * the CMS-driven "hero" and "featuredCollections" sections (placeholder colour blocks,
-   * not wired into the admin homepage editor yet), and VideoMoment is a new placeholder
-   * slot that doesn't exist in the CMS at all. Everything else — the product carousel,
-   * editorial banner, brand story, newsletter — is still the real, live-data sections;
-   * only the newsletter's own background moved to the purple accent (Newsletter.tsx) to
-   * match. Once a direction is picked, this becomes real CMS section types instead of a
-   * page.tsx special case.
+   * The hero renders as the split layout the client chose, but from the CMS "hero" section
+   * (SplitHero reads its two panels from it). It, a category grid and a video slot used to be
+   * hard-coded placeholders shown INSTEAD of the CMS sections — English copy, stock photos,
+   * made-up "24 pieces" counts and a play button that played nothing — so Homepage → Hero and
+   * the featured-collections section in the admin changed nothing on the storefront. The
+   * featured-collections section now renders from the CMS like every other section.
    *
-   * bestSellers gets the same override treatment as hero/featuredCollections, but for a
+   * bestSellers gets an override treatment, but for a
    * different reason: it's still the CMS's real title/subtitle/productIds, just rendered as
    * the CategorySpotlight runway (edge-to-edge, no card) between the hero and the category
    * grid instead of the standard card grid further down — the client asked for this
@@ -52,8 +48,9 @@ export default async function HomePage() {
    * had for exactly this purpose.
    */
   const withoutReplacedSections = sections.filter(
-    (section) => section.type !== "hero" && section.type !== "featuredCollections" && section.type !== "bestSellers"
+    (section) => section.type !== "hero" && section.type !== "bestSellers"
   );
+  const heroSection = sections.find((section) => section.type === "hero");
   const newsletterSection = withoutReplacedSections.find((section) => section.type === "newsletter");
   const middleSections = withoutReplacedSections.filter((section) => section.type !== "newsletter");
 
@@ -75,7 +72,7 @@ export default async function HomePage() {
         transparent
       />
       <main id="main" className="flex-1">
-        <SplitHero />
+        {heroSection && heroSection.type === "hero" ? <SplitHero hero={heroSection.data} /> : null}
         {bestSellersSection && bestSellersSection.type === "bestSellers" && bestSellersProducts.length > 0 ? (
           <CategorySpotlight
             headline={bestSellersSection.data.title}
@@ -85,11 +82,9 @@ export default async function HomePage() {
             products={bestSellersProducts}
           />
         ) : null}
-        <BigCategoryGrid />
         {middleSections.map((section) => (
           <SectionRenderer key={section.id} section={section} />
         ))}
-        <VideoMoment />
         {newsletterSection ? <SectionRenderer section={newsletterSection} /> : null}
       </main>
       <Footer navigation={navigation} settings={settings} />

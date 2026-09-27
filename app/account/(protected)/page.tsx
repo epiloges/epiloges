@@ -41,7 +41,7 @@ export default function AccountOverviewPage() {
     <div>
       <h1 className="font-heading text-3xl">Welcome back, {customer.firstName}</h1>
       <p className="mt-2 text-sm text-luxe-gray-dark">
-        {orders === null ? "Loading your account..." : `${orders.length} order${orders.length === 1 ? "" : "s"} placed`}
+        {orders === null ? t("loading") : t("ordersPlaced", { count: orders.length })}
       </p>
 
       {orders !== null ? (

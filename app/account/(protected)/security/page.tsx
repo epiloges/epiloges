@@ -2,6 +2,7 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { localizedResolver } from "@/lib/validation/localized-resolver";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { securitySchema, type SecurityFormValues } from "@/lib/validation/auth";
 import { useTranslations } from "next-intl";
@@ -10,6 +11,7 @@ const inputClass =
   "h-11 w-full border border-border bg-transparent px-3 text-sm outline-none focus:border-luxe-black aria-invalid:border-destructive";
 
 export default function AccountSecurityPage() {
+  const tValidation = useTranslations("Validation");
   const t = useTranslations("Account");
   const { changePassword } = useAuth();
   const {
@@ -17,7 +19,7 @@ export default function AccountSecurityPage() {
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm<SecurityFormValues>({ resolver: zodResolver(securitySchema) });
+  } = useForm<SecurityFormValues>({ resolver: localizedResolver(zodResolver(securitySchema), tValidation) });
 
   const onSubmit = async (values: SecurityFormValues) => {
     const ok = await changePassword(values);

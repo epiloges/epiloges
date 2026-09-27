@@ -31,6 +31,40 @@ export function SectionEditForm({ section, onChange }: SectionEditFormProps) {
             <Field label="Secondary CTA Label" value={section.data.secondaryCta?.label ?? ""} onChange={(v) => onChange({ ...section, data: { ...section.data, secondaryCta: { label: v, href: section.data.secondaryCta?.href ?? "/" } } })} />
             <Field label="Secondary CTA Link" value={section.data.secondaryCta?.href ?? ""} onChange={(v) => onChange({ ...section, data: { ...section.data, secondaryCta: { label: section.data.secondaryCta?.label ?? "", href: v } } })} />
           </div>
+          <div className="space-y-4 border-t border-border pt-4">
+            <p className="text-xs text-luxe-gray-dark">
+              <strong>Second panel (right half, optional).</strong> Its button uses the Secondary CTA above. Leave the image or
+              headline empty and the hero is one full-width photo.
+            </p>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field
+                label="Second panel eyebrow"
+                value={section.data.secondaryPanel?.eyebrow ?? ""}
+                onChange={(v) => onChange({ ...section, data: { ...section.data, secondaryPanel: { ...section.data.secondaryPanel, eyebrow: v } } })}
+              />
+              <Field
+                label="Second panel headline"
+                value={section.data.secondaryPanel?.headline ?? ""}
+                onChange={(v) => onChange({ ...section, data: { ...section.data, secondaryPanel: { ...section.data.secondaryPanel, headline: v } } })}
+              />
+            </div>
+            <ImageField
+              src={section.data.secondaryPanel?.image?.src ?? ""}
+              alt={section.data.secondaryPanel?.image?.alt ?? ""}
+              onChangeSrc={(v) =>
+                onChange({
+                  ...section,
+                  data: {
+                    ...section.data,
+                    secondaryPanel: {
+                      ...section.data.secondaryPanel,
+                      image: { src: v, alt: section.data.secondaryPanel?.image?.alt || section.data.secondaryPanel?.headline || "" },
+                    },
+                  },
+                })
+              }
+            />
+          </div>
         </div>
       );
 

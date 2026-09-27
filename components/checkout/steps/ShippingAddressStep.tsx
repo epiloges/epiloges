@@ -98,6 +98,7 @@ export function ShippingAddressStep() {
    * blocking every ordinary receipt order or letting a half-filled invoice through. Parsing the
    * object only when it is wanted keeps the address form exactly as it was.
    */
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [wantsInvoice, setWantsInvoice] = useState(Boolean(shippingAddress?.invoice));
   const [invoice, setInvoice] = useState<Record<string, string>>({
     companyName: shippingAddress?.invoice?.companyName ?? "",
@@ -217,8 +218,16 @@ export function ShippingAddressStep() {
 
     // Ordered, not parallel: the address submit is what advances the step, so the email must
     // already be stored when it does.
-    if (submittedEmail.trim() !== email) await setEmail(submittedEmail.trim());
-    await setShippingAddress({ ...address, ...(invoiceDetails ? { invoice: invoiceDetails } : {}) });
+    // Caught, unlike before: a failed save was an unhandled rejection, so the shopper saw the
+    // button do nothing at all — no step change, no message. The other steps already catch.
+    setSaveError(null);
+    try {
+      if (submittedEmail.trim() !== email) await setEmail(submittedEmail.trim());
+      await setShippingAddress({ ...address, ...(invoiceDetails ? { invoice: invoiceDetails } : {}) });
+    } catch (error) {
+      console.error("Failed to save the shipping address", error);
+      setSaveError(t("couldNotSaveAddress"));
+    }
   };
 
   return (
@@ -501,6 +510,12 @@ export function ShippingAddressStep() {
           </div>
         ) : null}
       </div>
+
+      {saveError ? (
+        <p role="alert" className="text-sm text-destructive">
+          {saveError}
+        </p>
+      ) : null}
 
       <button
         type="submit"

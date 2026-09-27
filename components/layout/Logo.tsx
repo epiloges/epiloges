@@ -23,9 +23,11 @@ export function Logo({ siteName, className }: LogoProps) {
       aria-label={`${siteName} — Home`}
       className={cn("font-heading flex items-baseline gap-2 whitespace-nowrap uppercase", className)}
     >
-      <span className="text-lg font-bold tracking-[0.24em]">{firstWord}</span>
+      <span className="text-lg font-bold tracking-[0.18em] sm:tracking-[0.24em]">{firstWord}</span>
+      {/* Not on phones: "EPILOGES FASHION BOUTIQUE" is ~270px, which on a 375px screen pushed
+          the bag icon past the right edge — the one control a shopper cannot do without. */}
       {subtitle ? (
-        <span className="text-[10px] font-normal tracking-[0.16em] opacity-60">{subtitle}</span>
+        <span className="hidden text-[10px] font-normal tracking-[0.16em] opacity-60 sm:inline">{subtitle}</span>
       ) : null}
     </Link>
   );

@@ -65,6 +65,7 @@ const CONFIG_FIELDS: readonly PaymentConfigField[] = [
     secret: false,
     required: false,
     help: "Strongly recommended — it is what lets you match an incoming transfer to an order.",
+    defaultValue: "true",
   },
 ] as const;
 
@@ -98,9 +99,6 @@ const BANK_TRANSFER_METHOD: PaymentMethodDefinition = {
   icon: "bank",
 };
 
-function isTruthy(value: string | undefined): boolean {
-  return value === "true" || value === "1" || value === "on";
-}
 
 export const bankTransferProvider: PaymentProvider = {
   id: "bank-transfer",
@@ -148,7 +146,9 @@ export const bankTransferProvider: PaymentProvider = {
       );
     }
 
-    const reference = isTruthy(values.useOrderNumberAsReference) ? orderReference(ctx.payment.orderId) : null;
+    // On unless explicitly switched off. It defaulted to off, and the default instructions below
+    // still asked the shopper to "write the reference on the transfer" — with no reference shown.
+    const reference = values.useOrderNumberAsReference === "false" ? null : orderReference(ctx.payment.orderId);
 
     const instructions = [
       { label: "Τράπεζα", value: values.bankName ?? "" },
@@ -158,7 +158,8 @@ export const bankTransferProvider: PaymentProvider = {
       ...(values.branch ? [{ label: "Κατάστημα", value: values.branch }] : []),
       {
         label: "Ποσό",
-        value: `${ctx.payment.amount.amount.toFixed(2)} ${ctx.payment.amount.currencyCode}`,
+        // "110,95 €", as the shop writes money everywhere else — not "110.95 EUR".
+        value: new Intl.NumberFormat("el-GR", { style: "currency", currency: ctx.payment.amount.currencyCode }).format(ctx.payment.amount.amount),
       },
       ...(reference ? [{ label: "Αιτιολογία κατάθεσης", value: reference }] : []),
       { label: "Προθεσμία πληρωμής", value: `${BANK_TRANSFER_PAYMENT_DAYS} ημέρες — μετά η παραγγελία ακυρώνεται αυτόματα` },

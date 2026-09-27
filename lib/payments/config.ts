@@ -200,7 +200,9 @@ export async function toAdminConfigView(providerId: PaymentProviderId): Promise<
   const fields: AdminConfigFieldView[] = fieldsForEnvironment(provider, resolved.environment).map((field) => {
     const fromEnvironment = resolved.sourcedFromEnv.has(field.key);
     const secretValue = resolved.secrets[field.key];
-    const plainValue = resolved.values[field.key] ?? "";
+    // A field never saved shows its default, so a fresh settings screen starts from the same
+    // value the provider behaves as if unset (bank transfer's order-number reference: on).
+    const plainValue = resolved.values[field.key] ?? field.defaultValue ?? "";
     return {
       ...field,
       displayValue: field.secret ? (secretValue ? maskSecret(secretValue) : "") : plainValue,

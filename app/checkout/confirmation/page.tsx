@@ -12,7 +12,8 @@ import { paymentProviderRegistry } from "@/lib/payments/registry";
 import { PurchaseAnalytics } from "@/components/checkout/PurchaseAnalytics";
 import type { PaymentRecord } from "@/lib/payments/types";
 import type { Metadata } from "next";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
+import { countryName } from "@/constants/countries";
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
@@ -60,6 +61,7 @@ export default async function CheckoutConfirmationPage({ searchParams }: Confirm
   const t = await getTranslations("Confirmation");
   const tCart = await getTranslations("Cart");
   const tStatus = await getTranslations("PaymentStatus");
+  const locale = await getLocale();
 
   if (!orderId) {
     return (
@@ -195,7 +197,7 @@ export default async function CheckoutConfirmationPage({ searchParams }: Confirm
             <div className="min-w-0 flex-1">
               <p className="text-sm">{item.name}</p>
               <p className="text-xs text-luxe-gray-dark">
-                {item.color} · {item.size} · {t("quantityShort")} {item.quantity}
+                {[item.color, item.size, `${t("quantityShort")} ${item.quantity}`].filter(Boolean).join(" · ")}
               </p>
             </div>
             <p className="shrink-0 text-sm">
@@ -210,6 +212,23 @@ export default async function CheckoutConfirmationPage({ searchParams }: Confirm
           <span className="text-luxe-gray-dark">{tCart("subtotal")}</span>
           <span>{formatMoney(order.totals.subtotal)}</span>
         </div>
+        {/* The discount and gift card were missing here, so the rows didn't add up to the
+            total: 120 + 2,95 shown above a total of 110,95. */}
+        {order.totals.discountTotal.amount > 0 ? (
+          <div className="flex justify-between">
+            <span className="text-luxe-gray-dark">
+              {tCart("discount")}
+              {order.discounts?.length ? ` (${order.discounts.map((d) => d.code).join(", ")})` : ""}
+            </span>
+            <span>−{formatMoney(order.totals.discountTotal)}</span>
+          </div>
+        ) : null}
+        {order.totals.giftCardTotal.amount > 0 ? (
+          <div className="flex justify-between">
+            <span className="text-luxe-gray-dark">{tCart("giftCard")}</span>
+            <span>−{formatMoney(order.totals.giftCardTotal)}</span>
+          </div>
+        ) : null}
         <div className="flex justify-between">
           <span className="text-luxe-gray-dark">{tCart("shipping")}</span>
           <span>{order.totals.shippingTotal.amount === 0 ? tCart("free") : formatMoney(order.totals.shippingTotal)}</span>
@@ -248,7 +267,7 @@ export default async function CheckoutConfirmationPage({ searchParams }: Confirm
             {order.shippingAddress.city}
             {order.shippingAddress.region ? `, ${order.shippingAddress.region}` : ""} {order.shippingAddress.postalCode}
             <br />
-            {order.shippingAddress.countryCode}
+            {countryName(order.shippingAddress.countryCode, locale)}
           </address>
         </div>
         <div>

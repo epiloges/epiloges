@@ -107,6 +107,7 @@
     "contactSubtitle": "We'll send your order confirmation here.",
     "emailAddress": "Email address",
     "continueToDelivery": "Continue to Delivery",
+    "couldNotSaveAddress": "We could not save your address. Check the details and try again.",
     "continueToPayment": "Continue to Payment",
     "deliveryTitle": "Delivery Method",
     "deliverySubtitle": "Choose how you'd like your order delivered.",
@@ -122,7 +123,7 @@
     "paymentMethod": "Payment method",
     "giftWrapping": "Gift wrapping",
     "noMessageAdded": "No message added",
-    "placeOrder": "Place Order",
+    "placeOrder": "Order with obligation to pay",
     "placingOrder": "Placing Order...",
     "termsAgreement": "By placing your order you agree to our",
     "termsLink": "Terms of Service",
@@ -172,7 +173,8 @@
     "securedBy": "Secure payment via {institution}",
     "redirectAfterPlacing": "Pressing “{button}” takes you to the bank's secure payment page, where you choose whether to pay by card, IRIS or Google Pay.",
     "mostPopular": "Most popular",
-    "manualConfirmNote": "We will confirm your payment before dispatching your order."
+    "manualConfirmNote": "We will confirm your payment before dispatching your order.",
+    "bankTransferDeadlineNote": "We ship as soon as the payment arrives. You have 5 days to make the transfer — after that the order is cancelled automatically."
   },
   "Plp": {
     "loadMore": "Load more",
@@ -295,7 +297,13 @@
     "verifyEmailResend": "Send again",
     "verifyEmailResent": "Sent",
     "verifyEmailSent": "We sent a new link to {email}",
-    "verifyEmailSendFailed": "Could not send. Please try again in a moment."
+    "verifyEmailSendFailed": "Could not send. Please try again in a moment.",
+    "ordersPlaced": "{count, plural, one {# order placed} other {# orders placed}}",
+    "noReturnableOrders": "No orders eligible for return.",
+    "referralRewarded": "Rewarded · {code}",
+    "referralPending": "Pending first order",
+    "marketingSubscribed": "Subscribed to marketing emails",
+    "marketingUnsubscribed": "Unsubscribed from marketing emails"
   },
   "ProductBadge": {
     "preorder": "Preorder",
@@ -442,6 +450,7 @@
     "or": "or",
     "oauthFailed": "That sign-in didn't go through. Please try again, or sign in with your email and password.",
     "noAccountYet": "New here?",
+    "registerLegal": "By creating an account you agree to the <terms>Terms of Service</terms> and the <privacy>Privacy Policy</privacy>.",
     "alreadyHaveAccount": "Already have an account?"
   },
   "Address": {
@@ -644,7 +653,14 @@
     "phoneCharacters": "Phone number can only contain digits, spaces and + ( ) - . /",
     "invoiceCompanyRequired": "Company name is required",
     "invoiceVatInvalid": "That VAT number is not valid",
-    "invoiceTaxOfficeRequired": "Tax office is required"
+    "invoiceTaxOfficeRequired": "Tax office is required",
+    "passwordRequired": "Password is required",
+    "passwordMin": "Use at least 8 characters",
+    "passwordMax": "Use fewer than 200 characters",
+    "passwordCommon": "That password is too common — please choose another",
+    "passwordConfirm": "Confirm your password",
+    "passwordMismatch": "Passwords don't match",
+    "currentPasswordRequired": "Current password is required"
   },
   "Footer": {
     "allRightsReserved": "All rights reserved."

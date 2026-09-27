@@ -172,10 +172,46 @@ export type AddressFormValues = z.infer<typeof addressSchema>;
  * drift from `contactSchema`, which still validates it on its own wherever email is collected
  * outside checkout.
  */
+/**
+ * Whether a postal code has the shape its country uses. The address rule only asked for two
+ * characters, so "ABCDE" or "1" reached the courier as a Greek postal code — and a wrong one
+ * also silently priced delivery as mainland instead of a remote area. Countries without a rule
+ * here fall back to "2–10 letters, digits, spaces or hyphens".
+ *
+ * Kept out of the shared address schema on purpose: Zod refuses .omit()/.extend() on an object
+ * with refinements, and the admin address editor omits from it.
+ */
+const POSTAL_CODE_SHAPES: Record<string, RegExp> = {
+  GR: /^\d{5}$/,
+  CY: /^\d{4}$/,
+  BG: /^\d{4}$/,
+  RO: /^\d{6}$/,
+  IT: /^\d{5}$/,
+  DE: /^\d{5}$/,
+  FR: /^\d{5}$/,
+  ES: /^\d{5}$/,
+  AT: /^\d{4}$/,
+  BE: /^\d{4}$/,
+  NL: /^\d{4}[A-Z]{2}$/,
+  PT: /^\d{4}-?\d{3}$/,
+};
+
+export function isPlausiblePostalCode(countryCode: string, postalCode: string): boolean {
+  const compact = postalCode.replace(/\s+/g, "").toUpperCase();
+  const shape = POSTAL_CODE_SHAPES[countryCode.trim().toUpperCase()];
+  return shape ? shape.test(compact) : /^[A-Z0-9-]{2,10}$/.test(compact);
+}
+
 export const buildContactAndAddressSchema = (t: ValidationMessages = defaultMessages) =>
-  buildAddressSchema(t).extend({
-    email: buildContactSchema(t).shape.email,
-  });
+  buildAddressSchema(t)
+    .extend({
+      email: buildContactSchema(t).shape.email,
+    })
+    .superRefine((value, ctx) => {
+      if (value.postalCode && value.countryCode && !isPlausiblePostalCode(value.countryCode, value.postalCode)) {
+        ctx.addIssue({ code: "custom", path: ["postalCode"], message: t("postalCodeInvalid") });
+      }
+    });
 export const contactAndAddressSchema = buildContactAndAddressSchema();
 export type ContactAndAddressFormValues = z.infer<typeof contactAndAddressSchema>;
 

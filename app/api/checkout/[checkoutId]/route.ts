@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { setCustomerNote, setPaymentMethod, setShippingRate, updateBillingAddress, updateEmail, updateShippingAddress } from "@/services/checkout";
 import { commerceErrorResponse, invalidInputResponse, rateLimitedResponse } from "@/lib/commerce/http-errors";
 import { getClientIp, isRateLimited, recordAttempt } from "@/lib/rate-limit";
-import { addressSchema, contactSchema } from "@/lib/validation/checkout";
+import { addressSchema, contactSchema, isPlausiblePostalCode } from "@/lib/validation/checkout";
 import { canAccessCheckout } from "@/lib/checkout-access";
 import type { Checkout } from "@/lib/commerce/types";
 
@@ -56,6 +56,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (body.shippingAddress !== undefined) {
       const result = addressSchema.safeParse(body.shippingAddress);
       if (!result.success) return invalidInputResponse(result.error.issues[0]?.message ?? "Invalid shipping address.");
+      // The same check the checkout form runs, repeated here because the form is not the only client.
+      if (!isPlausiblePostalCode(result.data.countryCode, result.data.postalCode)) {
+        return invalidInputResponse("Enter a valid postal code.");
+      }
     }
     if (body.billingAddress !== undefined) {
       const result = addressSchema.safeParse(body.billingAddress);

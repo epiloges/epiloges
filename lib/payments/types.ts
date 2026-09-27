@@ -195,6 +195,8 @@ export interface PaymentConfigField {
   placeholder?: string;
   help?: string;
   options?: { value: string; label: string }[];
+  /** What the settings screen shows before the field was ever saved ("true"/"false" for a boolean). */
+  defaultValue?: string;
 }
 
 /** Plain (non-secret) config values, safe to send to an authorised admin's browser. */

@@ -107,6 +107,7 @@
     "contactSubtitle": "Θα σας στείλουμε εδώ την επιβεβαίωση της παραγγελίας σας.",
     "emailAddress": "Διεύθυνση email",
     "continueToDelivery": "Συνέχεια στην παράδοση",
+    "couldNotSaveAddress": "Δεν ήταν δυνατή η αποθήκευση της διεύθυνσης. Ελέγξτε τα στοιχεία και δοκιμάστε ξανά.",
     "continueToPayment": "Συνέχεια στην πληρωμή",
     "deliveryTitle": "Τρόπος παράδοσης",
     "deliverySubtitle": "Επιλέξτε πώς θέλετε να παραδοθεί η παραγγελία σας.",
@@ -122,7 +123,7 @@
     "paymentMethod": "Τρόπος πληρωμής",
     "giftWrapping": "Δωροπεριτύλιξη",
     "noMessageAdded": "Δεν προστέθηκε μήνυμα",
-    "placeOrder": "Ολοκλήρωση παραγγελίας",
+    "placeOrder": "Παραγγελία με υποχρέωση πληρωμής",
     "placingOrder": "Επεξεργασία παραγγελίας...",
     "termsAgreement": "Με την υποβολή της παραγγελίας σας αποδέχεστε τους",
     "termsLink": "Όρους Χρήσης",
@@ -172,7 +173,8 @@
     "securedBy": "Ασφαλής πληρωμή μέσω {institution}",
     "redirectAfterPlacing": "Πατώντας «{button}» θα μεταφερθείτε στην ασφαλή σελίδα πληρωμής της τράπεζας, όπου επιλέγετε αν θα πληρώσετε με κάρτα, IRIS ή Google Pay.",
     "mostPopular": "Η πιο συνηθισμένη επιλογή",
-    "manualConfirmNote": "Θα επιβεβαιώσουμε την πληρωμή σας πριν στείλουμε την παραγγελία."
+    "manualConfirmNote": "Θα επιβεβαιώσουμε την πληρωμή σας πριν στείλουμε την παραγγελία.",
+    "bankTransferDeadlineNote": "Η αποστολή γίνεται μόλις εμφανιστεί η πληρωμή. Έχετε 5 ημέρες για τη μεταφορά — μετά η παραγγελία ακυρώνεται αυτόματα."
   },
   "Plp": {
     "loadMore": "Περισσότερα",
@@ -295,7 +297,13 @@
     "verifyEmailResend": "Αποστολή ξανά",
     "verifyEmailResent": "Στάλθηκε",
     "verifyEmailSent": "Στείλαμε νέο σύνδεσμο στο {email}",
-    "verifyEmailSendFailed": "Δεν ήταν δυνατή η αποστολή. Δοκιμάστε ξανά σε λίγο."
+    "verifyEmailSendFailed": "Δεν ήταν δυνατή η αποστολή. Δοκιμάστε ξανά σε λίγο.",
+    "ordersPlaced": "{count, plural, one {# παραγγελία} other {# παραγγελίες}}",
+    "noReturnableOrders": "Δεν υπάρχουν παραγγελίες που μπορούν να επιστραφούν.",
+    "referralRewarded": "Ανταμείφθηκε · {code}",
+    "referralPending": "Αναμένεται η πρώτη παραγγελία",
+    "marketingSubscribed": "Εγγραφήκατε στα ενημερωτικά email",
+    "marketingUnsubscribed": "Διαγραφήκατε από τα ενημερωτικά email"
   },
   "ProductBadge": {
     "preorder": "Προπαραγγελία",
@@ -442,6 +450,7 @@
     "or": "ή",
     "oauthFailed": "Η σύνδεση δεν ολοκληρώθηκε. Δοκιμάστε ξανά ή συνδεθείτε με email και κωδικό.",
     "noAccountYet": "Δεν έχετε λογαριασμό;",
+    "registerLegal": "Με τη δημιουργία λογαριασμού αποδέχεστε τους <terms>Όρους Χρήσης</terms> και την <privacy>Πολιτική Απορρήτου</privacy>.",
     "alreadyHaveAccount": "Έχετε ήδη λογαριασμό;"
   },
   "Address": {
@@ -644,7 +653,14 @@
     "phoneCharacters": "Το τηλέφωνο μπορεί να περιέχει μόνο ψηφία, κενά και + ( ) - . /",
     "invoiceCompanyRequired": "Η επωνυμία είναι υποχρεωτική",
     "invoiceVatInvalid": "Το ΑΦΜ δεν είναι έγκυρο",
-    "invoiceTaxOfficeRequired": "Η ΔΟΥ είναι υποχρεωτική"
+    "invoiceTaxOfficeRequired": "Η ΔΟΥ είναι υποχρεωτική",
+    "passwordRequired": "Ο κωδικός είναι υποχρεωτικός",
+    "passwordMin": "Χρησιμοποιήστε τουλάχιστον 8 χαρακτήρες",
+    "passwordMax": "Χρησιμοποιήστε λιγότερους από 200 χαρακτήρες",
+    "passwordCommon": "Αυτός ο κωδικός είναι πολύ συνηθισμένος — επιλέξτε άλλον",
+    "passwordConfirm": "Επιβεβαιώστε τον κωδικό σας",
+    "passwordMismatch": "Οι κωδικοί δεν ταιριάζουν",
+    "currentPasswordRequired": "Ο τρέχων κωδικός είναι υποχρεωτικός"
   },
   "Footer": {
     "allRightsReserved": "Με επιφύλαξη παντός δικαιώματος."

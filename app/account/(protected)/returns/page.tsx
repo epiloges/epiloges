@@ -71,7 +71,7 @@ export default function AccountReturnsPage() {
         ) : orders.length === 0 ? (
           <div className="mt-3 flex flex-col items-center gap-3 border border-border py-16 text-center">
             <PackageOpen className="size-10 text-luxe-gray-dark" strokeWidth={1} />
-            <p className="text-sm text-luxe-gray-dark">No orders eligible for return.</p>
+            <p className="text-sm text-luxe-gray-dark">{t("noReturnableOrders")}</p>
           </div>
         ) : (
           <div className="mt-3 divide-y divide-border border-y border-border">

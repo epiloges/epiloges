@@ -87,3 +87,12 @@ export function localizedCountries(locale: string): Country[] {
   const rest = localized.filter((country) => country.code !== DEFAULT_COUNTRY_CODE).sort((a, b) => collator.compare(a.name, b.name));
   return home ? [home, ...rest] : rest;
 }
+
+/** "Ελλάδα" for GR on a Greek page, "Greece" on an English one; the code itself if unknown. */
+export function countryName(code: string, locale: string): string {
+  try {
+    return new Intl.DisplayNames([locale], { type: "region" }).of(code.toUpperCase()) ?? code;
+  } catch {
+    return code;
+  }
+}

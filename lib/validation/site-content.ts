@@ -159,6 +159,15 @@ const heroSectionSchema = z.object({
     image: imageSchema,
     primaryCta: ctaSchema.optional(),
     secondaryCta: ctaSchema.optional(),
+    // Loose on purpose: a half-filled second panel is simply not shown (SplitHero), rather
+    // than blocking the whole homepage from publishing.
+    secondaryPanel: z
+      .object({
+        eyebrow: z.string().optional(),
+        headline: z.string().optional(),
+        image: z.object({ src: z.string(), alt: z.string() }).optional(),
+      })
+      .optional(),
   }),
 });
 

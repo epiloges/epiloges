@@ -41,10 +41,16 @@ if (testUrl) {
   // pointed at production would be a loaded gun in the drawer.
   process.env.DIRECT_URL = testUrl.replace("-pooler.", ".");
   console.info(`[tests] database: ${describeEndpoint(testUrl)} (test branch) · email: dev (nothing sent)`);
+} else if (process.env.ALLOW_PRODUCTION_DB_TESTS === "1") {
+  console.warn("[tests] ALLOW_PRODUCTION_DB_TESTS=1 — database tests will run against DATABASE_URL.");
 } else {
+  // Without a test database the DB suites SKIP instead of running against whatever `.env`
+  // points at — which, on this project, is the live shop. They clean up after themselves,
+  // but "creates and deletes orders in production on every `npm test`" is not a default.
+  for (const key of ["DATABASE_URL", "DIRECT_URL", "POSTGRES_PRISMA_URL", "POSTGRES_URL_NON_POOLING"]) delete process.env[key];
   console.warn(
-    "[tests] TEST_DATABASE_URL is not set — database tests will run against whatever\n" +
-      "        DATABASE_URL points at. Create a Neon branch and put it in .env.test."
+    "[tests] TEST_DATABASE_URL is not set — database tests are skipped. Put a test database's\n" +
+      "        connection string in .env.test (TEST_DATABASE_URL=...) to run them."
   );
 }
 

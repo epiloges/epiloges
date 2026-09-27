@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { localizedResolver } from "@/lib/validation/localized-resolver";
 import { Check } from "lucide-react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { SocialSignInButtons } from "@/components/account/SocialSignInButtons";
@@ -23,6 +24,7 @@ interface LoginFormProps {
 }
 
 export function LoginForm({ configuredOAuthProviders, from, oauthError }: LoginFormProps) {
+  const tValidation = useTranslations("Validation");
   const t = useTranslations("Auth");
   const hasSocialSignIn = Object.values(configuredOAuthProviders).some(Boolean);
   const { signIn, requestPasswordReset } = useAuth();
@@ -30,8 +32,8 @@ export function LoginForm({ configuredOAuthProviders, from, oauthError }: LoginF
   const [mode, setMode] = useState<"password" | "magic-link">("password");
   const [linkSent, setLinkSent] = useState(false);
 
-  const passwordForm = useForm<LoginFormValues>({ resolver: zodResolver(loginSchema) });
-  const magicLinkForm = useForm<MagicLinkFormValues>({ resolver: zodResolver(magicLinkSchema) });
+  const passwordForm = useForm<LoginFormValues>({ resolver: localizedResolver(zodResolver(loginSchema), tValidation) });
+  const magicLinkForm = useForm<MagicLinkFormValues>({ resolver: localizedResolver(zodResolver(magicLinkSchema), tValidation) });
 
   const onPasswordSubmit = async (values: LoginFormValues) => {
     const ok = await signIn(values);

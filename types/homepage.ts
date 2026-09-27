@@ -35,6 +35,11 @@ export interface HeroSection extends SectionBase {
     image: Image;
     primaryCta?: CallToAction;
     secondaryCta?: CallToAction;
+    /**
+     * The right half of the split hero. Its link is `secondaryCta`. Without an image and a
+     * headline the hero renders as one full-width panel.
+     */
+    secondaryPanel?: { eyebrow?: string; headline?: string; image?: Image };
   };
 }
 

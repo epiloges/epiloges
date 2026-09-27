@@ -86,7 +86,7 @@ async function makeOrderedCheckout(cartId: string): Promise<void> {
   created.orderIds.push(order.id);
 }
 
-describe("mergeCarts, against the real database", () => {
+describe.skipIf(!process.env.DATABASE_URL)("mergeCarts, against the real database", () => {
   it("deletes an ordinary guest cart, as it always has", async () => {
     const guest = await makeCart();
     const customer = await makeCart();

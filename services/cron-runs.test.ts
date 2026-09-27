@@ -62,7 +62,7 @@ afterAll(async () => {
   client = null;
 });
 
-describe("claimCronRun", () => {
+describe.skipIf(!process.env.DATABASE_URL)("claimCronRun", () => {
   it("claims a slot that has never been claimed", async () => {
     expect(await claimCronRun(TEST_JOB, DAY_MS)).toBe(true);
   });
@@ -121,7 +121,7 @@ describe("claimCronRun", () => {
   });
 });
 
-describe("runCron", () => {
+describe.skipIf(!process.env.DATABASE_URL)("runCron", () => {
   it("records a successful run, its trigger and what it returned", async () => {
     await runCron(TEST_JOB, "schedule", async () => ({ rateLimitRowsDeleted: 7 }));
 

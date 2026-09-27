@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { localizedResolver } from "@/lib/validation/localized-resolver";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { SocialSignInButtons } from "@/components/account/SocialSignInButtons";
 import { registerSchema, type RegisterFormValues } from "@/lib/validation/auth";
@@ -18,6 +19,7 @@ interface RegisterFormProps {
 }
 
 export function RegisterForm({ configuredOAuthProviders }: RegisterFormProps) {
+  const tValidation = useTranslations("Validation");
   const t = useTranslations("Auth");
   const hasSocialSignIn = Object.values(configuredOAuthProviders).some(Boolean);
   const { signUp } = useAuth();
@@ -26,7 +28,7 @@ export function RegisterForm({ configuredOAuthProviders }: RegisterFormProps) {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<RegisterFormValues>({ resolver: zodResolver(registerSchema) });
+  } = useForm<RegisterFormValues>({ resolver: localizedResolver(zodResolver(registerSchema), tValidation) });
 
   const onSubmit = async (values: RegisterFormValues) => {
     const ok = await signUp(values);
@@ -170,6 +172,20 @@ export function RegisterForm({ configuredOAuthProviders }: RegisterFormProps) {
         >
           {t("createAccountTitle")}
         </button>
+        <p className="text-center text-xs text-luxe-gray-dark">
+          {t.rich("registerLegal", {
+            terms: (chunks) => (
+              <Link href="/legal/terms-of-service" className="underline underline-offset-4">
+                {chunks}
+              </Link>
+            ),
+            privacy: (chunks) => (
+              <Link href="/legal/privacy-policy" className="underline underline-offset-4">
+                {chunks}
+              </Link>
+            ),
+          })}
+        </p>
       </form>
 
       <p className="mt-8 text-center text-sm text-luxe-gray-dark">

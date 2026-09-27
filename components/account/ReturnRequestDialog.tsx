@@ -104,7 +104,7 @@ export function ReturnRequestDialog({ order, onCreated }: ReturnRequestDialogPro
                 <span>
                   {item.name}
                   <span className="block text-xs text-luxe-gray-dark">
-                    {item.color} · {item.size} · Qty {item.quantity}
+                    {[item.color, item.size, `× ${item.quantity}`].filter(Boolean).join(" · ")}
                   </span>
                 </span>
               </span>

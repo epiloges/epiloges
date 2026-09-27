@@ -89,7 +89,10 @@ export const createReturnInputSchema = z.object({
 /** Route Handler request-body shapes for app/api/cart/*. */
 export const addLineItemInputSchema = z.object({
   productId: z.string().min(1),
-  color: z.string().min(1),
+  // Blank is valid: a product with no colours sends "" (PurchasePanel), and services/carts.ts
+  // resolveColorName is what checks the colour against the product. Requiring a character
+  // here made every colourless product impossible to add to the bag, with a 400 and no message.
+  color: z.string(),
   size: z.string().min(1),
   quantity: z.number().int().positive(),
 });

@@ -58,7 +58,7 @@ export function OrderSummary() {
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm">{item.name}</p>
                 <p className="text-xs text-luxe-gray-dark">
-                  {item.color} · {item.size}
+                  {[item.color, item.size].filter(Boolean).join(" · ")}
                 </p>
               </div>
               <p className="shrink-0 text-sm">

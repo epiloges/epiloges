@@ -1,6 +1,7 @@
 import { formatMoney } from "@/lib/format";
 import { storeName } from "@/constants/company";
 import type { Address, CartLineItem, CartTotals, ShippingRate } from "@/lib/commerce/types";
+import { countryName } from "@/constants/countries";
 
 interface RenderedEmail {
   subject: string;
@@ -165,7 +166,7 @@ function addressLines(address: Address): string {
     address.address1,
     address.address2,
     `${address.city}${address.region ? `, ${address.region}` : ""} ${address.postalCode}`,
-    address.countryCode,
+    countryName(address.countryCode, "el"),
   ]
     .filter(Boolean)
     .join("\n");
@@ -186,7 +187,7 @@ function lineItemsHtml(lineItems: CartLineItem[]): string {
         </td>
         <td style="padding:24px 0 24px 22px;border-bottom:1px solid ${HAIRLINE};color:${INK};font-size:14px;line-height:1.5;vertical-align:top;">
           ${escapeHtml(item.name)}
-          <span style="display:block;color:${MUTED};font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-top:8px;">${escapeHtml(item.color)} · ${escapeHtml(item.size)} · ×${item.quantity}</span>
+          <span style="display:block;color:${MUTED};font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-top:8px;">${[item.color, item.size, `×${item.quantity}`].filter(Boolean).map(escapeHtml).join(" · ")}</span>
         </td>
         <td align="right" style="padding:24px 0;border-bottom:1px solid ${HAIRLINE};color:${INK};font-size:14px;white-space:nowrap;vertical-align:top;">
           ${formatMoney({ amount: item.unitPrice.amount * item.quantity, currencyCode: item.unitPrice.currencyCode })}
@@ -302,7 +303,7 @@ export function orderConfirmationEmail(input: {
     ${orderUrl ? `<div style="margin-top:36px;">${textLink("Δείτε την παραγγελία σας", orderUrl)}</div>` : ""}`
   );
   const text = `Ευχαριστούμε για την παραγγελία σας\n\nΠαραγγελία #${orderId.slice(-8).toUpperCase()}\n\n${lineItems
-    .map((i) => `${i.name} (${i.color}, ${i.size}) x${i.quantity} — ${formatMoney({ amount: i.unitPrice.amount * i.quantity, currencyCode: i.unitPrice.currencyCode })}`)
+    .map((i) => `${i.name} (${[i.color, i.size].filter(Boolean).join(", ")}) x${i.quantity} — ${formatMoney({ amount: i.unitPrice.amount * i.quantity, currencyCode: i.unitPrice.currencyCode })}`)
     .join("\n")}\n\nΣύνολο: ${formatMoney(totals.total)}${
     paymentInstructions && paymentInstructions.length > 0
       ? `\n\nΣτοιχεία πληρωμής:\n${paymentInstructions.map((line) => `${line.label}: ${line.value}`).join("\n")}`
@@ -393,7 +394,7 @@ export function shippingUpdateEmail(input: {
       ? `\n\n${carrier ? `${carrier} · ` : ""}Αριθμός αποστολής: ${trackingNumber}${trackingUrl ? `\nΠαρακολούθηση: ${trackingUrl}` : ""}`
       : "";
   const text = `${headline}\n\nΠαραγγελία ${orderNumber}\n\n${body.replace(/<[^>]+>/g, "")}${trackingText}\n\n${lineItems
-    .map((i) => `${i.name} (${i.color}, ${i.size}) x${i.quantity}`)
+    .map((i) => `${i.name} (${[i.color, i.size].filter(Boolean).join(", ")}) x${i.quantity}`)
     .join("\n")}${orderUrl ? `\n\nΗ παραγγελία σας: ${orderUrl}` : ""}`;
   return { subject, html, text };
 }
@@ -556,7 +557,7 @@ export function abandonedCartEmail(input: {
     lineItems[0] ? { src: lineItems[0].image.src, alt: lineItems[0].image.alt } : undefined
   );
   const text = `${greeting}\n\nΤο καλάθι σας είναι ακόμη αποθηκευμένο:\n\n${lineItems
-    .map((i) => `${i.name} (${i.color}, ${i.size}) x${i.quantity}`)
+    .map((i) => `${i.name} (${[i.color, i.size].filter(Boolean).join(", ")}) x${i.quantity}`)
     .join("\n")}\n\nΕπιστροφή στο καλάθι: ${resumeUrl}`;
   return { subject, html, text };
 }
@@ -586,7 +587,7 @@ export function reviewRequestEmail(input: {
         </td>
         <td style="padding:24px 0 24px 22px;border-bottom:1px solid ${HAIRLINE};color:${INK};font-size:14px;line-height:1.5;vertical-align:top;">
           <a href="${siteUrl}/products/${item.slug}#reviews" style="color:${INK};text-decoration:none;border-bottom:1px solid ${HAIRLINE};">${escapeHtml(item.name)}</a>
-          <span style="display:block;color:${MUTED};font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-top:8px;">${escapeHtml(item.color)} · ${escapeHtml(item.size)}</span>
+          <span style="display:block;color:${MUTED};font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-top:8px;">${[item.color, item.size].filter(Boolean).map(escapeHtml).join(" · ")}</span>
         </td>
       </tr>`
     )
@@ -957,7 +958,7 @@ export function newOrderAdminEmail(input: {
   const text = [
     `ΝΕΑ ΠΑΡΑΓΓΕΛΙΑ #${ref} — ${total} — ${when}`,
     `${banner.title}\n${banner.detail}`,
-    `Προϊόντα (${units} τεμ.):\n${lineItems.map((i) => `- ${i.name} · ${i.color} · ${i.size} · ×${i.quantity} — ${formatMoney({ amount: i.unitPrice.amount * i.quantity, currencyCode: i.unitPrice.currencyCode })}`).join("\n")}`,
+    `Προϊόντα (${units} τεμ.):\n${lineItems.map((i) => `- ${[i.name, i.color, i.size, `×${i.quantity}`].filter(Boolean).join(" · ")} — ${formatMoney({ amount: i.unitPrice.amount * i.quantity, currencyCode: i.unitPrice.currencyCode })}`).join("\n")}`,
     `Σύνολο: ${total}`,
     `Πελάτης: ${shippingAddress.firstName} ${shippingAddress.lastName}${phone ? ` · ${phone}` : ""} · ${customerEmail}`,
     `Αποστολή (${shippingRate.label}):\n${addressLines(shippingAddress)}`,

@@ -319,10 +319,12 @@ function PaymentMethodOption({
             {t("redirectNote")}
           </span>
         ) : null}
-        {method.requiresManualConfirmation && !method.requiresRedirect ? (
-          <span className="mt-1 block text-[11px] text-luxe-gray-dark">
-            {t("manualConfirmNote")}
-          </span>
+        {/* Only for a transfer. "We'll confirm your payment before we ship" was printed under
+            every manually confirmed method — Cash on Delivery included, where the customer pays
+            the courier AT delivery, so the promise was impossible. The transfer gets its
+            deadline instead (BANK_TRANSFER_PAYMENT_DAYS in lib/payments/providers/bank-transfer.ts). */}
+        {method.id === "bank-transfer" ? (
+          <span className="mt-1 block text-[11px] text-luxe-gray-dark">{t("bankTransferDeadlineNote")}</span>
         ) : null}
       </span>
     </button>

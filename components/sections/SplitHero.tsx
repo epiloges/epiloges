@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { fadeUp, viewportOnce } from "@/constants/animation";
+import type { HeroSection } from "@/types/homepage";
 
 interface SplitHeroPanel {
   eyebrow: string;
@@ -23,44 +24,51 @@ interface SplitHeroPanel {
  * deliberately rather than picked fresh, so these placeholders are proven to load rather
  * than a new, unverified URL.
  */
-const PANELS: SplitHeroPanel[] = [
-  {
-    eyebrow: "A/W 2026",
-    headline: "Tailoring, softened.",
-    ctaLabel: "Shop New In",
-    href: "/new-in",
-    image: {
-      src: "https://images.unsplash.com/photo-1539533018447-63fcce2678e3?auto=format&fit=crop&w=1200&q=80",
-      alt: "Black wool trench coat, editorial styling",
-    },
-  },
-  {
-    eyebrow: "Curated by Us",
-    headline: "Complete looks, zero guesswork.",
-    ctaLabel: "Shop Ready to Wear",
-    href: "/collections",
-    image: {
-      src: "https://images.unsplash.com/photo-1516762689617-e1cffcef479d?auto=format&fit=crop&w=1200&q=80",
-      alt: "Folded knitwear and accessories, styled flat-lay",
-    },
-  },
-];
-
 /**
- * Two independent panels instead of one full-bleed banner — the "minimal grid" direction
- * the client approved. Photography placeholders, not final shoot images: swap `image` for
- * whatever's chosen once photography is commissioned, copy and layout don't change.
+ * The two halves, from the homepage editor's Hero section: the left from its image, eyebrow,
+ * headline and primary button; the right from its "second panel" fields and secondary button.
+ *
+ * These panels used to be written into this file — English copy and stock photos — and the
+ * page rendered them INSTEAD of the Hero section, so nothing edited under Homepage → Hero ever
+ * reached the storefront. A second panel without an image and a headline is left out, and the
+ * first then spans the full width.
  */
-export function SplitHero() {
+export function heroPanels(hero: HeroSection["data"]): SplitHeroPanel[] {
+  const panels: SplitHeroPanel[] = [];
+  if (hero.image?.src && hero.headline) {
+    panels.push({
+      eyebrow: hero.eyebrow ?? "",
+      headline: hero.headline,
+      ctaLabel: hero.primaryCta?.label ?? "",
+      href: hero.primaryCta?.href || "/new-in",
+      image: hero.image,
+    });
+  }
+  const second = hero.secondaryPanel;
+  if (second?.image?.src && second.headline) {
+    panels.push({
+      eyebrow: second.eyebrow ?? "",
+      headline: second.headline,
+      ctaLabel: hero.secondaryCta?.label ?? "",
+      href: hero.secondaryCta?.href || "/collections",
+      image: { src: second.image.src, alt: second.image.alt || second.headline },
+    });
+  }
+  return panels;
+}
+
+export function SplitHero({ hero }: { hero: HeroSection["data"] }) {
+  const panels = heroPanels(hero);
+  if (panels.length === 0) return null;
   return (
     // No `pt-header`: the header renders `transparent` on this page (see app/page.tsx), so
     // these panels need to run full-bleed up under it rather than start below it — that's
     // the whole point of the white-on-photo treatment. The announcement bar above the header
     // stays opaque regardless and simply overlaps the very top of the image, same as before.
-    <section className="grid grid-cols-1 gap-px bg-border md:grid-cols-2">
-      {PANELS.map((panel, index) => (
+    <section className={`grid grid-cols-1 gap-px bg-border ${panels.length > 1 ? "md:grid-cols-2" : ""}`}>
+      {panels.map((panel, index) => (
         <Link
-          key={panel.href}
+          key={`${index}:${panel.href}`}
           href={panel.href}
           // Taller from lg (1024px) up only, per request — md (tablet, 768-1023px) and mobile
           // heights are untouched.
@@ -71,7 +79,7 @@ export function SplitHero() {
             alt={panel.image.alt}
             fill
             priority={index === 0}
-            sizes="(min-width: 768px) 50vw, 100vw"
+            sizes={panels.length > 1 ? "(min-width: 768px) 50vw, 100vw" : "100vw"}
             className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
           />
           {/* Bottom-weighted scrim rather than a flat overlay — keeps the top of each photo
@@ -91,11 +99,13 @@ export function SplitHero() {
             transition={{ delay: index * 0.1 }}
             className="relative p-8 text-luxe-white md:p-10"
           >
-            <p className="text-eyebrow text-luxe-white/80">{panel.eyebrow}</p>
-            <h2 className="font-heading mt-3 text-3xl font-semibold md:text-4xl">{panel.headline}</h2>
-            <span className="mt-5 inline-flex items-center border-b border-luxe-white/70 pb-1 text-xs font-semibold tracking-[0.14em] uppercase transition-opacity group-hover:opacity-70">
-              {panel.ctaLabel}
-            </span>
+            {panel.eyebrow ? <p className="text-eyebrow text-luxe-white/80">{panel.eyebrow}</p> : null}
+            <h2 className="font-heading mt-3 text-3xl font-semibold whitespace-pre-line md:text-4xl">{panel.headline}</h2>
+            {panel.ctaLabel ? (
+              <span className="mt-5 inline-flex items-center border-b border-luxe-white/70 pb-1 text-xs font-semibold tracking-[0.14em] uppercase transition-opacity group-hover:opacity-70">
+                {panel.ctaLabel}
+              </span>
+            ) : null}
           </motion.div>
         </Link>
       ))}

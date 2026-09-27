@@ -112,7 +112,7 @@ export async function updateOrderShippingAddressAction(orderId: string, input: S
   const order = await getOrderById(orderId);
   if (!order) return { error: "Order not found." };
   if (order.trackingNumber) {
-    return { error: `Voucher ${order.trackingNumber} already carries this address. Cancel the voucher, correct the address, then create it again.` };
+    return { error: `Tracking number ${order.trackingNumber} is set, and its label carries the current address. Clear the tracking number (and cancel the voucher with the courier), correct the address, then add the new tracking number.` };
   }
 
   const parsed = addressSchema.omit({ invoice: true }).safeParse({ ...input, countryCode: order.shippingAddress.countryCode });

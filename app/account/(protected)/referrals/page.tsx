@@ -80,7 +80,7 @@ export default function AccountReferralsPage() {
                   <p className="text-xs text-luxe-gray-dark">Joined {formatDate(referral.createdAt)}</p>
                 </div>
                 <span className="text-xs font-medium tracking-[0.05em] uppercase">
-                  {referral.status === "rewarded" ? `Rewarded · ${referral.rewardGiftCardCode}` : "Pending first order"}
+                  {referral.status === "rewarded" ? t("referralRewarded", { code: referral.rewardGiftCardCode ?? "" }) : t("referralPending")}
                 </span>
               </div>
             ))}

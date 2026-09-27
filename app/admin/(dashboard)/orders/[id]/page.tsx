@@ -140,7 +140,7 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderDetailP
                     <div className="min-w-0">
                       <p>{item.name}</p>
                       <p className="text-xs text-luxe-gray-dark">
-                        {item.color} · {item.size} · Qty {item.quantity}
+                        {[item.color, item.size, `Qty ${item.quantity}`].filter(Boolean).join(" · ")}
                       </p>
                       <p className="mt-1 text-xs">
                         <Link href={`/admin/products/${item.productId}`} className="underline underline-offset-4">

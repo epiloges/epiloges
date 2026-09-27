@@ -16,7 +16,7 @@ export default function AccountPreferencesPage() {
     const commerce = getCommerceProvider();
     await commerce.customer.updateProfile(customer.id, { acceptsMarketing: checked });
     await refreshCustomer();
-    toast({ title: checked ? "Subscribed to marketing emails" : "Unsubscribed from marketing emails" });
+    toast({ title: checked ? t("marketingSubscribed") : t("marketingUnsubscribed") });
   };
 
   return (
