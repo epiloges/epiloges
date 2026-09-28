@@ -6,6 +6,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ProductCard } from "@/components/product/ProductCard";
 import { getAllCampaigns, getCampaignBySlug, getNavigation, getPublishedProductsByIds, getSiteSettings } from "@/services";
+import { atLeastOneSlug } from "@/lib/static-params";
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
@@ -17,7 +18,7 @@ interface CampaignPageProps {
 
 export async function generateStaticParams() {
   const campaigns = await getAllCampaigns();
-  return campaigns.map((campaign) => ({ slug: campaign.slug }));
+  return atLeastOneSlug(campaigns.map((campaign) => ({ slug: campaign.slug })));
 }
 
 export async function generateMetadata({ params }: CampaignPageProps): Promise<Metadata> {

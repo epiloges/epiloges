@@ -27,6 +27,7 @@ import { JsonLd } from "@/components/shared/JsonLd";
 import { Breadcrumbs } from "@/components/product/Breadcrumbs";
 import { ROUTES } from "@/constants/routes";
 import type { Locale } from "@/i18n/config";
+import { atLeastOneSlug } from "@/lib/static-params";
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
@@ -40,7 +41,7 @@ interface CategoryPageProps {
 
 export async function generateStaticParams() {
   const categories = await getAllCategories();
-  return categories.filter((c) => c.isVisible).map((category) => ({ slug: category.slug }));
+  return atLeastOneSlug(categories.filter((c) => c.isVisible).map((category) => ({ slug: category.slug })));
 }
 
 export async function generateMetadata({ params, searchParams }: CategoryPageProps): Promise<Metadata> {

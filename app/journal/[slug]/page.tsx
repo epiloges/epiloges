@@ -13,6 +13,7 @@ import { blogPostingSchema, buildMetadata } from "@/lib/seo";
 import { getLocale } from "next-intl/server";
 import type { Locale } from "@/i18n/config";
 import { getTranslations } from "next-intl/server";
+import { atLeastOneSlug } from "@/lib/static-params";
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
@@ -24,7 +25,7 @@ interface JournalPostPageProps {
 
 export async function generateStaticParams() {
   const posts = await getPublishedPosts();
-  return posts.map((post) => ({ slug: post.slug }));
+  return atLeastOneSlug(posts.map((post) => ({ slug: post.slug })));
 }
 
 export async function generateMetadata({ params }: JournalPostPageProps): Promise<Metadata> {

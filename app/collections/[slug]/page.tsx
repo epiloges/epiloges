@@ -13,6 +13,7 @@ import { listingPageNumber } from "@/components/plp/listing-query";
 import { buildMetadata } from "@/lib/seo";
 import { resolveCollectionSeo } from "@/lib/seo/resolve";
 import type { Locale } from "@/i18n/config";
+import { atLeastOneSlug } from "@/lib/static-params";
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
@@ -26,7 +27,7 @@ interface CollectionPageProps {
 
 export async function generateStaticParams() {
   const collections = await getAllCollections();
-  return collections.map((collection) => ({ slug: collection.slug }));
+  return atLeastOneSlug(collections.map((collection) => ({ slug: collection.slug })));
 }
 
 export async function generateMetadata({ params, searchParams }: CollectionPageProps): Promise<Metadata> {

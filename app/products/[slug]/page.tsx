@@ -30,6 +30,7 @@ import {
 import { ROUTES } from "@/constants/routes";
 import { getShippingRates, getShippingSettings } from "@/services/shipping";
 import { deliveryPolicy } from "@/lib/seo/commerce-policy";
+import { atLeastOneSlug } from "@/lib/static-params";
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
@@ -41,7 +42,7 @@ interface ProductPageProps {
 
 export async function generateStaticParams() {
   const products = await getAllProducts();
-  return products.map((product) => ({ slug: product.slug }));
+  return atLeastOneSlug(products.map((product) => ({ slug: product.slug })));
 }
 
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
