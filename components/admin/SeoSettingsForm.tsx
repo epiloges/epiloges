@@ -81,7 +81,7 @@ export function SeoSettingsForm({ initialSeo, onSave, siteUrlFromDeployment = fa
           />
           {siteUrlFromDeployment ? (
             <p id="site-url-note" className="mt-1 text-xs text-luxe-gray-dark">
-              Set by the deployment (NEXT_PUBLIC_SITE_URL in Vercel) and shown here for reference — change it there.
+              Set by the deployment and shown for reference: NEXT_PUBLIC_SITE_URL in Vercel, or epilogesfashion.vercel.app when that is unset. When your own domain is connected, set NEXT_PUBLIC_SITE_URL to it.
             </p>
           ) : null}
         </div>

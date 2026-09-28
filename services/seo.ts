@@ -2,6 +2,7 @@ import "server-only";
 import { unstable_cache } from "next/cache";
 import seoFallback from "@/data/seo.json";
 import { getSiteContent, setSiteContent } from "@/lib/site-content";
+import { getCanonicalSiteUrl } from "@/lib/site-url";
 import type { SiteSeoDefaults } from "@/types";
 
 /**
@@ -14,8 +15,27 @@ import type { SiteSeoDefaults } from "@/types";
  */
 export async function getSeoDefaults(): Promise<SiteSeoDefaults> {
   const stored = await getSiteContent<SiteSeoDefaults>("seo", seoFallback as SiteSeoDefaults);
-  const deployed = process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/+$/, "");
-  return deployed ? { ...stored, siteUrl: deployed } : stored;
+  // The stored row is no longer consulted for the URL at all: when NEXT_PUBLIC_SITE_URL was
+  // unset it still said shopalexandris.vercel.app, and that reached every canonical. See
+  // lib/site-url.ts for the fallback.
+  const siteUrl = getCanonicalSiteUrl();
+  return { ...stored, siteUrl, organization: { ...stored.organization, logo: rehostLogo(stored.organization?.logo, siteUrl) } };
+}
+
+/**
+ * The organisation logo is stored as an absolute URL, and the stored one was on the old host
+ * too. A logo served by this app (a relative path, or any *.vercel.app deployment of it) is
+ * re-anchored on the canonical address; a logo hosted elsewhere (a CDN) is left alone.
+ */
+function rehostLogo(logo: string | undefined, siteUrl: string): string {
+  if (!logo) return `${siteUrl}/logo.svg`;
+  try {
+    const url = new URL(logo, siteUrl);
+    if (logo.startsWith("/") || url.hostname.endsWith(".vercel.app")) return new URL(url.pathname, siteUrl).toString();
+    return logo;
+  } catch {
+    return `${siteUrl}/logo.svg`;
+  }
 }
 
 export async function saveSeoDefaults(seo: SiteSeoDefaults): Promise<void> {

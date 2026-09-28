@@ -129,7 +129,8 @@ export function organizationSchema(seo: SiteSeoDefaults) {
     // business, so an empty array is the honest state until real ones exist — and shipping
     // `sameAs: []` invites someone to "fix" it by putting the seeded handles back.
     ...(seo.organization.sameAs.length > 0 ? { sameAs: seo.organization.sameAs } : {}),
-    vatID: COMPANY.vatNumber,
+    // `vatID: null` is invalid schema.org; present only once the ΑΦΜ is.
+    ...(COMPANY.vatNumber ? { vatID: COMPANY.vatNumber } : {}),
     email: COMPANY.email,
     telephone: COMPANY.phoneE164,
     address: {

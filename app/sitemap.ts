@@ -6,7 +6,6 @@ import { getAllBrands } from "@/services/brands";
 const STATIC_ROUTES: { path: string; priority: number }[] = [
   { path: ROUTES.home, priority: 1 },
   { path: ROUTES.women, priority: 0.9 },
-  { path: ROUTES.men, priority: 0.9 },
   { path: ROUTES.newIn, priority: 0.8 },
   { path: ROUTES.collections, priority: 0.8 },
   { path: ROUTES.brands, priority: 0.6 },
@@ -33,6 +32,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const toUrl = (path: string) => new URL(path, seo.siteUrl).toString();
 
+  // Empty listings stay out until they have something in them — see hasPublishedProducts.
+  // Worked out from the published products already loaded, so no query per listing.
+  const collectionsWithProducts = new Set(products.flatMap((product) => product.collectionIds));
+  const categoriesWithProducts = new Set<string>();
+  const parentOf = new Map(categories.map((category) => [category.id, category.parentId]));
+  for (const product of products) {
+    // A product counts for its category and every ancestor, as the category page shows the subtree.
+    for (let id: string | null | undefined = product.categoryId; id && !categoriesWithProducts.has(id); id = parentOf.get(id)) {
+      categoriesWithProducts.add(id);
+    }
+  }
+  const liveCollections = collections.filter((collection) => collectionsWithProducts.has(collection.id));
+  const hiddenStatic = new Set<string>([
+    ...(liveCollections.length === 0 ? [ROUTES.collections] : []),
+    ...(posts.length === 0 ? [ROUTES.journal] : []),
+    ...(brands.length === 0 ? [ROUTES.brands] : []),
+  ]);
+
   /**
    * `lastModified` is the row's real `updatedAt`, not the build time.
    *
@@ -47,7 +64,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const buildTime = new Date().toISOString();
 
   return [
-    ...STATIC_ROUTES.map(({ path, priority }) => ({
+    ...STATIC_ROUTES.filter(({ path }) => !hiddenStatic.has(path)).map(({ path, priority }) => ({
       url: toUrl(path),
       lastModified: buildTime,
       changeFrequency: "weekly" as const,
@@ -61,7 +78,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
      * Drafts and archived products never reach here at all: getAllProducts() filters on
      * publication status by default, so they are absent rather than filtered out.
      */
-    ...collections
+    ...liveCollections
       .filter((collection) => !collection.seo?.noIndex)
       .map((collection) => ({
         url: toUrl(ROUTES.collection(collection.slug)),
@@ -70,7 +87,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: 0.7,
       })),
     ...categories
-      .filter((category) => category.isVisible && !category.seo?.noIndex)
+      .filter((category) => category.isVisible && !category.seo?.noIndex && categoriesWithProducts.has(category.id))
       .map((category) => ({
         url: toUrl(ROUTES.category(category.slug)),
         lastModified: category.updatedAt ?? buildTime,

@@ -13,7 +13,6 @@ export const BRAND_PATTERNS: { match: string[]; brand: string }[] = [
   { match: ["u.s grand polo", "u.s. grand polo", "us grand polo", "grand polo equipment"], brand: "U.S. Grand Polo Equipment" },
   { match: ["u.s polo assn", "u.s. polo assn", "us polo assn", "us polo"], brand: "U.S. Polo Assn." },
   { match: ["mont martre paris", "mont martre"], brand: "Mont Martre Paris" },
-  { match: ["alexandris shoes", "alexandris leather", "αλεξανδρής"], brand: "Alexandris Shoes" },
   { match: ["verde"], brand: "Verde" },
   { match: ["london"], brand: "London" },
 ];

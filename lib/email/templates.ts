@@ -2,6 +2,7 @@ import { formatMoney } from "@/lib/format";
 import { storeName } from "@/constants/company";
 import type { Address, CartLineItem, CartTotals, ShippingRate } from "@/lib/commerce/types";
 import { countryName } from "@/constants/countries";
+import { getSiteUrl } from "@/lib/site-url";
 
 interface RenderedEmail {
   subject: string;
@@ -25,7 +26,7 @@ const WIDTH = 600;
 
 /** Footer links need an absolute URL, and emails are rendered from contexts with no request. */
 function siteUrl(): string {
-  return process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "https://shopalexandris.vercel.app";
+  return getSiteUrl().replace(/\/$/, "");
 }
 
 /**

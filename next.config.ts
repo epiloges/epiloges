@@ -155,10 +155,15 @@ const nextConfig: NextConfig = {
      * Production only: preview deployments are *.vercel.app too, and a preview that bounced
      * to the live shop would be useless. A no-op while the site URL is itself on vercel.app.
      */
+    // The shop is women's only (owner, 2026-09-28): /men had no products and told search
+    // engines "this is a women's store" under a Men title. Anything still linking to it lands
+    // on the women's listing, query intact (filters and sort carry over).
+    const routeRedirects = [{ source: "/men", destination: "/women", permanent: true }];
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
     const isRealDomain = /^https?:\/\//.test(siteUrl) && !/\.vercel\.app$/.test(new URL(siteUrl).host);
-    if (process.env.VERCEL_ENV !== "production" || !isRealDomain) return [];
+    if (process.env.VERCEL_ENV !== "production" || !isRealDomain) return routeRedirects;
     return [
+      ...routeRedirects,
       {
         source: "/:path*",
         has: [{ type: "host", value: "(?<vercelHost>.*)\\.vercel\\.app" }],

@@ -76,6 +76,24 @@ export async function getAllProducts(filter?: ProductListFilter): Promise<Produc
 }
 
 /**
+ * Whether a category (with its subtree) or a collection has anything a shopper can buy.
+ *
+ * For search engines: an empty listing is a "soft 404" to Google — a page that exists but
+ * says nothing — and a sitemap full of them (twelve empty categories and five collections of
+ * archived demo products, before launch) teaches the crawler that this site's sitemap is not
+ * worth trusting. Empty listings are kept out of the sitemap and marked noindex until the
+ * first product is published into them.
+ */
+export async function hasPublishedProducts(scope: { categorySlug: string } | { collectionId: string }): Promise<boolean> {
+  if ("categorySlug" in scope) {
+    const categoryIds = await getCategorySubtreeIds(scope.categorySlug);
+    if (categoryIds.length === 0) return false;
+    return (await prisma.product.count({ where: { ...PUBLISHED, categoryId: { in: categoryIds } }, take: 1 })) > 0;
+  }
+  return (await prisma.product.count({ where: { ...PUBLISHED, collections: { some: { collectionId: scope.collectionId } } }, take: 1 })) > 0;
+}
+
+/**
  * What the shop has just got in, optionally for one gender.
  *
  * "New" means what the shop SAYS is new — the `isNew` checkbox on the product form —

@@ -1,7 +1,6 @@
 export const ROUTES = {
   home: "/",
   women: "/women",
-  men: "/men",
   newIn: "/new-in",
   collections: "/collections",
   collection: (slug: string) => `/collections/${slug}`,

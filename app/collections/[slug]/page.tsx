@@ -7,7 +7,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ProductListingSection } from "@/components/plp/ProductListingSection";
 import { ListingSkeleton } from "@/components/plp/ListingSkeleton";
-import { getAllCollections, getCollectionBySlug, getNavigation, getSiteSettings, getSeoDefaults } from "@/services";
+import { getAllCollections, getCollectionBySlug, getNavigation, getSiteSettings, getSeoDefaults, hasPublishedProducts } from "@/services";
 import { localizeCollection } from "@/lib/localize";
 import { listingPageNumber } from "@/components/plp/listing-query";
 import { buildMetadata } from "@/lib/seo";
@@ -40,13 +40,15 @@ export async function generateMetadata({ params, searchParams }: CollectionPageP
   // Collections had no SEO overrides at all until the `seo` column was added — the title
   // and description were whatever the merchandiser typed for the storefront hero.
   const resolved = resolveCollectionSeo(collection, { seo });
+  // Empty until products are published into it — see hasPublishedProducts.
+  const isEmpty = !(await hasPublishedProducts({ collectionId: raw.id }));
   return buildMetadata({
     seo,
     page,
     title: resolved.title,
     description: resolved.description,
     canonical: resolved.canonical,
-    noIndex: resolved.noIndex,
+    noIndex: resolved.noIndex || isEmpty,
     ogTitle: resolved.ogTitle,
     ogDescription: resolved.ogDescription,
     image: resolved.ogImage,

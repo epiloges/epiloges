@@ -17,6 +17,7 @@ import {
   getSiteSettings,
   getSeoDefaults,
   resolveRenamedCategorySlug,
+  hasPublishedProducts,
 } from "@/services";
 import { localizeCategory, localizeCategories } from "@/lib/localize";
 import { listingPageNumber } from "@/components/plp/listing-query";
@@ -51,13 +52,15 @@ export async function generateMetadata({ params, searchParams }: CategoryPagePro
   const category = localizeCategory(raw, locale as Locale);
   // Every fallback lives in resolveCategorySeo — see lib/seo/resolve.ts.
   const resolved = resolveCategorySeo(category, { seo });
+  // Empty until products are published into it — see hasPublishedProducts.
+  const isEmpty = !(await hasPublishedProducts({ categorySlug: raw.slug }));
   return buildMetadata({
     seo,
     page,
     title: resolved.title,
     description: resolved.description,
     canonical: resolved.canonical,
-    noIndex: resolved.noIndex,
+    noIndex: resolved.noIndex || isEmpty,
     ogTitle: resolved.ogTitle,
     ogDescription: resolved.ogDescription,
     image: resolved.ogImage,
