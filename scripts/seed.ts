@@ -379,6 +379,19 @@ async function seedBlogPosts(posts: BlogPost[]) {
 }
 
 async function main() {
+  /**
+   * Demo data only — never on the live shop. This used to run on EVERY Vercel deploy (it was
+   * chained onto db:deploy), and its upserts overwrite status, price and `active`: each deploy
+   * re-published the twelve archived demo products and re-enabled FREESHIP and the GIFT25 /
+   * GIFT50 demo gift cards, whose codes are readable in this public repository. Now it is a
+   * manual `npm run db:seed` for a fresh local database, and refuses production outright.
+   */
+  // The hosted (Supabase) database IS the live shop — `.env` points a local run at it too.
+  const isLiveDatabase = process.env.VERCEL_ENV === "production" || Boolean(rawConnectionString && isSupabasePooler(rawConnectionString));
+  if (isLiveDatabase && process.env.ALLOW_PRODUCTION_SEED !== "1") {
+    console.log("seed: refusing to write demo data to the live database (set ALLOW_PRODUCTION_SEED=1 to override).");
+    return;
+  }
   const products = productsData as SeedProduct[];
   const collections = collectionsData as Collection[];
 
