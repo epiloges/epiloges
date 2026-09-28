@@ -1,26 +1,38 @@
 {
-  "title": "Shipping & Returns",
-  "intro": "The essentials — full detail is confirmed at checkout and in your order emails.",
+  "title": "Αποστολές & Επιστροφές",
+  "intro": "Όλα όσα χρειάζεται να ξέρετε για την παράδοση και την επιστροφή της παραγγελίας σας. Το ακριβές κόστος και ο χρόνος παράδοσης εμφανίζονται πάντα στο ταμείο, πριν ολοκληρώσετε την παραγγελία.",
   "sections": [
     {
-      "heading": "Shipping",
-      "body": "Standard shipping is free on all orders over €150, and €6.95 on orders below that. Standard delivery arrives in 3–5 business days. Express shipping (1–2 business days) is available at checkout for €14.95. We currently ship within the EU and UK."
+      "heading": "Αποστολή στην Ελλάδα",
+      "body": "Στέλνουμε με ACS Courier σε όλη την Ελλάδα, σε 1–3 εργάσιμες ημέρες από την αποστολή του δέματος. Τα μεταφορικά είναι 2,95 € και δωρεάν για παραγγελίες άνω των 150 €. Για ορισμένες δυσπρόσιτες περιοχές η χρέωση είναι 4,95 € — θα τη δείτε στο ταμείο μόλις συμπληρώσετε τον ταχυδρομικό σας κώδικα. Υπάρχει και ταχεία παράδοση σε 1–2 εργάσιμες ημέρες, με 14,95 €."
     },
     {
-      "heading": "Order Tracking",
-      "body": "You'll receive a shipping confirmation once your order leaves the warehouse. Track its status any time from your account's Orders page."
+      "heading": "Παραλαβή από το κατάστημα",
+      "body": "Μπορείτε να επιλέξετε δωρεάν παραλαβή από το κατάστημά μας στην οδό Έβανς 9, στο κέντρο του Ηρακλείου. Θα σας ειδοποιήσουμε μόλις η παραγγελία είναι έτοιμη, συνήθως σε 1–2 εργάσιμες ημέρες."
     },
     {
-      "heading": "Returns",
-      "body": "Unworn items with tags attached can be returned within 30 days of delivery for a full refund to your original payment method. Start a return from your account's Returns page — we'll email a prepaid return label. Sale items marked 'Final Sale' are not eligible for return."
+      "heading": "Αποστολή στην Ευρωπαϊκή Ένωση",
+      "body": "Στέλνουμε και σε χώρες της Ευρωπαϊκής Ένωσης, σε 5–8 εργάσιμες ημέρες, με 14,95 €."
     },
     {
-      "heading": "Exchanges",
-      "body": "We don't process direct exchanges — return the item for a refund and place a new order for the size or colour you'd prefer, so you're not waiting on stock availability."
+      "heading": "Παρακολούθηση παραγγελίας",
+      "body": "Μόλις το δέμα φύγει από εμάς, θα λάβετε email με τον αριθμό αποστολής της ACS. Την κατάσταση της παραγγελίας σας τη βλέπετε επίσης στον λογαριασμό σας, στην ενότητα «Παραγγελίες», ή στη σελίδα «Παρακολούθηση παραγγελίας» με τον αριθμό παραγγελίας και το email σας."
     },
     {
-      "heading": "Refund Timing",
-      "body": "Once your return is received and inspected, refunds are issued within 5–7 business days. It can take a further few days for your bank to post the credit."
+      "heading": "Δωρεάν επιστροφή σε 14 ημέρες",
+      "body": "Έχετε 14 ημέρες από την παραλαβή για να επιστρέψετε ό,τι δεν σας ταιριάζει, χωρίς να δώσετε εξηγήσεις. Η επιστροφή είναι δωρεάν — τα έξοδα αποστολής της επιστροφής τα αναλαμβάνουμε εμείς. Τα είδη πρέπει να είναι αφόρετα, στην αρχική τους συσκευασία και με τα καρτελάκια τους. Ξεκινήστε την επιστροφή από τον λογαριασμό σας (Λογαριασμός → Επιστροφές) ή στείλτε μας email, και θα σας ενημερώσουμε για την παραλαβή του δέματος."
+    },
+    {
+      "heading": "Αλλαγή μεγέθους",
+      "body": "Θέλετε άλλο νούμερο; Επικοινωνήστε μαζί μας μέσα στις 14 ημέρες και θα κανονίσουμε την αλλαγή, εφόσον υπάρχει διαθέσιμο το μέγεθος που θέλετε. Διαφορετικά, επιστρέψτε το είδος για επιστροφή χρημάτων και κάντε νέα παραγγελία."
+    },
+    {
+      "heading": "Επιστροφή χρημάτων",
+      "body": "Μόλις παραλάβουμε και ελέγξουμε την επιστροφή, σας επιστρέφουμε τα χρήματα μέσα σε 14 ημέρες, με τον ίδιο τρόπο που πληρώσατε. Για παραγγελίες με αντικαταβολή, θα σας ζητήσουμε ένα IBAN για να κάνουμε την επιστροφή με τραπεζική μεταφορά."
+    },
+    {
+      "heading": "Ελαττωματικό ή λάθος είδος",
+      "body": "Αν λάβατε κάτι ελαττωματικό ή διαφορετικό από αυτό που παραγγείλατε, επικοινωνήστε μαζί μας με μια φωτογραφία. Θα το αντικαταστήσουμε ή θα σας επιστρέψουμε τα χρήματα, χωρίς καμία χρέωση."
     }
   ]
 }

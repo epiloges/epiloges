@@ -17,7 +17,6 @@ export const ROUTES = {
   cart: "/cart",
   product: (slug: string) => `/products/${slug}`,
   admin: "/admin",
-  sustainability: "/sustainability",
   careers: "/careers",
   contact: "/contact",
   shippingReturns: "/shipping-returns",

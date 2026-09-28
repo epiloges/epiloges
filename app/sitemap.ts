@@ -13,7 +13,6 @@ const STATIC_ROUTES: { path: string; priority: number }[] = [
   { path: ROUTES.sale, priority: 0.7 },
   { path: ROUTES.journal, priority: 0.6 },
   { path: ROUTES.about, priority: 0.5 },
-  { path: ROUTES.sustainability, priority: 0.4 },
   { path: ROUTES.faq, priority: 0.4 },
   { path: ROUTES.sizeGuide, priority: 0.4 },
   { path: ROUTES.shippingReturns, priority: 0.4 },

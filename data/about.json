@@ -1,30 +1,36 @@
 {
-  "title": "Our Story",
+  "title": "Η ιστορία μας",
+  "eyebrow": "Ηράκλειο · από το 1984",
   "heroImage": {
     "src": "https://images.unsplash.com/photo-1699309325446-3561a7508d3c?auto=format&fit=crop&w=1600&q=80",
-    "alt": "Epiloges Fashion Boutique atelier"
+    "alt": "Ρούχα κρεμασμένα σε κατάστημα"
   },
-  "intro": "Epiloges Fashion Boutique was founded on a simple idea: clothes built to be altered, not replaced.",
+  "intro": "Το Epiloges Fashion Boutique άνοιξε στο Ηράκλειο το 1984. Από τότε διαλέγουμε ένα-ένα τα ρούχα, τα παπούτσια και τα αξεσουάρ που φέρνουμε στα καταστήματά μας — και τώρα και online.",
+  "statement": {
+    "line": "Δύο καταστήματα στην Κρήτη, ένα στο διαδίκτυο.",
+    "facts": [
+      { "value": "1984", "label": "Η χρονιά που ανοίξαμε" },
+      { "value": "2", "label": "Καταστήματα, Ηράκλειο & Μάλια" },
+      { "value": "14", "label": "Ημέρες δωρεάν επιστροφής" }
+    ]
+  },
   "sections": [
     {
-      "heading": "Considered by Design",
-      "body": "Every piece starts with the fabric — natural fibres sourced from mills we've worked with for over a decade. We design in small batches, favouring longevity over trend cycles.",
-      "image": {
-        "src": "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&w=1200&q=80",
-        "alt": "Wool fabric detail"
-      }
+      "heading": "Τα καταστήματά μας",
+      "body": "Θα μας βρείτε στην οδό Έβανς 9, στο κέντρο του Ηρακλείου, και στην Ελ. Βενιζέλου 157 στα Μάλια. Περάστε να δοκιμάσετε, να ρωτήσετε ή απλώς να δείτε τις νέες αφίξεις."
     },
     {
-      "heading": "Made to Last",
-      "body": "Our ateliers build with a hand-finished seam and a hem left generous enough to let out — construction more common in bespoke tailoring than mass production. It costs more to make. It shows.",
-      "image": {
-        "src": "https://images.unsplash.com/photo-1516762689617-e1cffcef479d?auto=format&fit=crop&w=1200&q=80",
-        "alt": "Atelier craftsmanship"
-      }
+      "heading": "Τι θα βρείτε",
+      "body": "Γυναικεία και ανδρικά ρούχα, παπούτσια και αξεσουάρ, με νέες παραλαβές κάθε σεζόν. Διαλέγουμε κομμάτια που φοριούνται εύκολα, συνδυάζονται μεταξύ τους και κρατάνε."
     },
     {
-      "heading": "A Quieter Kind of Luxury",
-      "body": "No logos, no seasons that expire. Just clothes we'd wear ourselves, made the way we'd want them made."
+      "heading": "Και online",
+      "body": "Στο eshop βλέπετε τη διαθεσιμότητα κάθε μεγέθους και παραγγέλνετε με αποστολή σε όλη την Ελλάδα, δωρεάν άνω των 150 €, ή με δωρεάν παραλαβή από το κατάστημα στο Ηράκλειο. Αν κάτι δεν σας κάνει, η επιστροφή μέσα σε 14 ημέρες είναι δωρεάν."
     }
-  ]
+  ],
+  "closing": {
+    "quote": "Σας περιμένουμε, στο κατάστημα ή εδώ.",
+    "signature": "Epiloges Fashion Boutique",
+    "cta": { "label": "Δείτε τη συλλογή", "href": "/new-in" }
+  }
 }

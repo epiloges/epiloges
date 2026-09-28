@@ -1,71 +1,75 @@
 {
-  "intro": "Can't find what you're looking for? Reach us at epilogesfashion@gmail.com.",
+  "intro": "Δεν βρίσκετε αυτό που ψάχνετε; Γράψτε μας στο epilogesfashion@gmail.com ή καλέστε μας στο 2897 033730.",
   "categories": [
     {
-      "title": "Orders & Shipping",
+      "title": "Παραγγελίες & Αποστολές",
       "questions": [
         {
-          "question": "How long does delivery take?",
-          "answer": "Standard shipping arrives in 3–5 business days and is free on orders over €150 (€6.95 below that). Express shipping arrives in 1–2 business days for €14.95."
+          "question": "Σε πόσες ημέρες θα έρθει η παραγγελία μου;",
+          "answer": "Στέλνουμε με ACS Courier και η παράδοση γίνεται σε 1–3 εργάσιμες ημέρες σε όλη την Ελλάδα. Με ταχεία παράδοση (14,95 €) φτάνει σε 1–2 εργάσιμες ημέρες. Στις χώρες της ΕΕ η παράδοση γίνεται σε 5–8 εργάσιμες ημέρες."
         },
         {
-          "question": "Which countries do you ship to?",
-          "answer": "We currently ship within the EU and UK. Broader international shipping is on our roadmap."
+          "question": "Πόσο κοστίζουν τα μεταφορικά;",
+          "answer": "2,95 € για αποστολή στην Ελλάδα και δωρεάν για παραγγελίες άνω των 150 €. Για ορισμένες δυσπρόσιτες περιοχές η χρέωση είναι 4,95 €. Το ακριβές κόστος εμφανίζεται στο ταμείο πριν ολοκληρώσετε την παραγγελία."
         },
         {
-          "question": "Can I change or cancel my order after placing it?",
-          "answer": "Orders begin processing shortly after they're placed, so we can't guarantee changes once confirmed. Contact us as soon as possible and we'll do what we can."
+          "question": "Μπορώ να παραλάβω την παραγγελία από το κατάστημα;",
+          "answer": "Ναι, δωρεάν, από το κατάστημά μας στην οδό Έβανς 9 στο Ηράκλειο. Επιλέξτε «Παραλαβή από το κατάστημα» στο ταμείο και θα σας ειδοποιήσουμε μόλις η παραγγελία είναι έτοιμη."
         },
         {
-          "question": "How do I track my order?",
-          "answer": "Sign in and open Account → Orders to see the current status of any order. You'll also get a shipping confirmation email once it leaves the warehouse."
+          "question": "Πώς παρακολουθώ την παραγγελία μου;",
+          "answer": "Μόλις το δέμα φύγει, θα λάβετε email με τον αριθμό αποστολής της ACS. Μπορείτε επίσης να δείτε την κατάσταση στον λογαριασμό σας ή στη σελίδα «Παρακολούθηση παραγγελίας»."
+        },
+        {
+          "question": "Μπορώ να αλλάξω ή να ακυρώσω την παραγγελία μου;",
+          "answer": "Επικοινωνήστε μαζί μας το συντομότερο. Αν η παραγγελία δεν έχει σταλεί ακόμη, θα κάνουμε την αλλαγή ή την ακύρωση. Αν έχει ήδη σταλεί, μπορείτε να την επιστρέψετε δωρεάν μέσα σε 14 ημέρες."
         }
       ]
     },
     {
-      "title": "Returns & Exchanges",
+      "title": "Επιστροφές & Αλλαγές",
       "questions": [
         {
-          "question": "What's your return policy?",
-          "answer": "Unworn items with tags attached can be returned within 30 days of delivery for a full refund. Start a return from Account → Returns. Items marked 'Final Sale' aren't eligible."
+          "question": "Ποια είναι η πολιτική επιστροφών;",
+          "answer": "Έχετε 14 ημέρες από την παραλαβή για να επιστρέψετε ό,τι δεν σας ταιριάζει, δωρεάν. Τα είδη πρέπει να είναι αφόρετα, στην αρχική τους συσκευασία και με τα καρτελάκια τους. Ξεκινήστε την επιστροφή από τον λογαριασμό σας (Λογαριασμός → Επιστροφές) ή με ένα email."
         },
         {
-          "question": "Do you offer exchanges?",
-          "answer": "Not directly — return the item for a refund and place a new order for the size or colour you want, so you're not waiting on stock."
+          "question": "Μπορώ να αλλάξω μέγεθος;",
+          "answer": "Ναι. Επικοινωνήστε μαζί μας μέσα σε 14 ημέρες από την παραλαβή και θα κανονίσουμε την αλλαγή, εφόσον το μέγεθος που θέλετε είναι διαθέσιμο."
         },
         {
-          "question": "How long do refunds take?",
-          "answer": "5–7 business days after we receive and inspect your return, plus however long your bank takes to post the credit."
+          "question": "Πότε θα πάρω πίσω τα χρήματά μου;",
+          "answer": "Μέσα σε 14 ημέρες από τη στιγμή που θα παραλάβουμε την επιστροφή, με τον ίδιο τρόπο που πληρώσατε. Για αντικαταβολή, η επιστροφή γίνεται με τραπεζική μεταφορά στο IBAN που θα μας δώσετε."
         }
       ]
     },
     {
-      "title": "Product & Sizing",
+      "title": "Πληρωμή",
       "questions": [
         {
-          "question": "How do I find my size?",
-          "answer": "Check the Size Guide, linked from every product page and in the site footer, for measurements by category."
+          "question": "Ποιους τρόπους πληρωμής δέχεστε;",
+          "answer": "Αντικαταβολή (πληρώνετε στον courier κατά την παράδοση) και τραπεζική κατάθεση. Τυχόν χρέωση αντικαταβολής εμφανίζεται στο ταμείο πριν ολοκληρώσετε την παραγγελία."
         },
         {
-          "question": "Are your products true to size?",
-          "answer": "Fit notes are listed on each product page. When a style runs small or large, we call it out there rather than only in the general size chart."
+          "question": "Πώς λειτουργεί η τραπεζική κατάθεση;",
+          "answer": "Μετά την παραγγελία θα δείτε, και θα λάβετε με email, τον λογαριασμό της τράπεζας και το ποσό. Βάλτε τον αριθμό παραγγελίας ως αιτιολογία και κάντε την κατάθεση μέσα σε 5 ημέρες. Στέλνουμε την παραγγελία μόλις δούμε την πληρωμή."
         },
         {
-          "question": "What are your products made from?",
-          "answer": "Primarily natural fibres — wool, cotton, linen and silk. Full material composition is listed on each product page. See our Sustainability page for how we source them."
+          "question": "Μπορώ να πάρω τιμολόγιο;",
+          "answer": "Ναι. Στο ταμείο επιλέξτε «Τιμολόγιο» και συμπληρώστε τον ΑΦΜ και τα στοιχεία της επιχείρησής σας."
         }
       ]
     },
     {
-      "title": "Account & Payment",
+      "title": "Μεγέθη & Προϊόντα",
       "questions": [
         {
-          "question": "Do I need an account to order?",
-          "answer": "No — guest checkout is available. Creating an account lets you track orders, save addresses, and check out faster next time."
+          "question": "Πώς θα βρω το σωστό μέγεθος;",
+          "answer": "Δείτε τον Οδηγό μεγεθών. Αν είστε ανάμεσα σε δύο μεγέθη ή έχετε απορία για ένα συγκεκριμένο κομμάτι, γράψτε μας ή καλέστε μας και θα σας βοηθήσουμε."
         },
         {
-          "question": "What payment methods do you accept?",
-          "answer": "Card, Apple Pay, Google Pay, and PayPal are shown at checkout. This is a demo store — no payment is actually charged."
+          "question": "Είναι διαθέσιμα τα προϊόντα και στα φυσικά καταστήματα;",
+          "answer": "Τα περισσότερα ναι. Τα καταστήματά μας βρίσκονται στην οδό Έβανς 9 στο Ηράκλειο και στην Ελ. Βενιζέλου 157 στα Μάλια. Καλέστε μας για να ελέγξουμε αν ένα κομμάτι υπάρχει στο μέγεθός σας."
         }
       ]
     }

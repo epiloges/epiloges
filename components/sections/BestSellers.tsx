@@ -11,6 +11,8 @@ interface BestSellersProps {
 }
 
 export function BestSellers({ title, subtitle, products, viewAllCta }: BestSellersProps) {
+  // The pinned products may all be archived or unpublished — a heading over nothing reads as broken.
+  if (products.length === 0) return null;
   return (
     <section className="container-luxe py-20 md:py-28">
       <div className="mb-10 flex items-end justify-between md:mb-14">

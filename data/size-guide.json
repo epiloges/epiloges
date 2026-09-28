@@ -1,29 +1,48 @@
 {
-  "intro": "All sizing below is EU/international. If you're between sizes, we recommend sizing up — fit notes on each product page will flag any exception (a relaxed cut, a smaller-than-usual run).",
+  "intro": "Όλα τα μεγέθη είναι ευρωπαϊκά. Αν είστε ανάμεσα σε δύο μεγέθη, προτείνουμε το μεγαλύτερο — και αν κάποιο κομμάτι φοριέται διαφορετικά, θα το αναφέρουμε στη σελίδα του προϊόντος. Για οποιαδήποτε απορία, γράψτε μας ή καλέστε μας.",
   "categories": [
     {
-      "title": "Tops, Knitwear & Dresses",
-      "note": "Measured flat, garment laid out — not body measurements. See each product page for the exact garment measurements of that style.",
-      "headers": ["Size", "UK", "US", "Bust", "Waist", "Hip"],
+      "title": "Μπλούζες, πλεκτά & φορέματα",
+      "note": "Μετρήσεις σώματος σε εκατοστά. Μετρήστε το στήθος στο πιο φαρδύ σημείο, τη μέση στο πιο στενό και τους γοφούς στο πιο φαρδύ.",
+      "headers": ["Μέγεθος", "Νούμερο", "Στήθος", "Μέση", "Γοφοί"],
       "rows": [
-        ["XS", "6", "2", "80 cm", "62 cm", "88 cm"],
-        ["S", "8", "4", "84 cm", "66 cm", "92 cm"],
-        ["M", "10", "6", "88 cm", "70 cm", "96 cm"],
-        ["L", "12", "8", "94 cm", "76 cm", "102 cm"],
-        ["XL", "14", "10", "100 cm", "82 cm", "108 cm"],
-        ["XXL", "16", "12", "106 cm", "88 cm", "114 cm"]
+        ["XS", "34", "80 cm", "62 cm", "88 cm"],
+        ["S", "36", "84 cm", "66 cm", "92 cm"],
+        ["M", "38", "88 cm", "70 cm", "96 cm"],
+        ["L", "40", "94 cm", "76 cm", "102 cm"],
+        ["XL", "42", "100 cm", "82 cm", "108 cm"],
+        ["XXL", "44", "106 cm", "88 cm", "114 cm"]
       ]
     },
     {
-      "title": "Denim",
-      "note": "Waist is measured flat, laid out, and doubled. Inseam is the standard length before any hemming.",
-      "headers": ["Size", "Waist", "Inseam"],
+      "title": "Παντελόνια & τζιν",
+      "note": "Η μέση μετριέται γύρω από το σώμα, στο ύψος που φοράτε το παντελόνι. Το εσωτερικό μήκος είναι από τον καβάλο ως τον αστράγαλο.",
+      "headers": ["Μέγεθος", "Μέση", "Εσωτερικό μήκος"],
       "rows": [
         ["S", "76 cm", "80 cm"],
         ["M", "82 cm", "81 cm"],
         ["L", "88 cm", "82 cm"],
         ["XL", "94 cm", "83 cm"],
         ["XXL", "100 cm", "84 cm"]
+      ]
+    },
+    {
+      "title": "Παπούτσια",
+      "note": "Σταθείτε πάνω σε ένα χαρτί και μετρήστε από τη φτέρνα ως το μεγαλύτερο δάχτυλο. Αν το πόδι σας είναι ανάμεσα σε δύο νούμερα, διαλέξτε το μεγαλύτερο.",
+      "headers": ["Νούμερο (EU)", "Μήκος πέλματος"],
+      "rows": [
+        ["35", "22,5 cm"],
+        ["36", "23 cm"],
+        ["37", "23,5 cm"],
+        ["38", "24,5 cm"],
+        ["39", "25 cm"],
+        ["40", "25,5 cm"],
+        ["41", "26,5 cm"],
+        ["42", "27 cm"],
+        ["43", "27,5 cm"],
+        ["44", "28,5 cm"],
+        ["45", "29 cm"],
+        ["46", "29,5 cm"]
       ]
     }
   ]

@@ -25,6 +25,8 @@ interface FeaturedCollectionsProps {
 }
 
 export function FeaturedCollections({ title, subtitle, tiles }: FeaturedCollectionsProps) {
+  // Every tile dropped (see SectionRenderer): hide the section rather than show a bare title.
+  if (tiles.length === 0) return null;
   return (
     <section className="container-luxe py-16 md:py-20">
       <div className="mb-10 md:mb-14">

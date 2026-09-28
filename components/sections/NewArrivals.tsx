@@ -76,6 +76,8 @@ export function NewArrivals({ title, subtitle, rows }: NewArrivalsProps) {
    * itself in both cases, so the two layouts differ only in whether they have a subheading.
    */
   const isSoleRow = rows.length === 1 && !rows[0].title;
+  // Every row empty (a new or emptied catalogue): no section heading over blank space.
+  if (rows.every((row) => row.products.length === 0)) return null;
 
   return (
     <section className="pt-16 pb-10 md:pt-20 md:pb-12">

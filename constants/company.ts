@@ -116,8 +116,9 @@ export const COMPANY = {
    * schema.org's English day names; times are 24h "HH:MM". Sunday is simply absent: an
    * absent day is "closed" in schema.org, so nothing needs to say so.
    *
-   * OWNER: the map coordinates are still missing; Google Maps → right-click the shop pin →
-   * copy the two numbers into `geo`.
+   * `geo` is Evans 9 geocoded from OpenStreetMap to street level (the north, pedestrian end
+   * of Έβανς) — within ~50 m. OWNER: to make it exact, Google Maps → right-click the shop pin →
+   * copy the two numbers here.
    */
   store: {
     openingHours: [
@@ -125,7 +126,7 @@ export const COMPANY = {
       { days: ["Tuesday", "Thursday", "Friday"], opens: "17:00", closes: "21:00" },
       { days: ["Monday", "Wednesday", "Saturday"], opens: "09:00", closes: "16:00" },
     ] as { days: string[]; opens: string; closes: string }[],
-    geo: undefined as { latitude: number; longitude: number } | undefined,
+    geo: { latitude: 35.3379, longitude: 25.1338 } as { latitude: number; longitude: number } | undefined,
   },
 } as const;
 

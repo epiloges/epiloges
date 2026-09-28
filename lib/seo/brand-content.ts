@@ -21,7 +21,7 @@ export interface BrandContent {
   faqs: FaqItem[];
 }
 
-const SHIPPING = "Αποστολή με ACS σε 1–3 εργάσιμες ημέρες σε όλη την Ελλάδα, δωρεάν μεταφορικά άνω των 100 €, και δωρεάν αλλαγή ή επιστροφή μέσα σε 14 ημέρες.";
+const SHIPPING = "Αποστολή με ACS σε 1–3 εργάσιμες ημέρες σε όλη την Ελλάδα, δωρεάν μεταφορικά άνω των 150 €, και δωρεάν αλλαγή ή επιστροφή μέσα σε 14 ημέρες.";
 
 export const BRAND_CONTENT: Record<string, BrandContent> = {
   "alexandris-shoes": {
